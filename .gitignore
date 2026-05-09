@@ -1,1 +1,119 @@
-CLAUDE.md
+# ============================================================
+# OS / Editors / IDEs
+# ============================================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ============================================================
+# Secrets / env
+# ============================================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ============================================================
+# Python (ml/ e backend/)
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.venv/
+venv/
+env/
+ENV/
+.python-version
+.ipynb_checkpoints/
+
+# Jupyter
+*.ipynb_checkpoints
+
+# ============================================================
+# Datasets (pesados — versionados fora do Git, ex: DVC / drive)
+# ============================================================
+ml/data/raw/**
+ml/data/processed/**
+ml/data/splits/**
+ml/data/synthetic/**
+!ml/data/**/.gitkeep
+!ml/data/README.md
+
+# ============================================================
+# Checkpoints / pesos / artefatos de modelo
+# ============================================================
+ml/checkpoints/**
+!ml/checkpoints/.gitkeep
+!ml/checkpoints/README.md
+*.pt
+*.pth
+*.onnx
+*.engine
+*.tflite
+*.h5
+*.pb
+*.ckpt
+
+# Logs de treino / experiment trackers
+ml/runs/
+ml/wandb/
+ml/mlruns/
+ml/lightning_logs/
+ml/outputs/
+
+# ============================================================
+# Backend (FastAPI / Postgres / Alembic)
+# ============================================================
+backend/.env
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/instance/
+backend/uploads/
+
+# ============================================================
+# Frontend (Node / React / Vite)
+# ============================================================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.cache/
+frontend/coverage/
+frontend/.turbo/
+frontend/.parcel-cache/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# ============================================================
+# Docs (LaTeX, builds temporários)
+# ============================================================
+docs/**/*.aux
+docs/**/*.bbl
+docs/**/*.blg
+docs/**/*.log
+docs/**/*.out
+docs/**/*.toc
+docs/**/*.synctex.gz
+docs/**/_build/
