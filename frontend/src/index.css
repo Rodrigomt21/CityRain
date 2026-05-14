@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-base:     #0a0d12;
+    --bg-surface:  #111620;
+    --bg-card:     #161c27;
+    --bg-border:   #1e2535;
+    --text-primary:   #e8edf5;
+    --text-secondary: #8896aa;
+    --accent-brand:   #3b82f6;
+
+    --cat-dry:      #22c55e;
+    --cat-drizzle:  #67e8f9;
+    --cat-moderate: #fb923c;
+    --cat-heavy:    #ef4444;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@keyframes rain-fall {
+  0%   { transform: translateY(-30px); opacity: 0; }
+  12%  { opacity: 0.55; }
+  85%  { opacity: 0.45; }
+  100% { transform: translateY(105vh); opacity: 0; }
+}
+
+@keyframes sensor-pulse {
+  0%   { transform: scale(1);    opacity: 0.7; }
+  50%  { transform: scale(2.2);  opacity: 0; }
+  100% { transform: scale(2.2);  opacity: 0; }
+}
+
+@keyframes fade-in-row {
+  from { opacity: 0; background-color: rgba(59, 130, 246, 0.10); }
+  to   { opacity: 1; background-color: transparent; }
+}
+
+.animate-rain-fall    { animation: rain-fall linear infinite; }
+.animate-sensor-pulse { animation: sensor-pulse 1.8s ease-out infinite; }
+.animate-fade-in-row  { animation: fade-in-row 0.4s ease-out forwards; }
+
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 2px; }
