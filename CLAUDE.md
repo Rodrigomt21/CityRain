@@ -265,16 +265,31 @@ cityrain/
 │   ├── migrations/                # Alembic
 │   └── tests/
 │
-└── frontend/                      # Subprojeto do Dashboard (React + TypeScript)
+└── frontend/                      # Subprojeto do Dashboard (React + Vite + Tailwind)
     ├── README.md
-    ├── package.json               # (a criar)
+    ├── package.json               # Vite + React + Tailwind + Recharts + Leaflet + react-router-dom
+    ├── vite.config.js
+    ├── tailwind.config.js
+    ├── postcss.config.js
+    ├── eslint.config.js
+    ├── index.html
     ├── public/
     └── src/
-        ├── components/            # Componentes reutilizáveis
-        ├── pages/                 # Telas (mapa, série temporal, detalhe de célula)
-        ├── api/                   # Cliente HTTP do backend
-        ├── hooks/                 # React hooks
-        └── lib/                   # Utilitários H3, mapa, cores por classe
+        ├── main.jsx               # Entry point
+        ├── App.jsx                # Roteamento (Landing ↔ Dashboard)
+        ├── index.css / App.css    # Estilos globais + Tailwind
+        ├── assets/                # hero.png, ícones
+        ├── components/
+        │   ├── ui/                # Componentes atômicos reutilizáveis (CategoryBadge, StatusDot)
+        │   ├── layout/            # Topbar
+        │   ├── landing/           # Hero, Features
+        │   └── dashboard/         # KPICards, RainfallChart, HeatMap, UrbanMap,
+        │                          # AlertsPanel, ClassificationCards, ReadingsTable
+        ├── pages/                 # Landing.jsx, Dashboard.jsx
+        ├── hooks/                 # useRainfallData.js, useClassificationData.js
+        ├── api/                   # (a criar) — cliente HTTP do backend
+        └── lib/                   # Utilitários: categories.js, mockData.js
+                                   # (dados reais virão via api/ quando o backend estiver pronto)
 ```
 
 **Comunicação entre subprojetos:**
@@ -302,7 +317,7 @@ cityrain/
   - **Stack de backend:** FastAPI + Uvicorn + PostgreSQL + H3. API REST/HTTP entre frontend e backend, e HTTP entre backend e APIs públicas.
   - **Plataforma embarcada de referência:** NVIDIA Jetson Nano.
   - **Coleta veicular** pela Região Metropolitana de SP + ABC Paulista (não fixa).
-  - **Frontend:** React.
+  - **Frontend:** React (JSX) + Vite + Tailwind CSS. Stack inicializada e migrada para `frontend/` em maio/2026. Componentes em JSX (não TypeScript por ora). Dados reais ainda via mock (`lib/mockData.js`) — integração com o backend fica em `src/api/` quando a API estiver pronta.
   - **Sem V2X.** A entrega é o dashboard urbano.
 - **Decisões abertas (continuar tratando como experimento):** framework de ML, arquitetura do modelo, abordagem física vs. ML vs. híbrida, técnicas de pré-processamento, **protocolo Jetson → Backend (HTTP vs MQTT)**.
 - Quando sugerir algo na parte aberta, apresentar como "candidato a testar" e oferecer alternativas
