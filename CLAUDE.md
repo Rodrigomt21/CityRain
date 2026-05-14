@@ -71,26 +71,30 @@ O projeto tem dois caminhos possíveis (não mutuamente exclusivos) para estimar
 ## Pipeline do Sistema (arquitetura macro)
 
 ```
-[Câmera] → [Pré-processamento] → [Modelo de Percepção] → [Classificação 4 níveis] → [Backend HTTP] → [Frontend React]
-                                        ↑                          ↑                       ↑                  ↑
-                                   A investigar            Saída atual:            FastAPI/Uvicorn      Dashboard com
-                                   (ver candidatos)        seco, garoa,            PostgreSQL           agregação H3
-                                                           moderada, forte         (persistência)       em tempo real
-                                                           (regressão = futuro)    H3 (agregação)
+[Câmera] → [Pré-processamento] → [Modelo de Percepção] → [Classificação 4 níveis] → [Backend] ⇄ [Frontend React]
+                                        ↑                          ↑                  ↑              ↑
+                                   A investigar            Saída atual:        FastAPI/Uvicorn   Dashboard com
+                                   (ver candidatos)        seco, garoa,        PostgreSQL        agregação H3
+                                                           moderada, forte     (persistência)    em tempo real
+                                                           (regressão = futuro) H3 (agregação)
 
+  Jetson → Backend: protocolo em análise (HTTP vs MQTT — ver "Decisões abertas").
+  Frontend ⇄ Backend: HTTP (REST). Backend → APIs públicas: HTTP.
   Inferência: modelo recebe SÓ a imagem. Estações públicas entram apenas no fluxo offline:
   [Estações CGE-SP/INMET/CEMADEN] → labels do dataset (treino) + comparação com predição (avaliação)
 ```
 
-### Stack de Backend (definido)
+### Stack de Backend
 
-- **API HTTP** — FastAPI servido por **Uvicorn** (Python async)
+**Definido:**
+- **Framework** — FastAPI servido por **Uvicorn** (Python async)
 - **Banco de dados** — **PostgreSQL** para persistência de inferências, estações públicas e séries temporais
 - **Agregação espacial** — **H3** (Uber) para indexar células hexagonais sobre o mapa urbano
 - **Ingestão de ground truth** — requisições HTTP às APIs públicas (CGE-SP, INMET, CEMADEN)
-- **Frontend** — React, consumindo a API HTTP do backend
+- **Frontend ⇄ Backend** — React consumindo API REST/HTTP do backend
 
-> **Nota:** o stack de backend está fechado (Postgres + H3 + HTTP + Uvicorn). O que continua aberto é o modelo de percepção (arquitetura, framework, abordagem física vs. ML).
+**Em análise:**
+- **Protocolo Jetson → Backend** — escolha entre HTTP e MQTT. HTTP é mais simples e alinhado ao stack já adotado; MQTT é mais robusto a conectividade intermitente, cenário típico da coleta veicular. Decisão pendente.
 
 ## Datasets Identificados
 
@@ -130,12 +134,16 @@ O projeto tem dois caminhos possíveis (não mutuamente exclusivos) para estimar
 
 ## Coleta de Dados Próprios
 
-Planejamos coletar dados no campus do IMT (São Paulo). Setup mínimo:
-- Câmera USB ou IP (720p+) em posição fixa com visão de fundo a distância conhecida
-- **Ground truth para rotulação e validação via pluviômetros públicos urbanos** (CGE-SP, INMET, CEMADEN) — sem pluviômetro embarcado da equipe. A câmera é alinhada espacialmente à estação pública mais próxima e a sincronização temporal é feita via NTP.
-- Anotar condições: dia/noite, vento, tipo de chuva, ângulo da câmera
-- Estação chuvosa em SP: outubro–março (considerar no cronograma)
-- Para a fase atual (classificação 4-classes), os labels `seco`, `garoa`, `moderada`, `forte` **do dataset** são derivados da leitura mm/h da estação pública mais próxima, com janelas de tempo definidas. Esses labels existem só para treinar e avaliar — **o modelo final não consulta nenhuma estação em inferência**, ele decide a classe puramente a partir da imagem.
+A coleta de dados próprios é **veicular**, com câmera instalada em um veículo percorrendo a Região Metropolitana de São Paulo e o ABC Paulista, e não em ponto fixo no campus. Setup:
+- **Plataforma embarcada**: NVIDIA Jetson Nano com script de captura rodando no boot (`ml/scripts/captura/`) e botão físico de desligamento seguro.
+- **Câmera**: USB ou IP (720p+) montada no veículo.
+- **GPS** (em aquisição): associa cada frame à estação pública mais próxima naquele instante. Esse é o pivô do pipeline de rotulação, sem GPS funcional o alinhamento câmera ↔ estação fica inviável em deslocamento.
+- **Ground truth para rotulação e validação via pluviômetros públicos urbanos** (CGE-SP, INMET, CEMADEN) — sem pluviômetro embarcado da equipe. A sincronização temporal é feita via NTP.
+- Anotar condições: dia/noite, vento, tipo de chuva, ângulo da câmera.
+- Estação chuvosa em SP: outubro–março (considerar no cronograma).
+- Para a fase atual (classificação 4-classes), os labels `seco`, `garoa`, `moderada`, `forte` **do dataset** são derivados da leitura mm/h da estação pública mais próxima naquele instante de coleta, com janelas de tempo definidas. Esses labels existem só para treinar e avaliar — **o modelo final não consulta nenhuma estação em inferência**, ele decide a classe puramente a partir da imagem.
+
+> **Implicação técnica da coleta veicular:** o fundo é dinâmico (carros, faixas, iluminação variável). Isso reforça a relevância dos achados de Qin et al. (2025, ResNet-LSTM para fundos dinâmicos) e justifica incluir modelos temporais (CNN+LSTM/GRU) entre os experimentos.
 
 ## Métricas de Avaliação
 
@@ -204,7 +212,7 @@ b) Treinar e avaliar modelos CNN de referência como prova de conceito para clas
 c) Implementar e otimizar detectores de estágio único para detecção contínua em tempo real
 d) Investigar viabilidade futura de estimativa quantitativa em mm/h (regressão), condicionada aos resultados da classificação e ao alinhamento câmera ↔ estação pública
 e) Implantar modelo otimizado em hardware de borda com quantização e fusão de camadas
-f) Construir backend de ingestão e agregação espacial (FastAPI + Uvicorn + PostgreSQL + H3) integrando inferências da câmera e ground truth de pluviômetros públicos (CGE-SP, INMET, CEMADEN) via HTTP
+f) Construir backend de ingestão e agregação espacial (FastAPI + Uvicorn + PostgreSQL + H3) integrando inferências da câmera embarcada e ground truth de pluviômetros públicos (CGE-SP, INMET, CEMADEN) via HTTP/MQTT
 g) Desenvolver painel de controle React para visualização em tempo real (mapa com células H3 coloridas pela classe de chuva e séries temporais)
 h) Avaliar viabilidade da solução vs. métodos tradicionais (precisão, latência, custo)
 
@@ -291,13 +299,15 @@ cityrain/
 - **Decisões fechadas:**
   - Saída atual do modelo: **classificação em 4 classes** (`seco`, `garoa`, `moderada`, `forte`). Regressão mm/h só após validar a classificação.
   - **Sem pluviômetro embarcado** — ground truth vem de **estações públicas** (CGE-SP, INMET, CEMADEN).
-  - **Stack de backend:** FastAPI + Uvicorn + PostgreSQL + H3, integração via HTTP.
+  - **Stack de backend:** FastAPI + Uvicorn + PostgreSQL + H3. API REST/HTTP entre frontend e backend, e HTTP entre backend e APIs públicas.
+  - **Plataforma embarcada de referência:** NVIDIA Jetson Nano.
+  - **Coleta veicular** pela Região Metropolitana de SP + ABC Paulista (não fixa).
   - **Frontend:** React.
   - **Sem V2X.** A entrega é o dashboard urbano.
-- **Decisões abertas (continuar tratando como experimento):** framework de ML, arquitetura do modelo, abordagem física vs. ML vs. híbrida, técnicas de pré-processamento.
+- **Decisões abertas (continuar tratando como experimento):** framework de ML, arquitetura do modelo, abordagem física vs. ML vs. híbrida, técnicas de pré-processamento, **protocolo Jetson → Backend (HTTP vs MQTT)**.
 - Quando sugerir algo na parte aberta, apresentar como "candidato a testar" e oferecer alternativas
 - Priorizar código que facilite experimentação e comparação entre abordagens
-- Dados de coleta própria serão do campus do IMT em São Paulo
+- A coleta é **móvel** (veículo percorrendo SP + ABC Paulista), portanto o fundo é dinâmico — considerar isso em pré-processamento e na escolha de arquiteturas (modelos temporais ganham peso)
 - Quando gerar código, incluir type hints e docstrings
 - Preferir soluções simples e reproduzíveis sobre complexidade desnecessária
 - O orientador quer foco na qualidade da experimentação e comparações na parte de modelo

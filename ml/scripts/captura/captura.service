@@ -1,0 +1,15 @@
+[Unit]
+Description=Captura de camera CityRain
+After=multi-user.target
+
+[Service]
+ExecStartPre=/bin/sleep 15
+ExecStart=/usr/bin/python3 /home/maua/captura.py
+WorkingDirectory=/home/maua
+User=maua
+Group=video
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
