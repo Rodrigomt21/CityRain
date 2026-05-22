@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Droplets } from 'lucide-react'
+import { Droplets, ChevronLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-function formatTime(date) {
-  return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+function formatDateTime(date) {
+  const d = date.toLocaleDateString('pt-BR')
+  const t = date.toLocaleTimeString('pt-BR')
+  return `${d}, ${t}`
 }
 
-export default function Topbar({ mostSevereCategory }) {
+export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -16,46 +18,38 @@ export default function Topbar({ mostSevereCategory }) {
 
   return (
     <header
-      className="flex items-center justify-between px-5 h-14 shrink-0"
+      className="flex items-center justify-between px-5 h-11 shrink-0"
       style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--bg-border)' }}
     >
-      {/* Esquerda: logo + título */}
       <div className="flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-2 no-underline">
-          <Droplets size={20} color="var(--accent-brand)" />
-          <span className="font-mono font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
-            City Rain
-          </span>
+        <Link
+          to={backTo}
+          className="flex items-center gap-1 no-underline font-mono text-xs"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <ChevronLeft size={13} />
+          VOLTAR
         </Link>
         <span className="w-px h-4" style={{ background: 'var(--bg-border)' }} />
-        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-          Dashboard Operacional
-        </span>
+        <div className="flex items-center gap-2">
+          <Droplets size={16} color="var(--accent-brand)" />
+          <span className="font-mono text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+            CityRain
+          </span>
+          <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>/</span>
+          <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {breadcrumb}
+          </span>
+        </div>
       </div>
 
-      {/* Centro: status global */}
-      {mostSevereCategory && (
-        <div
-          className="flex items-center gap-2 px-3 py-1 rounded text-xs font-mono font-semibold uppercase tracking-widest"
-          style={{
-            color: mostSevereCategory.color,
-            background: `${mostSevereCategory.color}1a`,
-            border: `1px solid ${mostSevereCategory.color}4d`,
-            boxShadow: `0 0 10px ${mostSevereCategory.color}33`,
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: mostSevereCategory.color }} />
-          {mostSevereCategory.key === 'heavy' ? 'ALERTA: CHUVA FORTE'
-            : mostSevereCategory.key === 'moderate' ? 'ATENÇÃO: CHUVA MODERADA'
-            : mostSevereCategory.key === 'drizzle' ? 'GAROA DETECTADA'
-            : 'CONDIÇÕES NORMAIS'}
-        </div>
-      )}
-
-      {/* Direita: timestamp */}
-      <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
-        Última atualização: {formatTime(now)}
-      </span>
+      <div className="flex items-center gap-2 font-mono text-xs">
+        <span className="flex items-center gap-1.5" style={{ color: '#22c55e' }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#22c55e' }} />
+          SISTEMA ATIVO
+        </span>
+        <span style={{ color: 'var(--text-secondary)' }}>{formatDateTime(now)}</span>
+      </div>
     </header>
   )
 }

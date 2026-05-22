@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { getCategory, getMostSevereCategory } from '../utils/categories'
+import { getCategory, getMostSevereCategory } from '../lib/categories'
 import {
   INITIAL_SENSORS,
   SENSOR_OFFSETS,
   OFFLINE_SENSORS,
   generateTimeSeries,
   generateInitialReadings,
-} from '../utils/mockData'
+} from '../lib/mockData'
 
 // Constrói estado inicial dos sensores com base em intensidade global
 function buildSensors(globalIntensity) {

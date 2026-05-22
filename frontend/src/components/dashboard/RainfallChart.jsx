@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from 'recharts'
 import CategoryBadge from '../ui/CategoryBadge'
-import { getCategory } from '../../utils/categories'
+import { getCategory } from '../../lib/categories'
 
 function formatTick(ts) {
   return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })

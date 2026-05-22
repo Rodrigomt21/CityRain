@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { INITIAL_SENSORS, SENSOR_OFFSETS, OFFLINE_SENSORS } from '../utils/mockData'
-import { getCategory, CATEGORIES, getMostSevereCategory } from '../utils/categories'
+import { INITIAL_SENSORS, SENSOR_OFFSETS, OFFLINE_SENSORS } from '../lib/mockData'
+import { getCategory, CATEGORIES, getMostSevereCategory } from '../lib/categories'
 
 function initialIntensity() {
   const r = Math.random()

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATEGORIES } from '../../utils/categories'
+import { CATEGORIES } from '../../lib/categories'
 
 const GRID_LINES_H = Array.from({ length: 9 }, (_, i) => (i + 1) * 40)
 const GRID_LINES_V = Array.from({ length: 14 }, (_, i) => (i + 1) * 40)
