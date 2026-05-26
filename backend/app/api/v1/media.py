@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import verificar_api_key
+from app.models.device import Device
 from app.schemas.capture import CaptureResponse
 from app.services.media_service import MediaService
 
@@ -15,7 +16,6 @@ router = APIRouter()
     "/ingest",
     response_model=CaptureResponse,
     status_code=201,
-    dependencies=[Depends(verificar_api_key)],
 )
 async def ingest_capture(
     image: UploadFile = File(..., description="Arquivo de imagem JPEG ou PNG"),
@@ -29,6 +29,7 @@ async def ingest_capture(
         ),
     ),
     db: AsyncSession = Depends(get_db),
+    device: Device = Depends(verificar_api_key),
 ):
     """
     Ingestão de imagem + metadados da câmera embarcada via multipart/form-data.
@@ -45,4 +46,4 @@ async def ingest_capture(
         raise HTTPException(status_code=400, detail="O campo metadata deve ser um JSON válido.")
 
     service = MediaService(db)
-    return await service.ingest(image=image, meta=meta)
+    return await service.ingest(image=image, meta=meta, device=device)

@@ -22,7 +22,10 @@ app = FastAPI(
     description=(
         "API de ingestão e análise de imagens de chuva urbana capturadas por câmera "
         "embarcada em veículo conectado a uma NVIDIA Jetson.\n\n"
-        "**Para a equip de hardware:** use `POST /api/v1/ingest` com multipart/form-data.\n\n"
+        "O modelo CNN roda **na própria Jetson** (borda) — `weather_label` e `confidence` "
+        "chegam já classificados em cada requisição.\n\n"
+        "**Para a equipe de hardware:** use `POST /api/v1/ingest` com multipart/form-data. "
+        "Inclua `weather_label` e `confidence` no JSON de metadata.\n\n"
         "**Para o dashboard:** use `/api/v1/captures` e `/api/v1/stats`."
     ),
     version="0.1.0",
