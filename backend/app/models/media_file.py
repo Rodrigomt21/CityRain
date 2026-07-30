@@ -14,7 +14,7 @@ class MediaFile(Base):
 
     __tablename__ = "media_files"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     capture_id: Mapped[int] = mapped_column(ForeignKey("captures.id"), index=True)
     file_path: Mapped[str] = mapped_column(String(500))
     mime_type: Mapped[str] = mapped_column(String(100))

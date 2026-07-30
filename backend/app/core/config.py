@@ -8,6 +8,10 @@ class Settings(BaseSettings):
 
     database_url: str
     test_database_url: str = ""
+    # Pool de conexões: dimensionar para câmeras simultâneas + dashboard.
+    # pool_size = conexões mantidas abertas; max_overflow = extras sob pico.
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
     upload_dir: str = "storage"
     cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8501"]
     max_upload_size_mb: int = 50

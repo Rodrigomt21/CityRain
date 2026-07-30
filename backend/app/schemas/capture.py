@@ -21,8 +21,10 @@ class CaptureIngest(BaseModel):
     longitude: float = Field(..., ge=-180, le=180)
     captured_at: datetime = Field(..., description="ISO 8601 UTC. Ex: 2026-05-01T14:30:00Z")
     source_type: str = Field(default="jetson")
-    weather_label: str = Field(..., description="Classificação da CNN. Ex: 'rain', 'no_rain'")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confiança da CNN (0.0–1.0)")
+    weather_label: Optional[str] = Field(
+        default='moderado', description="Classificação da CNN: 'seco', 'garoa', 'moderado' ou 'forte'"
+    )
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Confiança da CNN (0.0–1.0)")
     metadata: Optional[dict[str, Any]] = None
 
 

@@ -16,13 +16,13 @@ class IngestionLog(Base):
 
     __tablename__ = "ingestion_logs"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     capture_id: Mapped[int] = mapped_column(ForeignKey("captures.id"), index=True)
     received_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     protocol: Mapped[str] = mapped_column(String(20))   # ex: "http_multipart"
-    status: Mapped[str] = mapped_column(String(10))     # "success" | "error"
+    status: Mapped[str] = mapped_column(String(10))     # "success" | "error" | "duplicate"
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     capture: Mapped["Capture"] = relationship(back_populates="ingestion_logs")

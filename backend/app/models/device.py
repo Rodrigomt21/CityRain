@@ -16,7 +16,7 @@ class Device(Base):
 
     __tablename__ = "devices"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
     vehicle_plate: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     # SHA-256 hex da chave real — nunca armazenar a chave em texto puro

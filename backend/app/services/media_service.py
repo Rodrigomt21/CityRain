@@ -5,14 +5,16 @@ from typing import Optional
 
 import aiofiles
 from fastapi import HTTPException, UploadFile
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.capture import Capture
+from app.models.capture import Capture, WEATHER_LABELS
 from app.models.device import Device
 from app.models.ingestion_log import IngestionLog
 from app.models.media_file import MediaFile
+from app.services.geo_service import GeoService
 
 
 class MediaService:
@@ -27,12 +29,18 @@ class MediaService:
         image: UploadFile,
         meta: dict,
         device: Optional[Device] = None,
-    ) -> Capture:
+    ) -> tuple[Capture, bool]:
         """
         Recebe imagem + metadados da Jetson e persiste no banco.
 
         A CNN roda na Jetson antes do envio — weather_label e confidence chegam
         já classificados pela borda. O servidor valida, persiste e confirma o recebimento.
+
+        Idempotência: o sha256 identifica a imagem. Se já foi ingerida (retry da
+        Jetson após perder a resposta na rede), retorna a captura existente sem
+        criar registros novos — o reenvio é confirmação, não erro.
+
+        Retorna (capture, created): created=False indica duplicata/retry.
 
         Fluxo em dois commits para garantir auditoria mesmo em caso de falha:
           Commit 1: apenas o Capture (ID estável para o log de erro)
@@ -57,6 +65,12 @@ class MediaService:
                 detail="captured_at deve ser ISO 8601. Ex: 2026-05-01T14:30:00Z",
             )
 
+        if meta["weather_label"] not in WEATHER_LABELS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"weather_label deve ser um de: {list(WEATHER_LABELS)}",
+            )
+
         confidence = meta["confidence"]
         if not isinstance(confidence, (int, float)) or not (0.0 <= confidence <= 1.0):
             raise HTTPException(
@@ -64,8 +78,40 @@ class MediaService:
                 detail="confidence deve ser um número entre 0.0 e 1.0.",
             )
 
-        content = await image.read()
+        latitude, longitude = meta["latitude"], meta["longitude"]
+        if (
+            not isinstance(latitude, (int, float))
+            or not isinstance(longitude, (int, float))
+            or not (-90.0 <= latitude <= 90.0)
+            or not (-180.0 <= longitude <= 180.0)
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
+            )
+
+        # Leitura com teto: lê no máximo limite+1 bytes. Se vier o byte extra,
+        # o arquivo é maior que o permitido — independente do Content-Length declarado.
+        max_bytes = settings.max_upload_size_mb * 1024 * 1024
+        content = await image.read(max_bytes + 1)
+        if len(content) > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Imagem excede o limite de {settings.max_upload_size_mb} MB.",
+            )
         sha256 = hashlib.sha256(content).hexdigest()
+
+        # Idempotência: retry da Jetson devolve a captura já existente.
+        existing = await self._find_capture_by_sha256(sha256)
+        if existing:
+            self.db.add(IngestionLog(
+                capture_id=existing.id,
+                protocol="http_multipart",
+                status="duplicate",
+                error_message="Retry detectado: sha256 já ingerido.",
+            ))
+            await self.db.commit()
+            return existing, False
 
         # Commit 1: persiste o Capture antes de tentar salvar o arquivo.
         # Isso garante que capture.id existe mesmo se o commit 2 falhar,
@@ -73,8 +119,9 @@ class MediaService:
         capture = Capture(
             captured_at=captured_at,
             received_at=datetime.now(timezone.utc),
-            latitude=meta["latitude"],
-            longitude=meta["longitude"],
+            latitude=latitude,
+            longitude=longitude,
+            h3_cell=GeoService.to_h3_cell(latitude, longitude),
             source_type=meta["source_type"],
             weather_label=meta["weather_label"],
             confidence=float(confidence),
@@ -110,13 +157,29 @@ class MediaService:
             ))
             await self.db.commit()
             await self.db.refresh(capture)
-            return capture
+            return capture, True
 
         except IntegrityError:
+            # Corrida rara: a mesma imagem entrou por outra requisição entre a
+            # checagem de idempotência e o commit 2. Remove o Capture órfão do
+            # commit 1 e devolve a captura vencedora — mesmo contrato do retry.
             await self.db.rollback()
             # expunge_all limpa o identity map — evita que objetos expirados causem lazy loads
             self.db.expunge_all()
-            msg = "SHA-256 já existe: imagem duplicada."
+            existing = await self._find_capture_by_sha256(sha256)
+            if existing:
+                orphan = await self.db.get(Capture, capture_id)
+                if orphan:
+                    await self.db.delete(orphan)
+                self.db.add(IngestionLog(
+                    capture_id=existing.id,
+                    protocol="http_multipart",
+                    status="duplicate",
+                    error_message="Retry detectado: sha256 já ingerido.",
+                ))
+                await self.db.commit()
+                return existing, False
+            msg = "Violação de integridade ao persistir a captura."
             self.db.add(IngestionLog(
                 capture_id=capture_id,
                 protocol="http_multipart",
@@ -138,6 +201,15 @@ class MediaService:
             ))
             await self.db.commit()
             raise HTTPException(status_code=500, detail="Falha ao processar a imagem.")
+
+    async def _find_capture_by_sha256(self, sha256: str) -> Optional[Capture]:
+        """Busca a captura dona de um MediaFile com o sha256 informado."""
+        result = await self.db.execute(
+            select(Capture)
+            .join(MediaFile, MediaFile.capture_id == Capture.id)
+            .where(MediaFile.sha256 == sha256)
+        )
+        return result.scalar_one_or_none()
 
     async def _save_file(
         self,

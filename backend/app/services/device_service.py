@@ -11,6 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.device import Device
 
 
+# Intervalo mínimo entre atualizações de last_seen_at. Com captura a cada ~10s,
+# atualizar a cada requisição geraria um commit extra por ingestão sem ganho:
+# "visto há menos de 1 minuto" é precisão suficiente para monitoramento.
+LAST_SEEN_THROTTLE_SECONDS = 60
+
+
 def generate_api_key() -> str:
     """Gera uma chave de API aleatória de alta entropia. Nunca é armazenada."""
     return secrets.token_urlsafe(32)
@@ -95,6 +101,17 @@ class DeviceService:
         return device
 
     async def update_last_seen(self, device: Device) -> None:
-        """Atualiza o timestamp de último contato. Chamado a cada ingestão bem-sucedida."""
-        device.last_seen_at = datetime.now(timezone.utc)
+        """
+        Atualiza o timestamp de último contato, com throttle.
+
+        Só persiste se a última atualização tiver mais de LAST_SEEN_THROTTLE_SECONDS —
+        corta o write extra por ingestão quando a câmera envia em alta frequência.
+        """
+        now = datetime.now(timezone.utc)
+        if (
+            device.last_seen_at
+            and (now - device.last_seen_at).total_seconds() < LAST_SEEN_THROTTLE_SECONDS
+        ):
+            return
+        device.last_seen_at = now
         await self.db.commit()

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -59,12 +59,30 @@ class CaptureService:
         return result.scalar_one_or_none()
 
     async def get_h3_heatmap(
-        self, resolution: int, device_id: Optional[int] = None
+        self,
+        resolution: int,
+        device_id: Optional[int] = None,
+        from_date: Optional[datetime] = None,
+        to_date: Optional[datetime] = None,
     ) -> list[dict]:
-        """Retorna capturas agrupadas por célula H3 para o mapa de calor do dashboard."""
-        query = select(Capture.latitude, Capture.longitude, Capture.weather_label)
+        """
+        Retorna capturas agrupadas por célula H3 para o mapa de calor do dashboard.
+
+        A agregação pesada acontece no banco (GROUP BY h3_cell, weather_label):
+        a aplicação recebe uma linha por célula/label, não uma por captura —
+        a memória cresce com a área coberta, não com o volume de capturas.
+        """
+        query = (
+            select(Capture.h3_cell, Capture.weather_label, func.count().label("count"))
+            .where(Capture.h3_cell.is_not(None))
+            .group_by(Capture.h3_cell, Capture.weather_label)
+        )
         if device_id is not None:
             query = query.where(Capture.device_id == device_id)
+        if from_date:
+            query = query.where(Capture.captured_at >= from_date)
+        if to_date:
+            query = query.where(Capture.captured_at <= to_date)
+
         result = await self.db.execute(query)
-        rows = [dict(r._mapping) for r in result.all()]
-        return GeoService.group_by_h3(rows, resolution)
+        return GeoService.aggregate_cells(list(result.all()), resolution)
