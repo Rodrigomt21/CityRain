@@ -26,10 +26,9 @@ async def ingest_capture(
         ...,
         description=(
             "JSON com campos obrigatórios: captured_at (ISO 8601), latitude, longitude, "
-            "source_type, weather_label (resultado CNN: seco, garoa, moderado ou forte) "
-            "e confidence (0.0–1.0). "
+            "source_type. "
             'Ex: {"captured_at":"2026-05-01T14:30:00Z","latitude":-23.92,"longitude":-46.89,'
-            '"source_type":"jetson_xavier","weather_label":"forte","confidence":0.97}'
+            '"source_type":"jetson_xavier"}'
         ),
     ),
     db: AsyncSession = Depends(get_db),
