@@ -12,9 +12,6 @@ from app.schemas.ingestion_log import IngestionLogResponse
 class CaptureIngest(BaseModel):
     """
     Campos do JSON enviado no campo 'metadata' do multipart/form-data.
-
-    O modelo CNN roda na NVIDIA Jetson antes do envio — weather_label e confidence
-    são calculados na borda e obrigatoriamente incluídos no payload.
     """
 
     latitude: float = Field(..., ge=-90, le=90)

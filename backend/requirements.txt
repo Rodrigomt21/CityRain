@@ -2,10 +2,14 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 sqlalchemy[asyncio]==2.0.37
 asyncpg==0.30.0
+alembic==1.14.0
 pydantic-settings==2.7.1
 aiofiles==24.1.0
 python-multipart==0.0.20
 h3==4.1.0
+
+# Visualização
+folium==0.19.6
 
 # Testes
 pytest==8.3.4

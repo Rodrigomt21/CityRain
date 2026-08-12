@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     max_upload_size_mb: int = 50
     api_key: str = ""
     admin_key: str = ""
-    host: str = "127.0.0.1"
+    host: str = "0.0.0.0"
     port: int = 8000
 
     model_config = {"env_file": ".env"}
