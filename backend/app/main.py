@@ -32,7 +32,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-_allow_credentials = "*" not in settings.cors_origins
+_allow_credentials = "*" in settings.cors_origins
 
 app.add_middleware(
     CORSMiddleware,
