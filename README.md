@@ -1,146 +1,152 @@
-# CityRain
+# Rodando o detector na Jetson
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
-![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
-![FastAPI](https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)
-![H3](https://img.shields.io/badge/H3-spatial%20index-orange)
-![IMT](https://img.shields.io/badge/Instituição-IMT%20Mauá-red)
-
-> **Sistema de monitoramento pluviométrico urbano por visão computacional.** Classifica a intensidade da chuva (`seco`, `garoa`, `moderada`, `forte`) a partir de imagens de câmera e visualiza o resultado em um dashboard web em tempo real, agregado espacialmente em células hexagonais H3.
-
-**Título formal:** CityRain — Sistema Embarcado de Monitoramento Climático Urbano por Visão Computacional
-**Trabalho de Conclusão de Curso** — Ciência da Computação, Centro Universitário do Instituto Mauá de Tecnologia (IMT)
-
----
-
-## Visão Geral
-
-A maior parte dos sistemas de visão para chuva responde apenas *"está chovendo?"*. O CityRain dá um passo além e produz uma **classificação em 4 níveis de intensidade** diretamente da imagem da câmera, sem depender de pluviômetro embarcado. A saída é consumida por um dashboard web que mostra, em tempo real, a intensidade da chuva em diferentes pontos da cidade.
-
-### O que é decidido vs. o que continua aberto
-
-| Área | Status |
-|---|---|
-| **Saída do modelo** | **Decidido (escopo atual):** classificação em 4 classes (`seco`, `garoa`, `moderada`, `forte`). Regressão em mm/h é objetivo futuro, condicional aos resultados da classificação. |
-| **Ground truth** | **Decidido:** pluviômetros públicos urbanos (CGE-SP, INMET, CEMADEN). Sem pluviômetro embarcado da equipe. |
-| **Backend** | **Decidido:** FastAPI + Uvicorn + PostgreSQL + H3, integração via HTTP. |
-| **Frontend** | **Decidido:** React + TypeScript. |
-| **Framework de ML** | **Aberto** — em fase de experimentação (PyTorch / TensorFlow / outro). |
-| **Arquitetura do modelo** | **Aberto** — comparando candidatos (CNNs leves, detectores de estágio único, abordagens híbridas com física). |
-| **Abordagem** | **Aberto** — detecção de gotas + modelagem física **vs.** regressão direta via CNN **vs.** híbrida. |
-
-> **Importante:** o modelo recebe **apenas a imagem** em inferência. As estações públicas servem só para (1) gerar labels do dataset durante o treino e (2) validar a predição durante a avaliação.
-
----
-
-## Arquitetura
+Esta pasta é tudo que precisa ir pra Jetson: **dois arquivos**.
 
 ```
-┌──────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-│  Câmera  │──▶│ Pré-process. │──▶│   Modelo     │──▶│   Backend    │──▶│  Frontend    │
-│  (RGB)   │   │              │   │  (CNN/...)   │   │  FastAPI     │   │  React       │
-└──────────┘   └──────────────┘   └──────────────┘   │  + Postgres  │   │  + mapa H3   │
-                                          │          │  + H3        │   └──────────────┘
-                                          ▼          └──────────────┘
-                                    [classe 4 níveis]         ▲
-                                                              │
-                                            ┌─────────────────┴─────────────────┐
-                                            │  Estações públicas (offline only) │
-                                            │  CGE-SP / INMET / CEMADEN         │
-                                            │  → labels de treino + validação   │
-                                            └───────────────────────────────────┘
+detector.py          o módulo de inferência
+best_model_tcc.pth   os pesos treinados (9 MB)
 ```
 
-### Camadas
-
-| Camada | Responsabilidade |
-|---|---|
-| **`ml/`** | Treinar, avaliar e exportar o modelo de classificação (Python) |
-| **`backend/`** | API HTTP, ingestão de estações públicas, persistência, agregação H3 (Python) |
-| **`frontend/`** | Dashboard de visualização em tempo real (React + TypeScript) |
-| **`docs/`** | Documento do TCC (ABNT), referências, planejamento |
+O módulo **não captura imagem** — ele recebe a imagem que o seu código de captura já
+produz e devolve o veredito. A ideia é plugar no que já funciona, não reescrever.
 
 ---
 
-## Estrutura do Repositório
+## Como plugar no seu código de captura
 
-```
-cityrain/
-├── CLAUDE.md          # Contexto do projeto para o Claude Code (versionado)
-├── README.md
-├── .gitignore
-├── docs/              # TCC, referências, plano de ação, atas, diagramas
-├── ml/                # Subprojeto de Machine Learning (Python)
-├── backend/           # Subprojeto da API (Python — FastAPI + Postgres + H3)
-└── frontend/          # Subprojeto do Dashboard (React + TypeScript)
+```python
+from detector import DetectorGota
+
+det = DetectorGota("best_model_tcc.pth", log_csv="deteccoes.csv")
+
+# ... seu código que já captura ...
+frame = sua_captura()            # cv2, PIL, numpy ou caminho de arquivo
+
+r = det.prever(frame)
+det.registrar(r)
+
+if r["tem_gota"]:
+    manda_pro_backend(frame)     # o portão: só sobe o que tem gota
 ```
 
-Cada subprojeto tem seu próprio `README.md` com detalhes da estrutura interna, stack e instruções de execução.
+O `prever()` devolve:
 
----
-
-## Objetivos do Projeto
-
-1. Investigar e comparar técnicas de pré-processamento para isolamento de regiões de interesse (gotas, distorções ópticas).
-2. Treinar e avaliar modelos CNN candidatos para **classificação em 4 níveis**, estabelecendo baselines de precisão e latência.
-3. Implementar e otimizar detectores de estágio único para detecção contínua em tempo real.
-4. Investigar viabilidade futura de estimativa quantitativa em mm/h (regressão), condicional aos resultados da classificação.
-5. Implantar modelo otimizado em hardware de borda com quantização e fusão de camadas.
-6. Construir backend de ingestão e agregação espacial integrando inferências da câmera e estações públicas via HTTP.
-7. Desenvolver dashboard React para visualização em tempo real (mapa H3 + séries temporais).
-8. Avaliar viabilidade da solução vs. métodos tradicionais (precisão, latência, custo).
-
----
-
-## Métricas de Avaliação
-
-### Fase atual — classificação 4-classes
-- Acurácia geral e por classe
-- Matriz de confusão (`seco` × `garoa` × `moderada` × `forte`)
-- F1-score macro e por classe
-- Recall em `forte` (crítico para alertas)
-
-### Performance de edge
-- Latência por frame (ms)
-- Throughput (FPS)
-- Uso de memória (MB)
-- Degradação de acurácia pós-quantização
-
-### Fase futura — regressão mm/h (condicional)
-- MAE, MAPE, R², NSE, KGE
-
----
-
-## Equipe
-
-| Nome | RA |
-|---|---|
-| Rodrigo Monteiro Toffoli Teixeira | 23.00068-6 |
-| Guilherme Mattioli | 20.00599-7 |
-| Gabriel Moreno | 23.01528-4 |
-| Paulo Vespero | 23.00607-2 |
-
-**Orientador:** Prof. Gabriel de Souza Lima
-**Instituição:** Centro Universitário do Instituto Mauá de Tecnologia (IMT)
-**Cronograma:** março–novembro de 2026
-
----
-
-## Citação
-
-```bibtex
-@thesis{cityrain2026,
-  title   = {CityRain: Sistema Embarcado de Monitoramento Climático Urbano por Visão Computacional},
-  author  = {Teixeira, Rodrigo M. T. and Mattioli, Guilherme and Moreno, Gabriel and Vespero, Paulo},
-  school  = {Centro Universitário do Instituto Mauá de Tecnologia},
-  year    = {2026},
-  advisor = {Lima, Gabriel de Souza}
+```python
+{
+  "arquivo": "frame_001.jpg",
+  "tem_gota": True,
+  "classe": "com_gota",
+  "probabilidade": 0.9994,    # probabilidade de haver gota
+  "limiar": 0.5,
+  "ms": 41.2                  # tempo de inferência
 }
 ```
 
+Para testar sem escrever código:
+
+```bash
+python3 detector.py foto.jpg --modelo best_model_tcc.pth
+```
+
 ---
 
-## Licença
+## O que ele aceita como entrada
 
-MIT. Ver [LICENSE](LICENSE).
+| entrada | tratamento |
+|---|---|
+| caminho de arquivo (`str`) | abre com PIL em RGB |
+| `PIL.Image` | converte pra RGB |
+| `numpy` de 3 canais | **tratado como BGR** e convertido pra RGB — é o caso do OpenCV |
+| `numpy` de 4 canais (BGRA) | descarta o alfa, mesmo tratamento |
+| `numpy` 2D (cinza) | replica nos 3 canais |
+
+Se o seu código já entrega RGB em numpy (raro — quase todo mundo usa OpenCV, que é
+BGR), converta antes com `frame[:, :, ::-1]`, senão os canais saem trocados.
+
+---
+
+## Por que o pré-processamento está escrito na mão
+
+No treino a imagem passou por: PIL em RGB → redimensionar pra 384×384 bilinear →
+dividir por 255 → normalizar pela média e desvio do ImageNet. Se qualquer um desses
+passos sair diferente na Jetson, **o modelo perde precisão em silêncio** — sem erro,
+sem aviso, só números piores.
+
+Por isso o preparo aqui usa PIL + NumPy puro, sem `torchvision`: além de ser uma
+dependência a menos, versões diferentes do torchvision mudam detalhes do
+redimensionamento.
+
+Essa equivalência foi **verificada, não assumida**: comparando o tensor produzido aqui
+com o produzido pelo pipeline de treino, a diferença máxima é `0.00e+00` — bit a bit
+idêntico. O caminho do OpenCV (BGR) também. Ou seja, os 97,18% de acurácia medidos no
+TCC são o que a Jetson reproduz.
+
+---
+
+## Instalação
+
+O módulo roda com **PyTorch** ou com **ONNX Runtime** — o que estiver disponível. Ele
+escolhe sozinho pela extensão do arquivo de modelo (`.pth` → PyTorch, `.onnx` → ONNX).
+
+Primeiro descubra o que a placa já tem:
+
+```bash
+cat /etc/nv_tegra_release; python3 -V; python3 -c "import torch,torchvision;print(torch.__version__, torch.cuda.is_available())"
+```
+
+**Se o PyTorch já responde** — não precisa instalar nada além de `pillow` e `numpy`,
+que quase sempre já estão:
+
+```bash
+pip3 install --user pillow numpy
+```
+
+**Se não tiver PyTorch**, há dois caminhos:
+
+1. *Wheel da NVIDIA* — o PyTorch de PC não funciona no Jetson (arquitetura ARM + CUDA
+   própria). É preciso a wheel compilada pra sua versão de JetPack, publicada pela
+   NVIDIA no fórum oficial.
+2. *ONNX Runtime* — mais leve, não precisa de torch nem torchvision. Exige exportar o
+   modelo pra `.onnx` no PC antes de copiar. Costuma ser o caminho mais simples em
+   placas antigas, onde a wheel do torch é difícil de achar.
+
+---
+
+## Ajustando o limiar
+
+O padrão é `0.5`, que é o ponto medido no TCC. Subir reduz alarme falso e aumenta gota
+perdida — e no portão esses erros têm preços bem diferentes: alarme falso custa banda,
+gota perdida some do backend pra sempre.
+
+| limiar | precisão | recall | alarmes falsos | gotas perdidas |
+|---|---:|---:|---:|---:|
+| 0,25 | 99,25% | 96,11% | 3 | 16 |
+| **0,50** | **99,50%** | **96,11%** | **2** | **16** |
+| 0,75 | 99,74% | 95,13% | 1 | 20 |
+| 0,90 | 100,00% | 92,94% | 0 | 29 |
+| 0,99 | 100,00% | 86,62% | 0 | 55 |
+
+Medido sobre as 638 imagens de teste da câmera do projeto (411 com gota, 227 sem).
+
+```python
+det = DetectorGota("best_model_tcc.pth", limiar=0.75)
+```
+
+Entre 0,25 e 0,75 quase nada muda — o modelo é confiante, quase nenhuma imagem fica em
+cima do muro. Mexer no limiar tem retorno pequeno; é mais provável que valha a pena
+coletar mais dados do que ajustar essa régua.
+
+---
+
+## O log
+
+Com `log_csv=` no construtor, cada `registrar()` anexa uma linha:
+
+```csv
+timestamp,arquivo,classe,probabilidade,limiar,ms
+2026-09-11 20:49:08,frame_001.jpg,com_gota,1.000000,0.5,41.2
+```
+
+Vale acumular isso em campo: é a evidência de desempenho real, na rua, fora do conjunto
+de teste — exatamente o que hoje falta ao trabalho, já que todo o material de treino
+vem de uma única sessão de gravação.
