@@ -1,8 +1,8 @@
 import json
-from typing import Any, List
+from typing import Annotated, Any, List
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, NoDecode
 
 
 class Settings(BaseSettings):
@@ -24,7 +24,15 @@ class Settings(BaseSettings):
     db_pool_size: int = 10
     db_max_overflow: int = 20
     upload_dir: str = "storage"
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8501"]
+    # NoDecode: por padrão o pydantic-settings tenta fazer json.loads() em campos
+    # complexos (List[str]) lidos de variável de ambiente ANTES de rodar o
+    # field_validator abaixo, quebrando com JSONDecodeError se o valor não for
+    # um array JSON. Com NoDecode, o valor bruto da env var vai direto pro
+    # validator, que decide se é JSON ou CSV.
+    cors_origins: Annotated[List[str], NoDecode] = [
+        "http://localhost:3000",
+        "http://localhost:8501",
+    ]
     max_upload_size_mb: int = 50
     api_key: str = ""
     admin_key: str = ""
