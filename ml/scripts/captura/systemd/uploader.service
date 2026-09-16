@@ -1,0 +1,17 @@
+[Unit]
+Description=CityRain - Envio de frames+metadados ao backend (fila local + retry)
+After=network.target
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+Type=simple
+User=jetson
+WorkingDirectory=/home/jetson/scripts
+ExecStart=/usr/bin/python3 /home/jetson/scripts/uploader.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

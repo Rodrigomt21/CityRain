@@ -1,0 +1,11 @@
+{
+  "device_id": "jetson-nano-01",
+  "backend_url": "http://127.0.0.1:8080/upload",
+  "token": null,
+  "intervalo_amostragem_metered_s": 15,
+  "conexoes_metered": ["Rodrigo"],
+  "source_type": "jetson_nano",
+  "modelo_chuva_path": "/home/jetson/modelo_chuva/bestModel.onnx",
+  "limiar_chuva": 0.5,
+  "pasta_sem_chuva_pendente": "/home/jetson/frames/sem_chuva_pendente"
+}

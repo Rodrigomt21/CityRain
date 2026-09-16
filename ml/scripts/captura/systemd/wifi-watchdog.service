@@ -1,0 +1,15 @@
+[Unit]
+Description=CityRain - Watchdog do wlan0 (reinicia a interface se ficar tempo demais sem conexao)
+After=NetworkManager.service network.target
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+Type=simple
+ExecStart=/usr/bin/python3 /home/jetson/scripts/wifi_watchdog.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

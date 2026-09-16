@@ -1,0 +1,18 @@
+[Unit]
+Description=CityRain - Leitura de GPS (NMEA) com ultimo fix persistido
+After=network.target
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+Type=simple
+User=jetson
+WorkingDirectory=/home/jetson/scripts
+RuntimeDirectory=cityrain
+ExecStart=/usr/bin/python3 /home/jetson/scripts/gps.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

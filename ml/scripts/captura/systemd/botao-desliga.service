@@ -1,0 +1,16 @@
+[Unit]
+Description=Monitor de botão físico para desligamento da Jetson
+After=multi-user.target
+
+[Service]
+Type=simple
+User=jetson
+WorkingDirectory=/home/jetson/scripts
+ExecStart=/usr/bin/python3 /home/jetson/scripts/botao_desliga.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
