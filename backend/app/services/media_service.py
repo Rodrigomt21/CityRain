@@ -26,15 +26,21 @@ class MediaService:
 
     async def ingest(
         self,
-        image: UploadFile,
+        image: Optional[UploadFile],
         meta: dict,
         device: Optional[Device] = None,
     ) -> tuple[Capture, bool]:
         """
-        Recebe imagem + metadados da Jetson e persiste no banco.
+        Recebe imagem (opcional) + metadados da Jetson e persiste no banco.
 
         A CNN roda na Jetson antes do envio — weather_label e confidence chegam
         já classificados pela borda. O servidor valida, persiste e confirma o recebimento.
+
+        Quando a Jetson classifica a captura como "sem chuva", ela descarta a
+        imagem e envia a requisição sem o campo image. Nesse caso o backend
+        grava weather_label="seco" e confidence=None diretamente, ignorando
+        qualquer weather_label/confidence presente no metadata, e não há
+        MediaFile associado nem deduplicação por sha256.
 
         Idempotência: o sha256 identifica a imagem. Se já foi ingerida (retry da
         Jetson após perder a resposta na rede), retorna a captura existente sem
@@ -47,7 +53,9 @@ class MediaService:
           Commit 2: MediaFile + IngestionLog("success")
                     ou IngestionLog("error") se o commit 2 falhar
         """
-        required = {"captured_at", "latitude", "longitude", "source_type", "weather_label", "confidence"}
+        required = {"captured_at", "latitude", "longitude", "source_type"}
+        if image is not None:
+            required |= {"weather_label", "confidence"}
         missing = required - meta.keys()
         if missing:
             raise HTTPException(
@@ -65,18 +73,26 @@ class MediaService:
                 detail="captured_at deve ser ISO 8601. Ex: 2026-05-01T14:30:00Z",
             )
 
-        if meta["weather_label"] not in WEATHER_LABELS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"weather_label deve ser um de: {list(WEATHER_LABELS)}",
-            )
+        if image is not None:
+            if meta["weather_label"] not in WEATHER_LABELS:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"weather_label deve ser um de: {list(WEATHER_LABELS)}",
+                )
 
-        confidence = meta["confidence"]
-        if not isinstance(confidence, (int, float)) or not (0.0 <= confidence <= 1.0):
-            raise HTTPException(
-                status_code=400,
-                detail="confidence deve ser um número entre 0.0 e 1.0.",
-            )
+            confidence = meta["confidence"]
+            if not isinstance(confidence, (int, float)) or not (0.0 <= confidence <= 1.0):
+                raise HTTPException(
+                    status_code=400,
+                    detail="confidence deve ser um número entre 0.0 e 1.0.",
+                )
+            confidence = float(confidence)
+            weather_label = meta["weather_label"]
+        else:
+            # Sem imagem: a Jetson já descartou a captura por classificá-la como
+            # "sem chuva" — não há nova inferência a validar aqui.
+            weather_label = "seco"
+            confidence = None
 
         latitude, longitude = meta["latitude"], meta["longitude"]
         if (
@@ -89,6 +105,31 @@ class MediaService:
                 status_code=400,
                 detail="latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
             )
+
+        if image is None:
+            capture = Capture(
+                captured_at=captured_at,
+                received_at=datetime.now(timezone.utc),
+                latitude=latitude,
+                longitude=longitude,
+                h3_cell=GeoService.to_h3_cell(latitude, longitude),
+                source_type=meta["source_type"],
+                weather_label=weather_label,
+                confidence=confidence,
+                metadata_=meta.get("metadata"),
+                device_id=device.id if device and device.id else None,
+            )
+            self.db.add(capture)
+            await self.db.commit()
+            await self.db.refresh(capture)
+
+            self.db.add(IngestionLog(
+                capture_id=capture.id,
+                protocol="http_multipart",
+                status="success",
+            ))
+            await self.db.commit()
+            return capture, True
 
         # Leitura com teto: lê no máximo limite+1 bytes. Se vier o byte extra,
         # o arquivo é maior que o permitido — independente do Content-Length declarado.
@@ -123,8 +164,8 @@ class MediaService:
             longitude=longitude,
             h3_cell=GeoService.to_h3_cell(latitude, longitude),
             source_type=meta["source_type"],
-            weather_label=meta["weather_label"],
-            confidence=float(confidence),
+            weather_label=weather_label,
+            confidence=confidence,
             metadata_=meta.get("metadata"),
             device_id=device.id if device and device.id else None,
         )

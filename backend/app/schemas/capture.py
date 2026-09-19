@@ -19,9 +19,18 @@ class CaptureIngest(BaseModel):
     captured_at: datetime = Field(..., description="ISO 8601 UTC. Ex: 2026-05-01T14:30:00Z")
     source_type: str = Field(default="jetson")
     weather_label: Optional[str] = Field(
-        default='moderado', description="Classificação da CNN: 'seco', 'garoa', 'moderado' ou 'forte'"
+        default=None,
+        description=(
+            "Classificação da CNN: 'seco', 'garoa', 'moderado' ou 'forte'. "
+            "Omitido quando não há imagem — o backend grava 'seco'."
+        ),
     )
-    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Confiança da CNN (0.0–1.0)")
+    confidence: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Confiança da CNN (0.0–1.0). Ausente quando não há imagem.",
+    )
     metadata: Optional[dict[str, Any]] = None
 
 
@@ -34,7 +43,7 @@ class CaptureResponse(BaseModel):
     latitude: float
     longitude: float
     weather_label: str
-    confidence: float
+    confidence: Optional[float] = None
     source_type: str
     device_id: Optional[int] = None
     # validation_alias mapeia metadata_ do ORM para "metadata" no JSON

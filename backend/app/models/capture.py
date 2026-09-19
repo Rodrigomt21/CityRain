@@ -41,9 +41,12 @@ class Capture(Base):
     # ingestão. Permite agregar o heatmap com GROUP BY no banco em vez de
     # carregar todas as capturas em memória. Nullable: capturas pré-H3.
     h3_cell: Mapped[Optional[str]] = mapped_column(String(15), index=True, nullable=True)
-    # Classificados pela CNN na Jetson antes do envio — sempre preenchidos
+    # Classificados pela CNN na Jetson antes do envio — weather_label sempre
+    # preenchido (backend grava "seco" quando a Jetson descarta a imagem por
+    # classificar como "sem chuva"). confidence é nula nesse caso, pois não
+    # há uma nova inferência a reportar.
     weather_label: Mapped[str] = mapped_column(String(50))
-    confidence: Mapped[float] = mapped_column(Float)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     # metadata_ evita conflito com Base.metadata do SQLAlchemy; coluna no banco é "metadata"
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     source_type: Mapped[str] = mapped_column(String(20))
