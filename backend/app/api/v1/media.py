@@ -21,7 +21,14 @@ router = APIRouter()
 async def ingest_capture(
     request: Request,
     response: Response,
-    image: UploadFile = File(..., description="Arquivo de imagem JPEG ou PNG"),
+    image: UploadFile | None = File(
+        None,
+        description=(
+            "Arquivo de imagem JPEG ou PNG. Omitido quando a Jetson já classificou "
+            "a captura como 'sem chuva' e descartou a imagem localmente — nesse caso "
+            "o backend grava a leitura diretamente com weather_label='seco'."
+        ),
+    ),
     metadata: str = Form(
         ...,
         description=(
@@ -40,8 +47,14 @@ async def ingest_capture(
     O modelo CNN roda na NVIDIA Jetson antes do envio — weather_label e confidence
     chegam já classificados pela borda. O servidor persiste e confirma imediatamente.
 
+    A imagem é opcional: quando a Jetson classifica a captura como "sem chuva",
+    ela descarta a imagem localmente e envia apenas o metadata. Nesse caso o
+    backend grava a leitura diretamente com weather_label="seco" e confidence
+    nulo, ignorando qualquer weather_label/confidence enviado no metadata.
+
     Idempotente: reenviar a mesma imagem (retry após falha de rede) retorna a
-    captura já existente com status 200 em vez de 201.
+    captura já existente com status 200 em vez de 201. Leituras sem imagem não
+    passam por deduplicação (não há arquivo para identificar o retry).
     """
     # Rejeição barata: usa o Content-Length declarado para recusar a requisição
     # antes de processar o corpo. Cliente que mente no header é pego pela
@@ -54,7 +67,7 @@ async def ingest_capture(
             detail=f"Upload excede o limite de {settings.max_upload_size_mb} MB.",
         )
 
-    if image.content_type not in ("image/jpeg", "image/png"):
+    if image is not None and image.content_type not in ("image/jpeg", "image/png"):
         raise HTTPException(status_code=422, detail="Somente JPEG e PNG são aceitos.")
 
     try:
