@@ -1,0 +1,17 @@
+# Config da normalização de orientação da coleta própria (Jetson Nano).
+#
+# A câmera veicular foi montada de ponta-cabeça em três das quatro sessões de
+# coleta. Este arquivo declara, por pasta, a rotação necessária para corrigir
+# a orientação (capô embaixo, céu em cima). Ver docs/specs/spec-normalizacao-orientacao.md.
+raiz_entrada: ml/data/raw/imt_coleta
+raiz_saida: ml/data/processed/imt_coleta
+pastas:
+  cityrain_frames:
+    rotacao_graus: 180
+  cityrain_frames2:
+    rotacao_graus: 180
+  cityrain_frames3:
+    rotacao_graus: 180
+  framesSemNada:
+    rotacao_graus: 0
+    subpasta_jpgs: frames
