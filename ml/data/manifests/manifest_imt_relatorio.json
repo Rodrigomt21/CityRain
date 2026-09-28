@@ -1,0 +1,75 @@
+{
+  "config_sha256": "d357061f10d761522e366c81719e7b448b5d450d1e1069426692eeea3ea9c196",
+  "timestamp_execucao_utc": "2026-09-18T04:30:57.615370+00:00",
+  "parametros": {
+    "raio_max_km": 2.0,
+    "janela_min": 15,
+    "zona_morta_frac": 0.15,
+    "minutos_por_leitura": 10
+  },
+  "total_frames": 7148,
+  "total_jpg_sem_json": 4787,
+  "rotulados": 478,
+  "por_classe": {
+    "seco": 351,
+    "garoa": 127,
+    "moderada": 0,
+    "forte": 0
+  },
+  "por_motivo": {
+    "sem_estacao_no_raio": 4810,
+    "sem_gps_fix": 1703,
+    "sem_leitura_na_janela": 157
+  },
+  "por_evento": {
+    "cityrain_frames2__2026-08-07": {
+      "total": 103,
+      "sem_gps_fix": 103
+    },
+    "cityrain_frames2__2026-09-01": {
+      "total": 4643,
+      "sem_gps_fix": 917,
+      "sem_estacao_no_raio": 3091,
+      "garoa": 127,
+      "seco": 351,
+      "sem_leitura_na_janela": 157
+    },
+    "cityrain_frames3__2026-09-05": {
+      "total": 140,
+      "sem_gps_fix": 140
+    },
+    "cityrain_frames3__2026-09-13": {
+      "total": 1245,
+      "sem_gps_fix": 543,
+      "sem_estacao_no_raio": 702
+    },
+    "cityrain_frames__2026-08-04": {
+      "total": 1017,
+      "sem_estacao_no_raio": 1017
+    }
+  },
+  "estacoes_usadas": {
+    "AC Central de SP": 346,
+    "Centro": 132
+  },
+  "sensibilidade_raio": {
+    "2.0 km": {
+      "seco": 351,
+      "garoa": 127,
+      "moderada": 0,
+      "forte": 0
+    },
+    "3.0 km": {
+      "seco": 1241,
+      "garoa": 1088,
+      "moderada": 0,
+      "forte": 0
+    },
+    "5.0 km": {
+      "seco": 2272,
+      "garoa": 1790,
+      "moderada": 0,
+      "forte": 0
+    }
+  }
+}

@@ -1,0 +1,38 @@
+# Config da rotulagem frame -> classe de chuva (F1.3 do docs/plano-dataset.md).
+#
+# Associa cada frame da coleta própria (que tenha GPS fix) à estação pluviométrica
+# mais próxima, agrega a janela de tempo centrada no instante da captura, converte
+# para mm/h e aplica os limiares do plano.
+#
+# A conversão leitura -> mm/h depende da semântica da fonte. Para o CEMADEN/PED,
+# `valor` é o INCREMENTO de precipitação do intervalo de 10 min (confirmado em
+# 18/09/2026 — ver docs/fontes-estacoes.md, Adendo 2). Logo:
+#     mm_h = soma_dos_incrementos_na_janela / (n_leituras * minutos_por_leitura / 60)
+raiz_frames: ml/data/processed/imt_coleta
+leituras_csv: ml/data/raw/estacoes/normalizado/cemaden_ped.csv
+
+# Saídas ficam em ml/data/manifests/, que NÃO é gitignorado — manifest e relatório
+# vão pro git; pixels não.
+saida_manifest: ml/data/manifests/manifest_imt.csv
+saida_relatorio: ml/data/manifests/manifest_imt_relatorio.json
+
+leitura:
+  # Duração do intervalo coberto por uma leitura da fonte, em minutos.
+  minutos_por_leitura: 10
+
+rotulagem:
+  # Raio máximo frame <-> estação. Acima disso o frame é excluído do manifest.
+  raio_max_km: 2.0
+  # Janela CENTRADA no instante da captura: [ts - janela_min, ts + janela_min].
+  janela_min: 15
+  # Zona morta em torno de cada limiar: frames na fronteira são descartados
+  # em vez de receberem um rótulo arbitrário. 0.15 = +-15% do valor do limiar.
+  zona_morta_frac: 0.15
+  limiares_mm_h:
+    # seco = 0 | garoa: 0 < i <= 2.5 | moderada: 2.5 < i <= 10 | forte: > 10
+    garoa_max: 2.5
+    moderada_max: 10.0
+
+# Raios extras avaliados só para o relatório (não afetam o manifest escrito).
+# Servem para medir quanto dataset se ganha/perde ao afrouxar o raio.
+sensibilidade_raio_km: [2.0, 3.0, 5.0]
