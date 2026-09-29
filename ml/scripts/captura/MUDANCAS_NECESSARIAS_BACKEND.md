@@ -1,3 +1,5 @@
+> **Atualização de 28/09/2026:** este documento registra o contrato antigo. Consulte a [spec atual de integração](../../../docs/specs/integracao-jetson-backend-frontend.md) para o estado verificado, contrato alvo e responsáveis. O backend atualizado já aceita seco sem imagem; a separação detecção/intensidade ainda está incompleta.
+
 # Mudanças necessárias no backend — CityRain
 
 Contexto: comparei o `openapi.json` publicado em `https://api-production-046f.up.railway.app/openapi.json`

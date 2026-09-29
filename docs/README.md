@@ -18,3 +18,8 @@ docs/
 - Documento final em formato ABNT (a equipe escolhe LaTeX ou Word)
 - Referências em BibTeX se LaTeX
 - Datas em formato ISO (YYYY-MM-DD)
+
+## Integração da equipe — 28/09/2026
+
+- [Estado, contrato alvo, responsáveis e aceite](specs/integracao-jetson-backend-frontend.md)
+- [Mensagem pronta para enviar ao grupo](mensagem-equipe-integracao.txt)

@@ -1,3 +1,5 @@
+> **Atualização de 28/09/2026:** este documento registra o contrato antigo. Consulte a [spec atual de integração](../../../docs/specs/integracao-jetson-backend-frontend.md) para o estado verificado, contrato alvo e responsáveis. O backend atualizado já aceita seco sem imagem; a separação detecção/intensidade ainda está incompleta.
+
 # Contrato — upload de frame CityRain (Jetson → backend)
 
 **Atualizado em 2026-09-15** pra bater com o `openapi.json` real do backend
