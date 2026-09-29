@@ -69,9 +69,9 @@ No banco, adicionar colunas de detecção nullable e permitir `weather_label` nu
 
 ## 3. Trabalho por frente
 
-Distribuição sugerida a partir do contexto do projeto: Guilherme no backend, Gabriel/Paulo no frontend e Rodrigo na Jetson. Confirmar a divisão entre Gabriel e Paulo no grupo; não há atribuição individual fechada para cada componente do dashboard.
+Distribuição confirmada por Rodrigo: Rodrigo e Guilherme na Jetson e nos modelos; Gabriel no backend; Paulo no frontend.
 
-### Guilherme — backend e publicação da API
+### Gabriel — backend e publicação da API
 
 - Concluir `MediaService.ingest`: validar e persistir os campos novos nos caminhos com e sem imagem; manter compatibilidade legada e rejeitar combinações contraditórias.
 - Completar validação tipada, inclusive vínculo entre cada resultado e sua confiança. Atualizar respostas, documentação e filtros de captura para consultar detecção e intensidade desconhecida.
@@ -82,7 +82,7 @@ Distribuição sugerida a partir do contexto do projeto: Guilherme no backend, G
 
 O patch local pode ser concluído no repositório. Publicação, verificação do banco de produção e confirmação do branch configurado dependem do acesso ao ambiente; não foram feitas nesta revisão.
 
-### Gabriel/Paulo — frontend
+### Paulo — frontend
 
 - Substituir a simulação dos hooks pelo consumo da API, incluindo autenticação, carregamento, erro e ausência de dados. Corrigir imports existentes e validar o build.
 - Criar adaptador explícito: `seco → dry`, `garoa → drizzle`, `moderado → moderate`, `forte → heavy`. Tratar nulo antes de chamar funções de categoria.
@@ -94,7 +94,7 @@ O patch local pode ser concluído no repositório. Publicação, verificação d
 
 **Limiar divergente:** `src/lib/categories.js` usa 0,1/5/25 mm/h; `docs/plano-dataset.md` usa seco=0, garoa até 2,5, moderada até 10 e forte acima de 10. Para classes vindas da API, usar o mapeamento de rótulos, sem recalcular por mm/h inventado. Se houver dados quantitativos reais no dashboard, alinhar os cortes e suas fronteiras com a frente de ML e documentar a política escolhida.
 
-### Rodrigo — Jetson, coleta e ensaio integrado
+### Rodrigo/Guilherme — Jetson, coleta e ensaio integrado
 
 - Ajustar o uploader para os novos campos, mantendo leitura dos metadados antigos e separando a confiança do gate da intensidade.
 - Implementar o envio de secos sem foto e reprocessar `sem_chuva_pendente/` de forma controlada, com chave de evento estável conforme contrato do backend.
@@ -104,7 +104,7 @@ O patch local pode ser concluído no repositório. Publicação, verificação d
 - Validar sincronização de horário e serviços na placa. O restart que pede senha deve ser executado em terminal interativo: `ssh -t jetson "sudo systemctl restart gps.service"`.
 - Concluir as verificações de energia, armazenamento e cópia de segurança da spec de pipeline antes do ensaio de campo. Esta documentação de integração não certifica a placa como pronta para coleta.
 
-### Rodrigo/Paulo — ML
+### Rodrigo/Guilherme — ML
 
 O modelo de intensidade continua sendo entrega separada. O gate atual não permite prometer garoa/moderada/forte nem mm/h. Validar os cortes do dataset e o modelo antes de ativar essas saídas; registrar versão e significado das probabilidades.
 

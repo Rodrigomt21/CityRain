@@ -12,6 +12,10 @@
 > 192.168.0.154, hostname `yahboom`). Os números citados foram medidos nessa auditoria —
 > ver **Apêndice A** para a evidência bruta de cada um.
 
+## Responsáveis
+
+Divisão atual confirmada por Rodrigo: Rodrigo e Guilherme — Jetson e modelos; Gabriel — backend; Paulo — frontend. As menções a dependências de backend abaixo se referem ao Gabriel.
+
 ## Objetivo
 
 Deixar a Jetson capaz de fazer, sozinha e sem supervisão, um trajeto de coleta inteiro sem
@@ -23,7 +27,7 @@ datas distintas e a spec é dividida por elas:
   recurso mais escasso do projeto (ver `docs/plano-dataset.md`: existe **1** sessão
   rotulável hoje).
 - **Fase 2 — Pipeline até o backend real.** Tira o sistema do `mock_backend.py` e o aponta
-  para a API de produção. Parte depende de resposta do Guilherme (ver Apêndice C).
+  para a API de produção. Parte depende de resposta do Gabriel (ver Apêndice C).
 - **Fase 3 — Depois do modelo de intensidade treinado.** Troca o gate binário pelo modelo
   que estima intensidade, sem quebrar nada do que já funciona.
 
@@ -38,7 +42,7 @@ até um 2xx do backend.** Toda decisão de projeto aqui protege essa cópia.
 | `gps.py` → `gps.service` | funciona; `A1`/`A2` aplicados no repo, **não deployados** |
 | `gate.py` + `bestModel.onnx` | funciona; onnxruntime/CUDA ~95-100 ms/frame |
 | `uploader.py` → `uploader.service` | roda **código antigo**; `backend_url` é placeholder |
-| Registro no backend | **sem `api_key`** — bloqueado no Guilherme |
+| Registro no backend | **sem `api_key`** — bloqueado no Gabriel |
 | Modelo de intensidade | **não existe ainda** (Fase 3 é preparatória) |
 | Energia | **acendedor de cigarro** em carro **com start-stop**, sem bateria no caminho; 3 cortes na sessão de 23/09, rendimento de **24%** |
 | Disco | raiz 14 GiB a 81%; **44,8 GiB não alocados** no mesmo SSD |
@@ -514,7 +518,7 @@ inodes`.
 backend real está de pé (`https://api-production-046f.up.railway.app`, `/health` e
 `/health/db` OK), mas **todos os endpoints exigem `HTTPBearer`** — inclusive
 `POST /api/v1/devices/`, que é como se obtém a `api_key` do device. Ou seja: é preciso um
-token admin do Guilherme só para conseguir a credencial da placa. A `api_key` aparece **uma
+token admin do Gabriel só para conseguir a credencial da placa. A `api_key` aparece **uma
 única vez**, na resposta de criação.
 
 Bloqueio externo. O pedido formal já está escrito em `MUDANCAS_NECESSARIAS_BACKEND.md`.
@@ -525,7 +529,7 @@ Registrar o device (`name`, `hw_model: "jetson_nano"` — não `jetson_xavier`, 
 exemplo do schema), guardar a `api_key` em `cityrain_config.json`, que **permanece fora do
 git**. Confirmar que o `.gitignore` cobre o arquivo antes de escrever segredo nele.
 
-**Achado de segurança (2026-09-28), para levar ao Guilherme:** `GET /api/v1/captures/` e
+**Achado de segurança (2026-09-28), para levar ao Gabriel:** `GET /api/v1/captures/` e
 `GET /api/v1/stats/geo` respondem **HTTP 200 sem autenticação nenhuma**, embora o `openapi.json`
 declare `HTTPBearer` neles. Hoje não expõem nada porque o banco está vazio, mas a partir da
 primeira coleta essas rotas devolvem publicamente as capturas com as coordenadas do trajeto.
@@ -586,7 +590,7 @@ Ambos os pontos estão em `MUDANCAS_NECESSARIAS_BACKEND.md`, sem resposta.
 
 ### Mudança
 
-Depende do Guilherme, e há duas saídas possíveis — a spec não escolhe por ele:
+Depende do Gabriel, e há duas saídas possíveis — a spec não escolhe por ele:
 
 - **(a)** endpoint novo para "seco" sem imagem, ou `image` opcional no `/ingest`
 - **(b)** a Jetson envia "seco" com imagem numa amostragem reduzida (ex.: 1 a cada N), o que
@@ -598,7 +602,7 @@ pode ser bloqueada** por esta pendência — a chuva de outubro não espera o ba
 
 ### Aceite
 
-- [ ] decisão do Guilherme registrada em `MUDANCAS_NECESSARIAS_BACKEND.md` **ou** plano B explicitamente acionado, com data
+- [ ] decisão do Gabriel registrada em `MUDANCAS_NECESSARIAS_BACKEND.md` **ou** plano B explicitamente acionado, com data
 - [ ] se (a): `move_para_pendente_seco()` substituída por chamada real e o caso "seco" aparece no dashboard
 - [ ] se (b): taxa de amostragem configurável e documentada
 - [ ] se plano B: `sem_chuva_pendente/` entra no checklist de cópia de fim de sessão (J3)
@@ -624,7 +628,7 @@ meio de uma sequência de chuva real se perde silenciosamente.
    um conjunto rotulado antes de fixar — o número 0,3 é hipótese, não resultado
 2. Suavização temporal no espírito do debounce do botão: só tratar como "seco" após N frames
    consecutivos abaixo do limiar. Enquanto a decisão de onde suavizar (Jetson ou backend)
-   estiver aberta com o Guilherme, implementar na Jetson é o caminho seguro — é a Jetson que
+   estiver aberta com o Gabriel, implementar na Jetson é o caminho seguro — é a Jetson que
    descarta, e o que ela descarta ninguém recupera
 
 ### Aceite
@@ -690,7 +694,7 @@ Declarar no metadado **qual modelo produziu qual saída**: identificador e vers�
 a forma da saída (`binaria` / `classes` / `ordinal` / `mm_h`), o valor, e a confiança. O
 schema interno já tem o campo `schema` (hoje `2`) para sinalizar mudança de formato — usar.
 
-O backend precisa saber ler isso; entra no pedido ao Guilherme junto com o item 3 de
+O backend precisa saber ler isso; entra no pedido ao Gabriel junto com o item 3 de
 `MUDANCAS_NECESSARIAS_BACKEND.md` (formalizar `metadata` como schema tipado).
 
 ### Aceite
@@ -698,7 +702,7 @@ O backend precisa saber ler isso; entra no pedido ao Guilherme junto com o item 
 - [ ] metadado carrega identificador e versão do modelo, forma da saída, valor e confiança
 - [ ] `schema` incrementado e a mudança documentada em `CONTRATO_API.md`
 - [ ] frame antigo (schema 1 e 2) continua legível pelos scripts de rotulagem — **sem migração destrutiva**
-- [ ] o backend aceita o formato novo, confirmado com o Guilherme, **antes** de qualquer envio em produção
+- [ ] o backend aceita o formato novo, confirmado com o Gabriel, **antes** de qualquer envio em produção
 
 ## J15. Export ONNX, validação numérica e latência medida
 
@@ -772,7 +776,7 @@ preciso tocar na placa.
 - [ ] mudar um corte no config altera a classe derivada sem reexportar o modelo
 - [ ] dashboard exibe a classe corretamente para os quatro valores do enum
 - [ ] um frame de cada classe percorre o caminho completo e aparece no dashboard
-- [ ] `CONTRATO_API.md` atualizado e conferido com o Guilherme
+- [ ] `CONTRATO_API.md` atualizado e conferido com o Gabriel
 
 ---
 
@@ -859,13 +863,13 @@ feitos fora de ordem.
 
 | Item | Depende de | Bloqueia |
 |---|---|---|
-| Token admin + `api_key` do device | Guilherme | J10, J13 |
-| Endpoint para "seco" sem imagem | Guilherme | J11 (tem plano B) |
-| Quem preenche `garoa`/`moderado`/`forte` | Guilherme | J11, J17 |
-| `metadata` como schema tipado | Guilherme | J14 |
+| Token admin + `api_key` do device | Gabriel | J10, J13 |
+| Endpoint para "seco" sem imagem | Gabriel | J11 (tem plano B) |
+| Quem preenche `garoa`/`moderado`/`forte` | Gabriel | J11, J17 |
+| `metadata` como schema tipado | Gabriel | J14 |
 | `sudo` na placa (`nvpmodel`, `fstab`, partição, apt) | Rodrigo | J4, J5 |
 | Fonte 5 V/4 A, buffer, alívio de tração | compra/montagem | J5 |
 | Modelo de intensidade treinado | frente de ML (F3.2) | Fase 3 inteira |
 
-O pedido formal ao Guilherme já está escrito em `MUDANCAS_NECESSARIAS_BACKEND.md`. Nenhum
+O pedido formal ao Gabriel já está escrito em `MUDANCAS_NECESSARIAS_BACKEND.md`. Nenhum
 item da Fase 1 depende dele — **a coleta de outubro não está bloqueada por terceiros.**

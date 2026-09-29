@@ -111,7 +111,7 @@ contém chuva noturna (nome engana), a cascata como decisão, os limiares acima.
 > F1.3 tem de recalcular distâncias sobre as 11 estações que reportam.
 > Detalhes: `docs/fontes-estacoes.md` (Adendo 2).
 
-### F1.1 Confirmar acesso a histórico de chuva — *Guilherme + Rodrigo* · **maior risco do plano**
+### F1.1 Confirmar acesso a histórico de chuva — *Gabriel + Rodrigo* · **maior risco do plano**
 Precisamos das leituras de **04/08, 01/09 e 13/09** para estações no centro-sul de SP
 (bbox lat −23,55..−23,57 / lon −46,59..−46,66). Ordem de tentativa:
 1. **CEMADEN** — acumulado 10 min, exige cadastro no portal de dados
@@ -123,7 +123,7 @@ Precisamos das leituras de **04/08, 01/09 e 13/09** para estações no centro-su
 - [ ] resolução temporal documentada (10 min? horária?) — define a janela real de rotulagem
 - [ ] se nenhuma fonte cobrir os 3 dias: decisão de fallback registrada neste arquivo
 
-### F1.2 Cliente de ingestão + tabela de leituras — *Guilherme*
+### F1.2 Cliente de ingestão + tabela de leituras — *Gabriel*
 `backend/app/ingestion/` está vazio. Implementar cliente da fonte escolhida + model/tabela
 de leituras de estação (estação, ts, acumulado, fonte). Alinhar também o
 `MUDANCAS_NECESSARIAS_BACKEND.md`: o `ml_service.py` atual assume que a borda classifica;
@@ -132,7 +132,7 @@ na cascata o backend classifica **no fluxo de ingestão**.
 **Aceite:**
 - [ ] job de ingestão roda e persiste leituras no Postgres (tempo real e/ou backfill histórico)
 - [ ] leituras dos 3 dias de teste carregadas no banco
-- [ ] resposta do Guilherme sobre a mudança do fluxo de classificação registrada
+- [ ] resposta do Gabriel sobre a mudança do fluxo de classificação registrada
 
 ### F1.3 Script de rotulagem → `manifest.csv` — *Rodrigo*
 `ml/scripts/rotulagem/gerar_manifest.py`: para cada frame com GPS fix, acha a estação
@@ -240,7 +240,7 @@ frames caem a ≤ 2 km dessas estações nesses minutos é o que F1.3 responde.
 
 ## F3 — Baselines de modelo (29/09–17/10)
 
-### F3.1 Gate: re-treinar MobileNetV2 — *Rodrigo*
+### F3.1 Gate: re-treinar MobileNetV2 — *Rodrigo + Guilherme*
 Arquitetura já roda embarcada (`ml/scripts/captura/modelo_chuva/`). Re-treinar com Dataset A.
 Baixar `limiar_chuva` 0,5 → 0,3 (falso positivo custa banda; falso negativo custa alerta).
 
@@ -249,7 +249,7 @@ Baixar `limiar_chuva` 0,5 → 0,3 (falso positivo custa banda; falso negativo cu
 - [ ] export ONNX validado na Jetson: latência por frame e FPS medidos e registrados
 - [ ] novo limiar configurado via `cityrain_config.json` (não hardcoded)
 
-### F3.2 Backend 3-classes: comparação de candidatos — *Rodrigo + Paulo*
+### F3.2 Backend 3-classes: comparação de candidatos — *Rodrigo + Guilherme*
 Candidatos (nenhum fechado): MobileNetV3-Large, ResNet18, EfficientNet-B0, todos ImageNet.
 Estratégia p/ pouco dado: estágio 1 pré-treino binário/públicos, estágio 2 fine-tune 3 classes.
 Temporais (CNN+GRU) ficam para depois do primeiro baseline.
@@ -259,7 +259,7 @@ Temporais (CNN+GRU) ficam para depois do primeiro baseline.
 - [ ] tabela comparativa (F1 macro, recall por classe, matriz de confusão) em `docs/`
 - [ ] mesmo split e mesma seed para todos os candidatos (comparação justa)
 
-### F3.3 Infra mínima de treino — *Paulo*
+### F3.3 Infra mínima de treino — *Rodrigo + Guilherme*
 `ml/src/cityrain_ml/`: loader que lê o manifest, loop de treino com seed fixa, log CSV por época.
 
 **Aceite:**

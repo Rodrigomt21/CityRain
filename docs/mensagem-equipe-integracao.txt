@@ -2,11 +2,13 @@ Pessoal, consolidei o que falta para ligar Jetson → API → dashboard.
 
 O bloqueio é o contrato: a Jetson só detecta chuva/sem chuva, mas hoje envia “chuva” como intensidade e a API rejeita com 400. Vamos separar rain_detected/detection_confidence de weather_label/confidence. Chuva detectada sem modelo de intensidade deve aparecer como “intensidade não medida”, sem inventar garoa ou mm/h.
 
-Guilherme: concluir ingestão e migration, ajustar respostas/agregação H3, testar no PostgreSQL e confirmar/publicar o deploy. O patch em fix/rain-detected está PARCIAL: só modelo/schema foram alterados. O backend já tem o caminho sem foto para seco; não precisamos criar outro endpoint.
+Gabriel: concluir ingestão e migration, ajustar respostas/agregação H3, testar no PostgreSQL e confirmar/publicar o deploy. O patch em fix/rain-detected está PARCIAL: só modelo/schema foram alterados. O backend já tem o caminho sem foto para seco; não precisamos criar outro endpoint.
 
-Gabriel/Paulo (divisão entre vocês a confirmar): ligar o front à API, tratar intensidade nula sem cair em “Seco”, adaptar mapa/cards/tabela e tirar mm/h simulados do fluxo real. Os cortes atuais do front também divergem do plano do dataset.
+Paulo: ligar o front à API, tratar intensidade nula sem cair em “Seco”, adaptar mapa/cards/tabela e tirar mm/h simulados do fluxo real. Os cortes atuais do front também divergem do plano do dataset.
 
-Rodrigo: adaptar uploader ao contrato novo, enviar secos sem foto, preservar o acervo e fazer o teste na Jetson após a API estar compatível. O cadastro do device já foi feito na sessão anterior; falta validar a credencial no ensaio.
+Rodrigo/Guilherme: adaptar uploader ao contrato novo, enviar secos sem foto, preservar o acervo e fazer o teste na Jetson após a API estar compatível. O cadastro do device já foi feito na sessão anterior; falta validar a credencial no ensaio.
+
+Rodrigo/Guilherme também ficam com os modelos: validar o gate e desenvolver o classificador de intensidade; o gate atual ainda não entrega garoa/moderada/forte.
 
 Ainda não houve deploy nem teste completo. Aceite mínimo: chuva sem intensidade + seco sem foto + retry sem duplicação + visualização correta no dashboard.
 
