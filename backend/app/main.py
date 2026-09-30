@@ -23,9 +23,12 @@ app = FastAPI(
         "API de ingestão e análise de imagens de chuva urbana capturadas por câmera "
         "embarcada em veículo conectado a uma NVIDIA Jetson.\n\n"
         "O modelo CNN roda **na própria Jetson** (borda) — `weather_label` e `confidence` "
-        "chegam já classificados em cada requisição.\n\n"
+        "chegam já classificados em cada requisição com imagem.\n\n"
         "**Para a equipe de hardware:** use `POST /api/v1/ingest` com multipart/form-data. "
-        "Inclua `weather_label` e `confidence` no JSON de metadata.\n\n"
+        "Inclua `weather_label` e `confidence` no JSON de metadata quando enviar `image`. "
+        "Quando a Jetson classificar a captura como 'sem chuva' e descartar a imagem, "
+        "omita o campo `image` — o backend grava a leitura com `weather_label='seco'` "
+        "automaticamente.\n\n"
         "**Para o dashboard:** use `/api/v1/captures` e `/api/v1/stats`."
     ),
     version="0.1.0",
