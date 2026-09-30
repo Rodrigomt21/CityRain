@@ -27,12 +27,12 @@ class MediaService:
 
     async def ingest(
         self,
-        image: UploadFile,
+        image: Optional[UploadFile],
         meta: dict,
         device: Optional[Device] = None,
     ) -> tuple[Capture, bool]:
         """
-        Recebe imagem + metadados da Jetson e persiste no banco.
+        Recebe imagem (opcional) + metadados da Jetson e persiste no banco.
 
         A Jetson filtra capturas secas (modelo binário chuva/não-chuva) antes do envio.
         O backend classifica a intensidade (garoa/moderado/forte) com o InferenceService.
@@ -78,6 +78,31 @@ class MediaService:
                 detail="latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
             )
 
+        if image is None:
+            capture = Capture(
+                captured_at=captured_at,
+                received_at=datetime.now(timezone.utc),
+                latitude=latitude,
+                longitude=longitude,
+                h3_cell=GeoService.to_h3_cell(latitude, longitude),
+                source_type=meta["source_type"],
+                weather_label=weather_label,
+                confidence=confidence,
+                metadata_=meta.get("metadata"),
+                device_id=device.id if device and device.id else None,
+            )
+            self.db.add(capture)
+            await self.db.commit()
+            await self.db.refresh(capture)
+
+            self.db.add(IngestionLog(
+                capture_id=capture.id,
+                protocol="http_multipart",
+                status="success",
+            ))
+            await self.db.commit()
+            return capture, True
+
         # Leitura com teto: lê no máximo limite+1 bytes. Se vier o byte extra,
         # o arquivo é maior que o permitido — independente do Content-Length declarado.
         max_bytes = settings.max_upload_size_mb * 1024 * 1024
@@ -115,6 +140,8 @@ class MediaService:
             longitude=longitude,
             h3_cell=GeoService.to_h3_cell(latitude, longitude),
             source_type=meta["source_type"],
+            weather_label=weather_label,
+            confidence=confidence,
             weather_label=weather_label,
             confidence=confidence,
             metadata_=meta.get("metadata"),

@@ -34,6 +34,7 @@ class CaptureResponse(BaseModel):
     longitude: float
     weather_label: str
     confidence: Optional[float] = None
+    confidence: Optional[float] = None
     source_type: str
     device_id: Optional[int] = None
     # validation_alias mapeia metadata_ do ORM para "metadata" no JSON
