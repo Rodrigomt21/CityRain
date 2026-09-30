@@ -13,8 +13,9 @@ if TYPE_CHECKING:
     from app.models.ingestion_log import IngestionLog
 
 
-# Classes de chuva que a CNN da Jetson pode reportar — contrato com o time de hardware.
-# Alterar aqui exige migration (CHECK constraint no banco) e retreinamento do modelo.
+# Intensidades de chuva que o modelo do backend pode retornar.
+# "seco" mantido apenas para retrocompatibilidade com dados antigos — a Jetson
+# filtra capturas secas antes do envio; o backend só gera garoa/moderado/forte.
 WEATHER_LABELS = ("seco", "garoa", "moderado", "forte")
 
 
@@ -41,9 +42,10 @@ class Capture(Base):
     # ingestão. Permite agregar o heatmap com GROUP BY no banco em vez de
     # carregar todas as capturas em memória. Nullable: capturas pré-H3.
     h3_cell: Mapped[Optional[str]] = mapped_column(String(15), index=True, nullable=True)
-    # Classificados pela CNN na Jetson antes do envio — sempre preenchidos
+    # Classificados pelo modelo do backend após receber a imagem da Jetson.
+    # confidence é nullable: None enquanto nenhum modelo estiver carregado.
     weather_label: Mapped[str] = mapped_column(String(50))
-    confidence: Mapped[float] = mapped_column(Float)
+    confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     # metadata_ evita conflito com Base.metadata do SQLAlchemy; coluna no banco é "metadata"
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     source_type: Mapped[str] = mapped_column(String(20))

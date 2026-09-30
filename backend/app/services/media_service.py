@@ -10,11 +10,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.capture import Capture, WEATHER_LABELS
+from app.models.capture import Capture
 from app.models.device import Device
 from app.models.ingestion_log import IngestionLog
 from app.models.media_file import MediaFile
 from app.services.geo_service import GeoService
+from app.services.inference_service import inference_service
 
 
 class MediaService:
@@ -33,11 +34,11 @@ class MediaService:
         """
         Recebe imagem + metadados da Jetson e persiste no banco.
 
-        A CNN roda na Jetson antes do envio — weather_label e confidence chegam
-        já classificados pela borda. O servidor valida, persiste e confirma o recebimento.
+        A Jetson filtra capturas secas (modelo binário chuva/não-chuva) antes do envio.
+        O backend classifica a intensidade (garoa/moderado/forte) com o InferenceService.
 
         Idempotência: o sha256 identifica a imagem. Se já foi ingerida (retry da
-        Jetson após perder a resposta na rede), retorna a captura existente sem
+        Jetson após perda de resposta na rede), retorna a captura existente sem
         criar registros novos — o reenvio é confirmação, não erro.
 
         Retorna (capture, created): created=False indica duplicata/retry.
@@ -47,7 +48,7 @@ class MediaService:
           Commit 2: MediaFile + IngestionLog("success")
                     ou IngestionLog("error") se o commit 2 falhar
         """
-        required = {"captured_at", "latitude", "longitude", "source_type", "weather_label", "confidence"}
+        required = {"captured_at", "latitude", "longitude", "source_type"}
         missing = required - meta.keys()
         if missing:
             raise HTTPException(
@@ -63,19 +64,6 @@ class MediaService:
             raise HTTPException(
                 status_code=400,
                 detail="captured_at deve ser ISO 8601. Ex: 2026-05-01T14:30:00Z",
-            )
-
-        if meta["weather_label"] not in WEATHER_LABELS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"weather_label deve ser um de: {list(WEATHER_LABELS)}",
-            )
-
-        confidence = meta["confidence"]
-        if not isinstance(confidence, (int, float)) or not (0.0 <= confidence <= 1.0):
-            raise HTTPException(
-                status_code=400,
-                detail="confidence deve ser um número entre 0.0 e 1.0.",
             )
 
         latitude, longitude = meta["latitude"], meta["longitude"]
@@ -113,6 +101,10 @@ class MediaService:
             await self.db.commit()
             return existing, False
 
+        # Classifica a intensidade da chuva no backend.
+        # Retorna confidence=None enquanto nenhum modelo ONNX estiver configurado.
+        weather_label, confidence = await inference_service.classify(content)
+
         # Commit 1: persiste o Capture antes de tentar salvar o arquivo.
         # Isso garante que capture.id existe mesmo se o commit 2 falhar,
         # permitindo que o log de erro seja vinculado a esta tentativa.
@@ -123,8 +115,8 @@ class MediaService:
             longitude=longitude,
             h3_cell=GeoService.to_h3_cell(latitude, longitude),
             source_type=meta["source_type"],
-            weather_label=meta["weather_label"],
-            confidence=float(confidence),
+            weather_label=weather_label,
+            confidence=confidence,
             metadata_=meta.get("metadata"),
             device_id=device.id if device and device.id else None,
         )

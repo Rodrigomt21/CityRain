@@ -25,8 +25,8 @@ async def ingest_capture(
     metadata: str = Form(
         ...,
         description=(
-            "JSON com campos obrigatórios: captured_at (ISO 8601), latitude, longitude, "
-            "source_type. "
+            "JSON com campos obrigatórios: captured_at (ISO 8601), latitude, longitude, source_type. "
+            "weather_label e confidence não são mais necessários — o backend classifica a intensidade. "
             'Ex: {"captured_at":"2026-05-01T14:30:00Z","latitude":-23.92,"longitude":-46.89,'
             '"source_type":"jetson_xavier"}'
         ),
@@ -37,8 +37,8 @@ async def ingest_capture(
     """
     Ingestão de imagem + metadados da câmera embarcada via multipart/form-data.
 
-    O modelo CNN roda na NVIDIA Jetson antes do envio — weather_label e confidence
-    chegam já classificados pela borda. O servidor persiste e confirma imediatamente.
+    A Jetson filtra capturas secas antes do envio (modelo binário chuva/não-chuva).
+    O backend classifica a intensidade (garoa/moderado/forte) com o InferenceService.
 
     Idempotente: reenviar a mesma imagem (retry após falha de rede) retorna a
     captura já existente com status 200 em vez de 201.
