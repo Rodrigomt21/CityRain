@@ -13,9 +13,10 @@ if TYPE_CHECKING:
     from app.models.ingestion_log import IngestionLog
 
 
-# Intensidades de chuva que o modelo do backend pode retornar.
-# "seco" mantido apenas para retrocompatibilidade com dados antigos — a Jetson
-# filtra capturas secas antes do envio; o backend só gera garoa/moderado/forte.
+# Classes de INTENSIDADE. Alterar aqui exige migration (CHECK constraint).
+# Não confundir com detecção: o gate binário da Jetson responde "há chuva?",
+# nunca "quanto". weather_label=None significa intensidade não medida, e é
+# diferente de "seco", que é uma medida de ausência de chuva.
 WEATHER_LABELS = ("seco", "garoa", "moderado", "forte")
 
 
@@ -24,8 +25,9 @@ class Capture(Base):
 
     __tablename__ = "captures"
     __table_args__ = (
+        # NULL é permitido: significa "intensidade não medida". Ver migration 0003.
         CheckConstraint(
-            "weather_label IN ('seco', 'garoa', 'moderado', 'forte')",
+            "weather_label IS NULL OR weather_label IN ('seco', 'garoa', 'moderado', 'forte')",
             name="ck_captures_weather_label",
         ),
     )
@@ -42,9 +44,12 @@ class Capture(Base):
     # ingestão. Permite agregar o heatmap com GROUP BY no banco em vez de
     # carregar todas as capturas em memória. Nullable: capturas pré-H3.
     h3_cell: Mapped[Optional[str]] = mapped_column(String(15), index=True, nullable=True)
-    # Classificados pelo modelo do backend após receber a imagem da Jetson.
-    # confidence é nullable: None enquanto nenhum modelo estiver carregado.
-    weather_label: Mapped[str] = mapped_column(String(50))
+    # Intensidade classificada pelo modelo do backend sobre a imagem recebida.
+    # Ambos nullable: ficam None enquanto nenhum modelo de intensidade estiver
+    # carregado — "não medido", nunca "seco". O único caso em que o backend
+    # grava "seco" por conta própria é a captura sem imagem, em que a Jetson já
+    # afirmou ausência de chuva ao descartar o frame.
+    weather_label: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     # metadata_ evita conflito com Base.metadata do SQLAlchemy; coluna no banco é "metadata"
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
