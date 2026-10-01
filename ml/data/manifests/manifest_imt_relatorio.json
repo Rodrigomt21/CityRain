@@ -1,38 +1,58 @@
 {
-  "config_sha256": "d357061f10d761522e366c81719e7b448b5d450d1e1069426692eeea3ea9c196",
-  "timestamp_execucao_utc": "2026-09-18T04:30:57.615370+00:00",
+  "config_sha256": "85a62b2c5eb78ba0c61cd45d9a2702e3425e4f7397ce0c5d863edc031b6a4869",
+  "timestamp_execucao_utc": "2026-10-01T02:01:30.613714+00:00",
   "parametros": {
     "raio_max_km": 2.0,
     "janela_min": 15,
     "zona_morta_frac": 0.15,
-    "minutos_por_leitura": 10
+    "minutos_por_leitura": 10,
+    "idade_maxima_posicao_s": 12.0,
+    "consenso_raio_km": 5.0,
+    "consenso_min_estacoes": 3,
+    "janela_seco_min": 60,
+    "consenso_zona_morta_na_mediana": true,
+    "consenso_metropolitano_min_estacoes": 5,
+    "consenso_metropolitano_janela_min": 60
   },
-  "total_frames": 7148,
-  "total_jpg_sem_json": 4787,
-  "rotulados": 478,
+  "total_frames": 7413,
+  "total_jpg_sem_json": 4788,
+  "rotulados": 2474,
   "por_classe": {
-    "seco": 351,
-    "garoa": 127,
+    "seco": 596,
+    "garoa": 1878,
     "moderada": 0,
     "forte": 0
   },
   "por_motivo": {
-    "sem_estacao_no_raio": 4810,
-    "sem_gps_fix": 1703,
-    "sem_leitura_na_janela": 157
+    "posicao_desatualizada": 169,
+    "poucas_estacoes_consenso": 1878,
+    "seco_incerto": 372,
+    "sem_consenso_regional": 1060,
+    "sem_gps_fix": 1460
+  },
+  "por_origem_idade_posicao": {
+    "": 103,
+    "fix_atual": 2346,
+    "inferida_sequencia": 25
+  },
+  "por_metodo_rotulo": {
+    "consenso_metropolitano": 103,
+    "consenso_regional": 2244,
+    "estacao_proxima": 127
   },
   "por_evento": {
     "cityrain_frames2__2026-08-07": {
       "total": 103,
-      "sem_gps_fix": 103
+      "seco": 103
     },
     "cityrain_frames2__2026-09-01": {
       "total": 4643,
-      "sem_gps_fix": 917,
-      "sem_estacao_no_raio": 3091,
-      "garoa": 127,
-      "seco": 351,
-      "sem_leitura_na_janela": 157
+      "sem_gps_fix": 765,
+      "sem_consenso_regional": 1000,
+      "garoa": 1697,
+      "seco_incerto": 372,
+      "posicao_desatualizada": 111,
+      "poucas_estacoes_consenso": 698
     },
     "cityrain_frames3__2026-09-05": {
       "total": 140,
@@ -40,34 +60,97 @@
     },
     "cityrain_frames3__2026-09-13": {
       "total": 1245,
-      "sem_gps_fix": 543,
-      "sem_estacao_no_raio": 702
+      "sem_gps_fix": 474,
+      "poucas_estacoes_consenso": 532,
+      "garoa": 181,
+      "posicao_desatualizada": 58
+    },
+    "cityrain_frames4__2026-09-05": {
+      "total": 1,
+      "sem_gps_fix": 1
+    },
+    "cityrain_frames4__2026-09-16": {
+      "total": 22,
+      "sem_gps_fix": 22
+    },
+    "cityrain_frames4__2026-09-23": {
+      "total": 242,
+      "sem_gps_fix": 58,
+      "poucas_estacoes_consenso": 124,
+      "sem_consenso_regional": 60
     },
     "cityrain_frames__2026-08-04": {
       "total": 1017,
-      "sem_estacao_no_raio": 1017
+      "seco": 493,
+      "poucas_estacoes_consenso": 524
+    }
+  },
+  "seco_por_evento_periodo": {
+    "cityrain_frames2__2026-08-07": {
+      "noite": 103
+    },
+    "cityrain_frames__2026-08-04": {
+      "dia": 493
+    }
+  },
+  "ganho_zona_morta_mediana": {
+    "cityrain_frames2__2026-09-01": {
+      "garoa": 1570
     }
   },
   "estacoes_usadas": {
-    "AC Central de SP": 346,
-    "Centro": 132
+    "(consenso metropolitano)": 103,
+    "(consenso regional)": 2244,
+    "Centro": 127
   },
   "sensibilidade_raio": {
     "2.0 km": {
-      "seco": 351,
-      "garoa": 127,
+      "seco": 596,
+      "garoa": 1878,
       "moderada": 0,
       "forte": 0
     },
     "3.0 km": {
-      "seco": 1241,
-      "garoa": 1088,
+      "seco": 1031,
+      "garoa": 2625,
       "moderada": 0,
       "forte": 0
     },
     "5.0 km": {
-      "seco": 2272,
-      "garoa": 1790,
+      "seco": 1120,
+      "garoa": 1862,
+      "moderada": 0,
+      "forte": 0
+    }
+  },
+  "sensibilidade_idade_posicao": {
+    "12 s": {
+      "seco": 596,
+      "garoa": 1878,
+      "moderada": 0,
+      "forte": 0
+    },
+    "30 s": {
+      "seco": 596,
+      "garoa": 1914,
+      "moderada": 0,
+      "forte": 0
+    },
+    "60 s": {
+      "seco": 596,
+      "garoa": 1972,
+      "moderada": 0,
+      "forte": 0
+    },
+    "90 s": {
+      "seco": 596,
+      "garoa": 1987,
+      "moderada": 0,
+      "forte": 0
+    },
+    "120 s": {
+      "seco": 596,
+      "garoa": 1987,
       "moderada": 0,
       "forte": 0
     }
