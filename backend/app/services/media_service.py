@@ -34,8 +34,17 @@ class MediaService:
         """
         Recebe imagem (opcional) + metadados da Jetson e persiste no banco.
 
-        A Jetson filtra capturas secas (modelo binário chuva/não-chuva) antes do envio.
-        O backend classifica a intensidade (garoa/moderado/forte) com o InferenceService.
+        A Jetson filtra capturas secas (gate binário chuva/não-chuva) antes do
+        envio. O backend classifica a intensidade com o InferenceService.
+
+        Dois caminhos, e eles gravam coisas diferentes:
+          - sem imagem: a Jetson descartou o frame por classificá-lo como sem
+            chuva. Isso é uma afirmação sobre ausência de chuva, então grava
+            weather_label="seco" com confidence=None (não houve inferência de
+            intensidade a reportar).
+          - com imagem: há chuva. A intensidade vem do InferenceService, que
+            devolve (None, None) enquanto nenhum modelo estiver carregado —
+            "não medido", que é diferente de "seco" e não deve virar "seco".
 
         Idempotência: o sha256 identifica a imagem. Se já foi ingerida (retry da
         Jetson após perda de resposta na rede), retorna a captura existente sem
@@ -79,6 +88,11 @@ class MediaService:
             )
 
         if image is None:
+            # A ausência de imagem é, em si, a decisão do gate: sem chuva.
+            # confidence fica nula porque nenhum modelo de intensidade rodou.
+            weather_label: Optional[str] = "seco"
+            confidence: Optional[float] = None
+
             capture = Capture(
                 captured_at=captured_at,
                 received_at=datetime.now(timezone.utc),
@@ -140,8 +154,6 @@ class MediaService:
             longitude=longitude,
             h3_cell=GeoService.to_h3_cell(latitude, longitude),
             source_type=meta["source_type"],
-            weather_label=weather_label,
-            confidence=confidence,
             weather_label=weather_label,
             confidence=confidence,
             metadata_=meta.get("metadata"),

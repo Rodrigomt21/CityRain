@@ -13,8 +13,9 @@ class CaptureIngest(BaseModel):
     """
     Campos do JSON enviado no campo 'metadata' do multipart/form-data.
 
-    weather_label e confidence não são mais enviados pela Jetson — o backend
-    classifica a intensidade (garoa/moderado/forte) com seu próprio modelo.
+    weather_label e confidence não são enviados pela Jetson — o backend
+    classifica a intensidade com seu próprio modelo. Enquanto não houver modelo
+    carregado, a captura é persistida com intensidade nula ("não medida").
     """
 
     latitude: float = Field(..., ge=-90, le=90)
@@ -32,8 +33,8 @@ class CaptureResponse(BaseModel):
     received_at: datetime
     latitude: float
     longitude: float
-    weather_label: str
-    confidence: Optional[float] = None
+    # None = intensidade não medida. Não renderizar como "seco" no dashboard.
+    weather_label: Optional[str] = None
     confidence: Optional[float] = None
     source_type: str
     device_id: Optional[int] = None
