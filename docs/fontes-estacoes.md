@@ -678,3 +678,12 @@ dessas estações nesses minutos é o que F1.3 vai dizer.
       novas chamadas (o script recebe `--dias`).
 - [ ] Cota do cadastro limita ~11 chamadas por rodada; para outubro, planejar o
       backfill em lotes ou pedir aumento de cota ao CEMADEN.
+
+## irCNN (Yin et al. 2023) — teste real de moderada/forte
+
+- **Fonte:** https://doi.org/10.6084/m9.figshare.22122500.v1 (figshare 22122500; Yin et al., "Estimating Rainfall Intensity Using an Image-Based Deep Learning Model", *Engineering* 21, 2023). Baixado em 30/09/2026 para `ml/data/raw/public_datasets/ircnn/` (12 vídeos `Event N.mp4`, ~230 MB cada, + `Gauge-observations.xlsx`; total 2,8 GB). Não há README no figshare (descrição: "Rainfall videos and the rainfall data measured by a rain gauge").
+- **Licença:** CC BY 4.0 (citar Yin et al. 2023 e Zheng et al. 2023, WRR, 10.1029/2023WR034831).
+- **O dataset tem 12 eventos** (6 diurnos, 7-12 noturnos em IR/cinza), não 6. Câmera fixa de vigilância em Hangzhou, 1920x1080, 1 fps, 60 min por vídeo (jun-jul/2020).
+- **Rótulo:** pluviômetro de báscula a 1-2 m da câmera, 1 leitura por minuto (hh:mm:45), resolução 0,1 mm/min (= 6 mm/h). A planilha **não declara a unidade**; ela é **mm/min** (Zheng et al. 2023, seção 3 e Tabela 1: máx. 156 mm/h no evento 10 = 2,6 mm/min). Convertido para mm/h (x60). Consequência: toda leitura > 0 vale >= 6 mm/h; só a interpolação gera garoa.
+- **Alinhamento temporal:** o relógio do vídeo é a tag `creation_time` (UTC) + 8 h, conferida contra o timestamp gravado no frame (ex.: evento 10, frame 0 = 2020-07-02 20:00:13). Frame t = início + t s. Entre leituras do pluviômetro usa-se interpolação linear (Eq. 14 de Zheng et al.). Frames fora da janela do pluviômetro (que cobre só o evento, 12-69 min de cada vídeo) são descartados; zona morta de ±15% de 2,5 e 10 mm/h descartada.
+- **Ressalvas:** domínio diferente (vigilância fixa, sem para-brisa; 7-12 em infravermelho noturno); o `seco` do irCNN (74 frames) é só zero interpolado dentro de evento, pode ter chuva abaixo da resolução do báscula — não usar como teste de seco. Extração: `ml/scripts/dataset_publico/ircnn_extrair.py`; frames reduzidos para 960x540.
