@@ -50,7 +50,7 @@ SGAA_TOKEN_URL = "https://ped.cemaden.gov.br/SGAA/rest/controle-token/tokens"
 PED_BASE = "https://sws.cemaden.gov.br/PED/rest"
 
 # Dias-alvo das sessões de coleta (ver docs/specs/spec-historico-estacoes.md)
-DIAS_ALVO = ["2026-08-04", "2026-09-01", "2026-09-13"]
+DIAS_ALVO = ["2026-08-04", "2026-09-01", "2026-09-13", "2026-09-23"]
 
 # Estações CEMADEN <= 5 km dos bboxes das sessões (coordenadas do feed oficial
 # resources.cemaden.gov.br/dados/311_24.json — ver docs/fontes-estacoes.md).
@@ -320,8 +320,10 @@ def main() -> None:
         return
 
     print(f"Baixando {len(ESTACOES)} estações x {len(args.dias)} dias...")
-    arquivos = baixar(email, senha, token, list(args.dias), forcar=args.forcar)
-    n = normalizar(arquivos)
+    baixar(email, senha, token, list(args.dias), forcar=args.forcar)
+    # Normaliza TODOS os brutos já salvos, não só os desta execução: o CSV é
+    # reescrito do zero, então baixar um dia novo apagava os dias anteriores.
+    n = normalizar(sorted(RAW_DIR.glob("dados_pcd_*")))
     print(f"\n{n} leituras normalizadas -> {OUT_CSV}")
     if n == 0:
         print("Nenhuma leitura extraída — inspecione os brutos em "

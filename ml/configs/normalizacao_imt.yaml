@@ -12,6 +12,8 @@ pastas:
     rotacao_graus: 180
   cityrain_frames3:
     rotacao_graus: 180
+  cityrain_frames4:
+    rotacao_graus: 180
   framesSemNada:
     rotacao_graus: 0
     subpasta_jpgs: frames
