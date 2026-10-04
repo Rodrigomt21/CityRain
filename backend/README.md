@@ -33,12 +33,20 @@ backend/
 2. **Inferência online:** câmera envia frame → modelo classifica → resultado vai para Postgres com `h3_index` (célula) e timestamp.
 3. **Consulta do frontend:** dashboard pede o estado atual por célula H3 → backend retorna a classe agregada (mais recente / moda na janela) por célula.
 
-## Como rodar (placeholder)
+## Como rodar
+
+> **Use Python 3.11.** O `sqlalchemy==2.0.37` fixado em `requirements.txt` não
+> funciona em 3.14: a importação de qualquer model estoura em
+> `TypeError: descriptor '__getitem__' requires a 'typing.Union' object`, dentro
+> do próprio SQLAlchemy. Não é erro do projeto e a mensagem não ajuda a achar a
+> causa. Em muitos Macs o `python3` já resolve para 3.14, então chamar o 3.11
+> pelo nome evita um venv que nasce quebrado. O `.python-version` deste
+> diretório fixa a mesma versão no build do Railway.
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -e .
+python3.11 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 cp .env.example .env  # ajustar DATABASE_URL
 alembic upgrade head
 uvicorn app.main:app --reload

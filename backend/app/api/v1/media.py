@@ -21,12 +21,20 @@ router = APIRouter()
 async def ingest_capture(
     request: Request,
     response: Response,
-    image: UploadFile = File(..., description="Arquivo de imagem JPEG ou PNG"),
+    image: UploadFile | None = File(
+        None,
+        description=(
+            "Arquivo de imagem JPEG ou PNG. Omitido quando o gate da Jetson classificou "
+            "a captura como 'sem chuva' e descartou a imagem localmente — nesse caso "
+            "o backend grava a leitura diretamente com weather_label='seco'."
+        ),
+    ),
     metadata: str = Form(
         ...,
         description=(
-            "JSON com campos obrigatórios: captured_at (ISO 8601), latitude, longitude, "
-            "source_type. "
+            "JSON com campos obrigatórios: captured_at (ISO 8601), latitude, longitude, source_type. "
+            "Não envie weather_label nem confidence: a intensidade é classificada no backend "
+            "e fica nula enquanto nenhum modelo de intensidade estiver carregado. "
             'Ex: {"captured_at":"2026-05-01T14:30:00Z","latitude":-23.92,"longitude":-46.89,'
             '"source_type":"jetson_xavier"}'
         ),
@@ -37,11 +45,21 @@ async def ingest_capture(
     """
     Ingestão de imagem + metadados da câmera embarcada via multipart/form-data.
 
-    O modelo CNN roda na NVIDIA Jetson antes do envio — weather_label e confidence
-    chegam já classificados pela borda. O servidor persiste e confirma imediatamente.
+    A Jetson filtra capturas secas antes do envio (gate binário chuva/não-chuva).
+    O backend classifica a intensidade (garoa/moderado/forte) com o InferenceService.
+
+    A imagem é opcional: quando o gate classifica a captura como "sem chuva",
+    a Jetson descarta a imagem localmente e envia apenas o metadata. Nesse caso o
+    backend grava a leitura diretamente com weather_label="seco" e confidence
+    nulo, ignorando qualquer weather_label/confidence enviado no metadata.
+
+    Com imagem e sem modelo de intensidade carregado, a captura é persistida com
+    weather_label nulo — "intensidade não medida". Nulo não é "seco": o dashboard
+    precisa exibi-los em estados distintos.
 
     Idempotente: reenviar a mesma imagem (retry após falha de rede) retorna a
-    captura já existente com status 200 em vez de 201.
+    captura já existente com status 200 em vez de 201. Leituras sem imagem não
+    passam por deduplicação (não há arquivo para identificar o retry).
     """
     # Rejeição barata: usa o Content-Length declarado para recusar a requisição
     # antes de processar o corpo. Cliente que mente no header é pego pela
@@ -54,7 +72,7 @@ async def ingest_capture(
             detail=f"Upload excede o limite de {settings.max_upload_size_mb} MB.",
         )
 
-    if image.content_type not in ("image/jpeg", "image/png"):
+    if image is not None and image.content_type not in ("image/jpeg", "image/png"):
         raise HTTPException(status_code=422, detail="Somente JPEG e PNG são aceitos.")
 
     try:

@@ -43,6 +43,10 @@ venv/
 env/
 ENV/
 .python-version
+# Exceção: o backend FIXA a versão de propósito — o nixpacks lê esse arquivo no
+# build do Railway, e o sqlalchemy pinado não funciona em Python 3.14. Sem o
+# versionamento o pin não chega ao deploy e a falha é silenciosa.
+!backend/.python-version
 .ipynb_checkpoints/
 
 # Jupyter

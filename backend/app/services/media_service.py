@@ -10,11 +10,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.models.capture import Capture, WEATHER_LABELS
+from app.models.capture import Capture
 from app.models.device import Device
 from app.models.ingestion_log import IngestionLog
 from app.models.media_file import MediaFile
 from app.services.geo_service import GeoService
+from app.services.inference_service import inference_service
 
 
 class MediaService:
@@ -26,18 +27,27 @@ class MediaService:
 
     async def ingest(
         self,
-        image: UploadFile,
+        image: Optional[UploadFile],
         meta: dict,
         device: Optional[Device] = None,
     ) -> tuple[Capture, bool]:
         """
-        Recebe imagem + metadados da Jetson e persiste no banco.
+        Recebe imagem (opcional) + metadados da Jetson e persiste no banco.
 
-        A CNN roda na Jetson antes do envio — weather_label e confidence chegam
-        já classificados pela borda. O servidor valida, persiste e confirma o recebimento.
+        A Jetson filtra capturas secas (gate binário chuva/não-chuva) antes do
+        envio. O backend classifica a intensidade com o InferenceService.
+
+        Dois caminhos, e eles gravam coisas diferentes:
+          - sem imagem: a Jetson descartou o frame por classificá-lo como sem
+            chuva. Isso é uma afirmação sobre ausência de chuva, então grava
+            weather_label="seco" com confidence=None (não houve inferência de
+            intensidade a reportar).
+          - com imagem: há chuva. A intensidade vem do InferenceService, que
+            devolve (None, None) enquanto nenhum modelo estiver carregado —
+            "não medido", que é diferente de "seco" e não deve virar "seco".
 
         Idempotência: o sha256 identifica a imagem. Se já foi ingerida (retry da
-        Jetson após perder a resposta na rede), retorna a captura existente sem
+        Jetson após perda de resposta na rede), retorna a captura existente sem
         criar registros novos — o reenvio é confirmação, não erro.
 
         Retorna (capture, created): created=False indica duplicata/retry.
@@ -47,7 +57,7 @@ class MediaService:
           Commit 2: MediaFile + IngestionLog("success")
                     ou IngestionLog("error") se o commit 2 falhar
         """
-        required = {"captured_at", "latitude", "longitude", "source_type", "weather_label", "confidence"}
+        required = {"captured_at", "latitude", "longitude", "source_type"}
         missing = required - meta.keys()
         if missing:
             raise HTTPException(
@@ -65,19 +75,6 @@ class MediaService:
                 detail="captured_at deve ser ISO 8601. Ex: 2026-05-01T14:30:00Z",
             )
 
-        if meta["weather_label"] not in WEATHER_LABELS:
-            raise HTTPException(
-                status_code=400,
-                detail=f"weather_label deve ser um de: {list(WEATHER_LABELS)}",
-            )
-
-        confidence = meta["confidence"]
-        if not isinstance(confidence, (int, float)) or not (0.0 <= confidence <= 1.0):
-            raise HTTPException(
-                status_code=400,
-                detail="confidence deve ser um número entre 0.0 e 1.0.",
-            )
-
         latitude, longitude = meta["latitude"], meta["longitude"]
         if (
             not isinstance(latitude, (int, float))
@@ -89,6 +86,36 @@ class MediaService:
                 status_code=400,
                 detail="latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
             )
+
+        if image is None:
+            # A ausência de imagem é, em si, a decisão do gate: sem chuva.
+            # confidence fica nula porque nenhum modelo de intensidade rodou.
+            weather_label: Optional[str] = "seco"
+            confidence: Optional[float] = None
+
+            capture = Capture(
+                captured_at=captured_at,
+                received_at=datetime.now(timezone.utc),
+                latitude=latitude,
+                longitude=longitude,
+                h3_cell=GeoService.to_h3_cell(latitude, longitude),
+                source_type=meta["source_type"],
+                weather_label=weather_label,
+                confidence=confidence,
+                metadata_=meta.get("metadata"),
+                device_id=device.id if device and device.id else None,
+            )
+            self.db.add(capture)
+            await self.db.commit()
+            await self.db.refresh(capture)
+
+            self.db.add(IngestionLog(
+                capture_id=capture.id,
+                protocol="http_multipart",
+                status="success",
+            ))
+            await self.db.commit()
+            return capture, True
 
         # Leitura com teto: lê no máximo limite+1 bytes. Se vier o byte extra,
         # o arquivo é maior que o permitido — independente do Content-Length declarado.
@@ -113,6 +140,10 @@ class MediaService:
             await self.db.commit()
             return existing, False
 
+        # Classifica a intensidade da chuva no backend.
+        # Retorna confidence=None enquanto nenhum modelo ONNX estiver configurado.
+        weather_label, confidence = await inference_service.classify(content)
+
         # Commit 1: persiste o Capture antes de tentar salvar o arquivo.
         # Isso garante que capture.id existe mesmo se o commit 2 falhar,
         # permitindo que o log de erro seja vinculado a esta tentativa.
@@ -123,8 +154,8 @@ class MediaService:
             longitude=longitude,
             h3_cell=GeoService.to_h3_cell(latitude, longitude),
             source_type=meta["source_type"],
-            weather_label=meta["weather_label"],
-            confidence=float(confidence),
+            weather_label=weather_label,
+            confidence=confidence,
             metadata_=meta.get("metadata"),
             device_id=device.id if device and device.id else None,
         )
