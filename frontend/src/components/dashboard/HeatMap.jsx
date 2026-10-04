@@ -5,6 +5,7 @@ const LEGEND_ITEMS = [
   { label: 'Garoa',    color: '#67e8f9' },
   { label: 'Moderada', color: '#fb923c' },
   { label: 'Forte',    color: '#ef4444' },
+  { label: 'Não medido', color: '#64748b' },
 ]
 
 const CITY_BLOCKS = [
@@ -122,12 +123,12 @@ export default function HeatMap({ sensors }) {
           <text x={50} y={398} fontFamily="monospace" fontSize={9} fill="#8896aa" textAnchor="middle">2 km</text>
 
           {/* Legenda */}
-          <rect x={488} y={308} width={104} height={86} rx={5}
+          <rect x={488} y={292} width={104} height={102} rx={5}
             fill="#091520" fillOpacity={0.92} stroke="#1e2535" strokeWidth="1" />
-          <text x={496} y={323} fontFamily="monospace" fontSize={9} fill="#8896aa"
+          <text x={496} y={307} fontFamily="monospace" fontSize={9} fill="#8896aa"
             fontWeight="600" letterSpacing="1">CATEGORIA</text>
           {LEGEND_ITEMS.map((item, i) => (
-            <g key={item.label} transform={`translate(496, ${338 + i * 16})`}>
+            <g key={item.label} transform={`translate(496, ${322 + i * 16})`}>
               <circle cx={5} cy={-3} r={4} fill={item.color} />
               <text x={14} y={0} fontFamily="monospace" fontSize={9} fill="#c8d3e0">
                 {item.label.toUpperCase()}

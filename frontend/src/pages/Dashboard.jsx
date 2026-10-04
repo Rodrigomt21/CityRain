@@ -1,12 +1,16 @@
 import { Link } from 'react-router-dom'
 import { useClassificationData } from '../hooks/useClassificationData'
+import { useLiveSensors } from '../hooks/useLiveSensors'
 import Topbar from '../components/layout/Topbar'
 import ClassificationCards from '../components/dashboard/ClassificationCards'
 import HeatMap from '../components/dashboard/HeatMap'
 
 export default function Dashboard() {
-  const { sensors, categoryCounts, mostSevereCategory, lastUpdate, totalOnline } =
-    useClassificationData()
+  const simulado = useClassificationData()
+  const live = useLiveSensors()
+  // Com capturas reais na API, o painel mostra só elas; sem nenhuma, cai na simulação
+  // e diz isso na tela — nunca misturar dado simulado com medido.
+  const { sensors, categoryCounts, mostSevereCategory, lastUpdate, totalOnline } = live.ativo ? live : simulado
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
@@ -25,6 +29,16 @@ export default function Dashboard() {
             </h1>
             <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
               Classificação de intensidade pluviométrica e distribuição geoespacial
+              {' · '}
+              <span
+                className="font-mono"
+                title={live.error ? `API indisponível: ${live.error.message}` : undefined}
+                style={{ color: live.ativo ? 'var(--cat-dry)' : 'var(--cat-moderate)' }}
+              >
+                {live.ativo
+                  ? `AO VIVO · ${live.sensors.length} dispositivo(s)${live.naoMedidos ? ` · ${live.naoMedidos} sem intensidade` : ''}`
+                  : live.loading ? 'conectando…' : 'SIMULAÇÃO · API sem capturas'}
+              </span>
             </p>
           </div>
           <Link

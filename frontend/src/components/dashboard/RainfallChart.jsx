@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from 'recharts'
 import CategoryBadge from '../ui/CategoryBadge'
-import { getCategory } from '../../lib/categories'
+import { getCategory, CATEGORIES } from '../../lib/categories'
 
 function formatTick(ts) {
   return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
@@ -76,11 +76,10 @@ export default function RainfallChart({ data, currentCategory }) {
             tickLine={false}
           />
 
-          <ReferenceLine y={0.1} stroke="var(--cat-drizzle)" strokeDasharray="4 3" strokeWidth={1}
-            label={{ value: 'Garoa', fill: 'var(--cat-drizzle)', fontSize: 10, fontFamily: 'JetBrains Mono', position: 'right' }} />
-          <ReferenceLine y={5}   stroke="var(--cat-moderate)" strokeDasharray="4 3" strokeWidth={1}
+          {/* cada linha marca o início da categoria; garoa começa em 0 e não precisa de linha */}
+          <ReferenceLine y={CATEGORIES.moderate.min} stroke="var(--cat-moderate)" strokeDasharray="4 3" strokeWidth={1}
             label={{ value: 'Moderada', fill: 'var(--cat-moderate)', fontSize: 10, fontFamily: 'JetBrains Mono', position: 'right' }} />
-          <ReferenceLine y={25}  stroke="var(--cat-heavy)" strokeDasharray="4 3" strokeWidth={1}
+          <ReferenceLine y={CATEGORIES.heavy.min} stroke="var(--cat-heavy)" strokeDasharray="4 3" strokeWidth={1}
             label={{ value: 'Forte', fill: 'var(--cat-heavy)', fontSize: 10, fontFamily: 'JetBrains Mono', position: 'right' }} />
 
           <Tooltip content={<CustomTooltip />} />

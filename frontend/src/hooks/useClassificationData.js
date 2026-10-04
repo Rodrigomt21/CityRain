@@ -4,10 +4,11 @@ import { getCategory, CATEGORIES, getMostSevereCategory } from '../lib/categorie
 
 function initialIntensity() {
   const r = Math.random()
-  if (r < 0.45) return Math.random() * 0.09
-  if (r < 0.70) return 0.1 + Math.random() * 4.8
-  if (r < 0.88) return 5 + Math.random() * 18
-  return 25 + Math.random() * 12
+  // simulação: mesmas proporções de antes, nos limiares 2,5/10 mm/h
+  if (r < 0.45) return 0
+  if (r < 0.70) return 0.1 + Math.random() * 2.3
+  if (r < 0.88) return 2.6 + Math.random() * 7.3
+  return 10.5 + Math.random() * 15
 }
 
 export function useClassificationData() {

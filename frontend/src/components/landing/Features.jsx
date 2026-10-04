@@ -58,10 +58,10 @@ const STEPS = [
 ]
 
 const CATEGORIES = [
-  { key: 'Seco',     range: '< 0.1 mm/h',  color: '#22c55e', desc: 'Sem precipitação detectada. Condições normais de operação.' },
-  { key: 'Garoa',    range: '0.1 – 5 mm/h', color: '#67e8f9', desc: 'Precipitação leve. Monitoramento contínuo recomendado.' },
-  { key: 'Moderada', range: '5 – 25 mm/h',  color: '#fb923c', desc: 'Chuva moderada. Atenção a pontos de alagamento conhecidos.' },
-  { key: 'Forte',    range: '> 25 mm/h',    color: '#ef4444', desc: 'Chuva intensa. Acionar protocolo de emergência imediatamente.' },
+  { key: 'Seco',     range: '0 mm/h',      color: '#22c55e', desc: 'Sem precipitação detectada. Condições normais de operação.' },
+  { key: 'Garoa',    range: '0 – 2,5 mm/h', color: '#67e8f9', desc: 'Precipitação leve. Monitoramento contínuo recomendado.' },
+  { key: 'Moderada', range: '2,5 – 10 mm/h', color: '#fb923c', desc: 'Chuva moderada. Atenção a pontos de alagamento conhecidos.' },
+  { key: 'Forte',    range: '> 10 mm/h',    color: '#ef4444', desc: 'Chuva intensa. Acionar protocolo de emergência imediatamente.' },
 ]
 
 export default function Features() {
