@@ -1,0 +1,44 @@
+# CV por evento do irCNN com o sintético forte v2 (película/borrão). Igual ao treino_intensidade_cv_mnv3 fora o splits_csv.
+# mais eventos do irCNN no treino. Dataset: ml/data/splits/intensidade_v1.csv (spec D3).
+# Rodar: ml/.venv/bin/python ml/scripts/treino/treinar_intensidade.py ml/configs/treino_intensidade_cv_mnv3.yaml --cv
+nome: intensidade_cv_v2_mnv3
+seed: 42
+
+dados:
+  splits_csv: ml/data/splits/intensidade_v2.csv
+  origens_treino: [real, sintetico]
+  # Folds declarados, nunca sorteados: 3 eventos por fold, misturando dia/noite e com
+  # garoa (eventos 3, 8, 9, 10, 12) espalhada. No fold k: folds[k] = teste,
+  # folds[k+1][0] = val, o resto = treino. Ver eventos_ircnn() em training/intensidade.py.
+  ircnn_cv:
+    fold: 0
+    max_por_evento: 200
+    folds:
+      - [ircnn__event_2, ircnn__event_7, ircnn__event_8]    # dia, noite, noite (garoa)
+      - [ircnn__event_6, ircnn__event_9, ircnn__event_4]    # dia, noite (garoa), dia
+      - [ircnn__event_3, ircnn__event_10, ircnn__event_1]   # dia (garoa), noite (garoa), dia
+      - [ircnn__event_5, ircnn__event_11, ircnn__event_12]  # dia, noite, noite (garoa)
+
+entrada:            # 4:3, igual ao frame da câmera (640x480)
+  altura: 288
+  largura: 384
+
+modelo:
+  arquitetura: mobilenet_v3_large
+  pretreinado: true
+
+aumentacao:
+  flip_horizontal: true
+  recorte_escala_min: 0.85
+  brilho_contraste: 0.2
+  jpeg_qualidade_min: 60   # recomprime tudo: tira o atalho da dupla compressão do sintético
+
+treino:
+  dispositivo: auto
+  epocas: 12
+  batch: 32
+  lr: 0.0005
+  weight_decay: 0.0001
+  label_smoothing: 0.1
+  paciencia: 5
+  workers: 4

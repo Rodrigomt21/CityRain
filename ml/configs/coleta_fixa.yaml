@@ -1,0 +1,28 @@
+# Fontes do coletor de câmeras fixas (ml/scripts/coleta_fixa/coletor.py).
+# Lives verificadas no ar em 04/10/2026 via yt-dlp. Lat/lon são APROXIMADOS pelo
+# local declarado no título (marco/bairro) — conferir na própria imagem antes de
+# usar o rótulo: a rotulagem só aceita estação a poucos km.
+#
+# Para pluviômetro fora da capital é preciso acrescentar as estações CEMADEN da
+# cidade em ml/scripts/estacoes/baixar_cemaden_ped.py (hoje só tem SP capital).
+destino: ml/data/raw/coleta_fixa
+intervalo_s: 60
+
+fontes:
+  # --- capital (estações já cadastradas) ---
+  - {id: sp_centro_geolan, tipo: youtube, url: "https://www.youtube.com/watch?v=dJN7snkYg-I", lat: -23.5465, lon: -46.6340, descricao: "Geolan — Centro de SP"}
+  # --- Baixada Santista / litoral SP (CEMADEN tem rede densa lá) ---
+  - {id: santos_gonzaga, tipo: youtube, url: "https://www.youtube.com/watch?v=mCnJ9gR5Dn0", lat: -23.9680, lon: -46.3340, descricao: "Olhar 013 — Gonzaga/Canal 2, Santos"}
+  - {id: praiagrande_boqueirao, tipo: youtube, url: "https://www.youtube.com/watch?v=8eHa1bfLSTI", lat: -24.0060, lon: -46.4120, descricao: "Praia Grande — Boqueirão/Guilhermina"}
+  - {id: praiagrande_tupi, tipo: youtube, url: "https://www.youtube.com/watch?v=J_ne7psSqBk", lat: -24.0340, lon: -46.5050, descricao: "Praia Grande — Tupi"}
+  - {id: guaruja_enseada, tipo: youtube, url: "https://www.youtube.com/watch?v=v5Y6WsD577M", lat: -23.9890, lon: -46.2240, descricao: "Guarujá — Enseada, posto 11"}
+  - {id: ubatuba_tenorio, tipo: youtube, url: "https://www.youtube.com/watch?v=CJGzm3qjFUk", lat: -23.4590, lon: -45.0570, descricao: "UBACAM — Tenório, Ubatuba"}
+  # --- outros estados (chuva forte de verão frequente) ---
+  - {id: bc_atlantica, tipo: youtube, url: "https://www.youtube.com/watch?v=5Xl6pSgiy3A", lat: -26.9930, lon: -48.6330, descricao: "CLIMA BC — Av. Atlântica, Balneário Camboriú"}
+  - {id: rio_copacabana_p6, tipo: youtube, url: "https://www.youtube.com/watch?v=Bz9Hkrk1NcY", lat: -22.9850, lon: -43.1890, descricao: "Homes in Rio — Copacabana, posto 6"}
+
+  # --- dispositivos da equipe (ativar quando estiverem na janela) ---
+  # Celular velho com o app "IP Webcam" (Android) apontado para a rua:
+  - {id: casa_rodrigo_celular, tipo: snapshot, url: "http://192.168.0.50:8080/shot.jpg", lat: 0.0, lon: 0.0, ativa: false}
+  # Webcam do notebook / USB:
+  - {id: notebook_webcam, tipo: camera, indice: 0, lat: 0.0, lon: 0.0, ativa: false}
