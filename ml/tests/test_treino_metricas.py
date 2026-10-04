@@ -89,3 +89,16 @@ def test_aumentacao_deterministica_por_seed(tmp_path):
     a = np.asarray(aumentar(img, random.Random(7), cfg))
     b = np.asarray(aumentar(img, random.Random(7), cfg))
     assert np.array_equal(a, b)
+
+
+def test_subamostragem_por_classe_preserva_classe_rara():
+    pytest.importorskip("torch")
+    from cityrain_ml.training.intensidade import subamostrar_por_evento
+
+    linhas = [{"evento_id": "e1", "classe": "forte", "caminho": f"x/t{i}.jpg"} for i in range(1000)]
+    linhas += [{"evento_id": "e1", "classe": "garoa", "caminho": f"x/t{1000 + i}.jpg"} for i in range(30)]
+    so_evento = subamostrar_por_evento(linhas, 100)
+    por_classe = subamostrar_por_evento(linhas, 100, por_classe=True)
+    assert len(so_evento) == 100 and sum(r["classe"] == "garoa" for r in so_evento) <= 4
+    assert sum(r["classe"] == "garoa" for r in por_classe) == 30
+    assert sum(r["classe"] == "forte" for r in por_classe) == 100

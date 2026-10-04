@@ -114,11 +114,17 @@ def eventos_ircnn(cfg: dict) -> dict[str, set[str]]:
     return {"train": train, "val": val, "test": test}
 
 
-def subamostrar_por_evento(linhas: list[dict], maximo: int) -> list[dict]:
-    """Até ``maximo`` frames por evento, igualmente espaçados na ordem do caminho (tempo)."""
+def subamostrar_por_evento(linhas: list[dict], maximo: int, por_classe: bool = False) -> list[dict]:
+    """Até ``maximo`` frames por evento, igualmente espaçados na ordem do caminho (tempo).
+
+    Com ``por_classe`` o teto vale por (evento, classe): a garoa do irCNN (~3% dos
+    frames, concentrada no começo/fim dos eventos) deixa de sumir na amostragem.
+    Sem isso o modelo aprendeu "cara de irCNN => não é garoa" (CV v1: F1 garoa 0,02).
+    """
     por_ev: dict[str, list[dict]] = {}
     for r in linhas:
-        por_ev.setdefault(r["evento_id"], []).append(r)
+        chave = f"{r['evento_id']}|{r['classe']}" if por_classe else r["evento_id"]
+        por_ev.setdefault(chave, []).append(r)
     saida = []
     for ev in sorted(por_ev):
         rs = sorted(por_ev[ev], key=lambda r: _tempo_ircnn(r["caminho"]))
@@ -143,8 +149,9 @@ def montar_particoes(cfg: dict, csv_path: Path) -> tuple[list[dict], list[dict]]
     if papeis["train"] or papeis["val"]:
         ir = [r for r in ler_split(csv_path, {"test_ircnn"}) if r["classe"] in CLASSES]
         maximo = cfg["dados"]["ircnn_cv"].get("max_por_evento", 200)
-        lin_tr += subamostrar_por_evento([r for r in ir if r["evento_id"] in papeis["train"]], maximo)
-        lin_va += subamostrar_por_evento([r for r in ir if r["evento_id"] in papeis["val"]], maximo)
+        por_classe = cfg["dados"]["ircnn_cv"].get("amostrar_por_classe", False)
+        lin_tr += subamostrar_por_evento([r for r in ir if r["evento_id"] in papeis["train"]], maximo, por_classe)
+        lin_va += subamostrar_por_evento([r for r in ir if r["evento_id"] in papeis["val"]], maximo, por_classe)
     return lin_tr, lin_va
 
 
