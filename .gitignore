@@ -122,3 +122,6 @@ docs/**/_build/
 # devolve uma vez, no POST /api/v1/devices/). O schema fica versionado no
 # cityrain_config.example.json ao lado.
 ml/scripts/captura/cityrain_config.json
+
+# Painéis e amostras de revisão visual (gerados, pesados)
+ml/data/review/
