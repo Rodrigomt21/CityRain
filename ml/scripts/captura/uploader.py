@@ -4,9 +4,12 @@ uploader.py — Envia pares frame+metadado (gerados pelo captura.py) ao backend
 do CityRain, com fila local e retry.
 
 A fila é o próprio diretório ~/frames: cada par (frame_X.jpg, frame_X.json)
-completo é candidato a upload. Só é apagado do disco depois de confirmação
-HTTP 2xx do backend — enquanto isso não acontece, o dado de campo continua
-seguro localmente, mesmo sem rede.
+completo é candidato a upload. Só sai da fila depois de confirmação HTTP 2xx
+do backend — enquanto isso não acontece, o dado de campo continua seguro
+localmente, mesmo sem rede. Com `modo_coleta: true` no config, o par
+confirmado é preservado em frames/enviados/AAAAMMDD/ em vez de apagado — a
+Jetson é o único lugar onde o frame existe até uma cópia confirmada pro PC
+do Rodrigo (ver J3 da spec).
 
 Rodar como serviço (uploader.service) ou manualmente: python3 uploader.py
 Encerrar (modo manual): Ctrl+C
@@ -14,9 +17,11 @@ Encerrar (modo manual): Ctrl+C
 
 import json
 import os
+import re
 import socket
 import subprocess
 import time
+from datetime import datetime, timezone
 
 import requests
 
@@ -26,6 +31,14 @@ FRAMES_DIR = "/home/jetson/frames"
 CONFIG_PATH = "/home/jetson/scripts/cityrain_config.json"
 PASTA_SEM_CHUVA_PENDENTE_PADRAO = "/home/jetson/frames/sem_chuva_pendente"
 PASTA_ERRO_GATE_PADRAO = "/home/jetson/frames/erro_gate"
+PASTA_PAR_INVALIDO_PADRAO = "/home/jetson/frames/par_invalido"
+PASTA_ENVIADOS_PADRAO = "/home/jetson/frames/enviados"
+AUDITORIA_INVALIDOS = "par_invalido.csv"  # dentro da pasta de quarentena
+
+# Mesmo contrato de nome que pares_pendentes() já assume pra ordenação
+# lexicográfica ser cronológica (frame_AAAAMMDD_HHMMSS_mmm) — reaproveitado
+# aqui pra extrair a data de CAPTURA do frame, ver data_sessao().
+PADRAO_NOME_FRAME = re.compile(r"^frame_(\d{8})_\d{6}_\d{3}\.")
 
 CICLO_OCIOSO_S = 5       # sem nada na fila, espera isso antes de checar de novo
 BACKOFF_INICIAL_S = 5
@@ -44,6 +57,12 @@ def carrega_config():
     config.setdefault("limiar_chuva", 0.5)
     config.setdefault("pasta_sem_chuva_pendente", PASTA_SEM_CHUVA_PENDENTE_PADRAO)
     config.setdefault("pasta_erro_gate", PASTA_ERRO_GATE_PADRAO)
+    config.setdefault("pasta_par_invalido", PASTA_PAR_INVALIDO_PADRAO)
+    config.setdefault("pasta_enviados", PASTA_ENVIADOS_PADRAO)
+    # Padrão False preserva o comportamento histórico (apaga após 2xx). Ligar
+    # em sessão de coleta: a Jetson é o único lugar onde o frame de campo
+    # existe até uma cópia confirmada pro PC do Rodrigo (ver J3 da spec).
+    config.setdefault("modo_coleta", False)
     return config
 
 
@@ -58,6 +77,57 @@ def salva_metadado(caminho_json, metadado):
     with open(tmp_path, "w") as f:
         json.dump(metadado, f)
     os.replace(tmp_path, caminho_json)
+
+
+def par_invalido(caminho_jpg, caminho_json):
+    """Motivo (str) se o par não é utilizável, ou None se está íntegro.
+
+    Existe porque corte de energia em campo produz pares com nome final e
+    conteúdo vazio: o nome vai pro journal do ext4 na hora, os dados ficam em
+    página suja e se perdem. Medido em 2026-09-28: 63 pares assim numa única
+    sessão. Um json de 0 byte fazia `json.load` levantar JSONDecodeError fora
+    de qualquer try, o processo morria, `Restart=always` reiniciava e
+    `pares_pendentes()` devolvia o MESMO par primeiro — fila travada pra
+    sempre. Nenhum retry conserta um jpg vazio, então o par tem de sair da
+    frente da fila em vez de ser retentado.
+    """
+    try:
+        if os.path.getsize(caminho_jpg) == 0:
+            return "jpg de 0 byte"
+        if os.path.getsize(caminho_json) == 0:
+            return "json de 0 byte"
+        with open(caminho_jpg, "rb") as f:
+            if f.read(3) != b"\xff\xd8\xff":
+                return "jpg sem magic bytes de JPEG"
+        with open(caminho_json) as f:
+            json.load(f)
+    except (ValueError, OSError) as e:
+        return "ilegivel: {}".format(e)
+    return None
+
+
+def move_para_par_invalido(caminho_jpg, caminho_json, motivo, config):
+    """Isola o par corrompido e registra o motivo, para que a taxa de perda de
+    uma sessão seja auditável (ver verifica_teste_campo.py). Nada é apagado: o
+    par inválido é a evidência de que houve corte de energia naquele instante.
+    """
+    pasta = config.get("pasta_par_invalido", PASTA_PAR_INVALIDO_PADRAO)
+    os.makedirs(pasta, exist_ok=True)
+    registro = os.path.join(pasta, AUDITORIA_INVALIDOS)
+    novo = not os.path.exists(registro)
+    with open(registro, "a") as f:
+        if novo:
+            f.write("detectado_em_utc,arquivo,motivo\n")
+        f.write("{},{},{}\n".format(
+            datetime.now(timezone.utc).isoformat(),
+            os.path.basename(caminho_jpg),
+            motivo.replace(",", ";"),
+        ))
+    for origem in (caminho_jpg, caminho_json):
+        try:
+            os.replace(origem, os.path.join(pasta, os.path.basename(origem)))
+        except FileNotFoundError:
+            pass
 
 
 def pares_pendentes():
@@ -216,7 +286,84 @@ def envia_par(caminho_jpg, metadado, config):
         )
 
 
-def apaga_par(caminho_jpg, caminho_json):
+def data_sessao(caminho_jpg):
+    """Data (AAAAMMDD) da sessão de CAPTURA do frame, extraída do nome do
+    arquivo — não a data de hoje.
+
+    A subpasta de frames/enviados/ existe pra separar sessões de coleta (ver
+    move_para_enviados), e uma sessão é definida por quando o frame foi
+    capturado, não por quando a fila conseguiu drenar. Um par capturado em
+    23/09 mas só enviado hoje (rede caiu, backoff, o que for) tem de cair em
+    enviados/20260923/, senão sessões de campo distintas se misturam numa
+    pasta só — o que anula o propósito da subpasta.
+
+    pares_pendentes() já assume esse mesmo formato de nome
+    (frame_AAAAMMDD_HHMMSS_mmm) pra ordenação cronológica funcionar, então
+    depender dele aqui não é uma fragilidade nova.
+
+    Se o nome não casar com o padrão (premissa do módulo mudou — frame
+    legado, renomeado manualmente etc.), cai pra data de hoje e avisa: uma
+    data errada e silenciosa esconderia sessões misturadas sem ninguém notar.
+    """
+    nome = os.path.basename(caminho_jpg)
+    match = PADRAO_NOME_FRAME.match(nome)
+    if match:
+        return match.group(1)
+    hoje = datetime.now().strftime("%Y%m%d")
+    print(
+        f"[uploader] nome fora do padrão frame_AAAAMMDD_HHMMSS_mmm ({nome}) — "
+        f"não dá pra saber a data de captura, usando a data de hoje "
+        f"({hoje}) pra frames/enviados/; confirme se o formato do nome mudou"
+    )
+    return hoje
+
+
+def move_para_enviados(caminho_jpg, caminho_json, config):
+    """Preserva o par já confirmado pelo backend, em vez de apagar (J3).
+
+    Um 2xx do backend não é garantia de durabilidade do lado de lá: o
+    payload pode ter schema errado e ser aceito mesmo assim, ou o backend
+    pode perder o dado depois. Enquanto a cópia pro PC do Rodrigo não é
+    feita e confirmada, a Jetson continua sendo o único lugar onde o frame
+    de campo existe — apagar aqui é apagar de vez.
+
+    Subpasta por dia de CAPTURA (AAAAMMDD, ver data_sessao) porque a cópia
+    pro PC do Rodrigo é feita por sessão de coleta, e uma pasta única com
+    dezenas de milhares de arquivos de sessões diferentes misturadas é
+    hostil pra rsync e pra inspeção manual.
+    """
+    pasta_base = config.get("pasta_enviados", PASTA_ENVIADOS_PADRAO)
+    pasta = os.path.join(pasta_base, data_sessao(caminho_jpg))
+    os.makedirs(pasta, exist_ok=True)
+    for origem in (caminho_jpg, caminho_json):
+        try:
+            os.replace(origem, os.path.join(pasta, os.path.basename(origem)))
+        except FileNotFoundError:
+            pass
+
+
+def mensagem_modo(config):
+    """Mensagem de log do regime de retenção em vigor nesta sessão.
+
+    Existe como função separada (em vez de só um print solto no main) pra
+    o journal registrar inequivocamente, sem ambiguidade, se a sessão
+    rodou apagando pares após 2xx ou preservando-os em frames/enviados/ —
+    e pra isso ser testável sem precisar rodar o loop principal.
+    """
+    if config.get("modo_coleta", False):
+        return (
+            "[uploader] modo_coleta=true — pares confirmados vão para "
+            "frames/enviados/AAAAMMDD/, nada é apagado nesta sessão"
+        )
+    return "[uploader] modo_coleta=false — pares são apagados após 2xx (padrão)"
+
+
+def apaga_par(caminho_jpg, caminho_json, config):
+    """Remove o par após 2xx — a menos que `modo_coleta` esteja ativo, caso
+    em que o par é preservado em frames/enviados/ (ver move_para_enviados)."""
+    if config.get("modo_coleta", False):
+        move_para_enviados(caminho_jpg, caminho_json, config)
+        return
     for caminho in (caminho_jpg, caminho_json):
         try:
             os.remove(caminho)
@@ -226,6 +373,7 @@ def apaga_par(caminho_jpg, caminho_json):
 
 def main():
     config = carrega_config()
+    print(mensagem_modo(config))
     backoff = BACKOFF_INICIAL_S
 
     while True:
@@ -241,7 +389,24 @@ def main():
 
         deu_erro = False
         for caminho_jpg, caminho_json in lote:
-            metadado = carrega_metadado(caminho_json)
+            motivo = par_invalido(caminho_jpg, caminho_json)
+            if motivo:
+                print(
+                    f"[uploader] par inválido ({motivo}): {caminho_jpg} — "
+                    f"movendo pra quarentena, sem retry"
+                )
+                move_para_par_invalido(caminho_jpg, caminho_json, motivo, config)
+                continue
+
+            # Defesa em profundidade: o par pode ser corrompido entre a
+            # validação acima e esta leitura. Nunca deixar essa leitura
+            # derrubar o processo — foi exatamente esse o bug do crash-loop.
+            try:
+                metadado = carrega_metadado(caminho_json)
+            except (ValueError, OSError) as e:
+                print(f"[uploader] metadado ilegível em {caminho_json}: {e}")
+                move_para_par_invalido(caminho_jpg, caminho_json, f"ilegivel: {e}", config)
+                continue
 
             if metadado.get("tentativas_gate", 0) >= TENTATIVAS_GATE_MAX:
                 print(
@@ -270,7 +435,7 @@ def main():
                 break
 
             if 200 <= resposta.status_code < 300:
-                apaga_par(caminho_jpg, caminho_json)
+                apaga_par(caminho_jpg, caminho_json, config)
                 backoff = BACKOFF_INICIAL_S
             elif 400 <= resposta.status_code < 500:
                 print(

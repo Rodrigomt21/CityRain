@@ -38,6 +38,8 @@ def estado_inicial():
         "satelites": None,
         "hdop": None,           # precisão horizontal (menor = melhor)
         "status_rmc": None,     # 'A' = válido, 'V' = void, segundo o RMC
+        "hora_rmc_utc": None,   # hora vinda da constelação (A1) — independe do relógio do sistema
+        "ultimo_fix_em": None,  # quando o último fix válido foi visto (A2) — mede a idade de lat/lon
         "atualizado_em": None,  # timestamp UTC (relógio do sistema) da última leitura processada
     }
 
@@ -72,19 +74,43 @@ def processa_linha(linha, estado):
     # uma sentença malformada não pode derrubar o processo inteiro.
     try:
         if isinstance(msg, pynmea2.types.talker.GGA):
+            # Converte tudo antes de tocar em `estado`: um receptor não conforme
+            # pode entregar um campo isolado em formato inesperado (checksum
+            # ainda bate, mas ex. hdop vem "ABC") — se a mutação começasse antes
+            # da conversão, essa sentença deixaria fix/satelites atualizados e
+            # lat/lon/ultimo_fix_em atrasados, um estado que nunca existiu de
+            # verdade no receptor. Ou a sentença inteira é aplicada, ou nada dela é.
             qualidade = int(msg.gps_qual) if msg.gps_qual not in (None, "") else 0
-            estado["fix"] = qualidade > 0
-            estado["satelites"] = int(msg.num_sats) if msg.num_sats not in (None, "") else 0
-            estado["hdop"] = float(msg.horizontal_dil) if msg.horizontal_dil not in (None, "") else None
-            if estado["fix"]:
-                estado["latitude"] = msg.latitude
-                estado["longitude"] = msg.longitude
-                estado["altitude_m"] = msg.altitude
+            satelites = int(msg.num_sats) if msg.num_sats not in (None, "") else 0
+            hdop = float(msg.horizontal_dil) if msg.horizontal_dil not in (None, "") else None
+            tem_fix = qualidade > 0
+            latitude = msg.latitude
+            longitude = msg.longitude
+            altitude = msg.altitude
+
+            estado["fix"] = tem_fix
+            estado["satelites"] = satelites
+            estado["hdop"] = hdop
+            if tem_fix:
+                estado["latitude"] = latitude
+                estado["longitude"] = longitude
+                estado["altitude_m"] = altitude
+                # lat/lon persistem depois que o fix cai (é útil), então sem este
+                # campo não há como saber se a posição é de 2s ou de 20min atrás.
+                estado["ultimo_fix_em"] = agora
             estado["atualizado_em"] = agora
             return True
 
         if isinstance(msg, pynmea2.types.talker.RMC):
             estado["status_rmc"] = msg.status
+            # A hora do RMC vem da constelação, não do relógio da Jetson (que não
+            # tem RTC utilizável). Guardar as duas torna o timestamp auditável: se
+            # divergirem, a sessão é descartada de forma consciente em vez de
+            # entrar no dataset silenciosamente errada — foi o que matou maio.
+            if msg.status == "A" and msg.datestamp and msg.timestamp:
+                estado["hora_rmc_utc"] = datetime.combine(
+                    msg.datestamp, msg.timestamp, tzinfo=timezone.utc
+                ).isoformat()
             estado["atualizado_em"] = agora
             return True
     except (ValueError, TypeError) as e:
