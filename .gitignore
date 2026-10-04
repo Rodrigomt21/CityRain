@@ -71,6 +71,8 @@ ml/checkpoints/**
 *.pt
 *.pth
 *.onnx
+# exceção: o modelo de intensidade em produção vai no repo (o Railway builda do Git)
+!backend/app/inference/modelos/*.onnx
 *.engine
 *.tflite
 *.h5

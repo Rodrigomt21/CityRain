@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     # validator, que decide se é JSON ou CSV.
     cors_origins: Annotated[List[str], NoDecode] = [
         "http://localhost:3000",
+        "http://localhost:5173",  # Vite (frontend/) em desenvolvimento
         "http://localhost:8501",
     ]
     max_upload_size_mb: int = 50
@@ -38,6 +39,8 @@ class Settings(BaseSettings):
     admin_key: str = ""
     host: str = "0.0.0.0"
     port: int = 8000
+    # Caminho do .onnx de intensidade; vazio = app/inference/modelos/intensidade.onnx
+    inference_model_path: str = ""
 
     @field_validator("cors_origins", mode="before")
     @classmethod
