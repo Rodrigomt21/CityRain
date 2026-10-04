@@ -72,6 +72,42 @@ ESTACOES: dict[str, tuple[str, float, float]] = {
     "354880701A": ("Centro (S.Caetano)", -23.609, -46.573),
 }
 
+# Pluviômetros a <= 5 km das câmeras fixas de ml/configs/coleta_fixa.yaml (feed
+# resources.cemaden.gov.br/dados/311_24.json, consultado em 04/10/2026).
+ESTACOES_COLETA_FIXA: dict[str, tuple[str, float, float]] = {
+    # santos_gonzaga (coleta fixa, <= 5 km)
+    "354850005A": ("Vila Mathias (Santos)", -23.94200, -46.33100),
+    "354850010A": ("Estuario (Santos)", -23.96700, -46.30500),
+    "354850012A": ("Nova Cintra (Santos)", -23.94700, -46.35600),
+    "354850013A": ("Morro de São Bento (Santos)", -23.93500, -46.34100),
+    "354850008A": ("Ponta da Praia (Santos)", -23.98100, -46.30000),
+    "354850011A": ("Saboó (Santos)", -23.93040, -46.34490),
+    "354850006A": ("Chico de Paula (Santos)", -23.93100, -46.36000),
+    # praiagrande_boqueirao (coleta fixa, <= 5 km)
+    "354100002A": ("Portinho (Praia Grande)", -23.98791, -46.40595),
+    "355100904A": ("Parque Prainha (São Vicente)", -23.97899, -46.38380),
+    # guaruja_enseada (coleta fixa, <= 5 km)
+    "351870111A": ("Enseada (Guarujá)", -23.97700, -46.22200),
+    "351870120A": ("Jardim São Miguel (Guarujá)", -23.98200, -46.24700),
+    "351870114A": ("Balneário Pernambuco (Guarujá)", -23.97000, -46.19100),
+    "351870113A": ("Santo Antonio (Guarujá)", -23.99000, -46.26500),
+    "351870119A": ("Cachoeira (Guarujá)", -23.98300, -46.26600),
+    "351870107A": ("Morrinhos (Guarujá)", -23.96800, -46.26000),
+    # ubatuba_tenorio (coleta fixa, <= 5 km)
+    "355540601A": ("Tenório (Ubatuba)", -23.46500, -45.06000),
+    "355540606A": ("Estufa II (Ubatuba)", -23.45200, -45.07900),
+    "355540622A": ("Centro 2 (Ubatuba)", -23.44000, -45.08200),
+    "355540616A": ("Centro (Ubatuba)", -23.43400, -45.07700),
+    "355540613A": ("Perequê-Açu (Ubatuba)", -23.42604, -45.06628),
+    # bc_atlantica (coleta fixa, <= 5 km)
+    "420200801A": ("Nações (Balneário Camboriú)", -26.98600, -48.64300),
+    "420320402A": ("Monte Alegre (Camboriú)", -27.00200, -48.66500),
+    "420200802A": ("Barra (Balneário Camboriú)", -27.00700, -48.59600),
+    "420820303A": ("Praia Brava (Itajaí)", -26.95600, -48.64400),
+    "420320405A": ("Rio Pequeno (Camboriú)", -27.03100, -48.64100),
+}
+ESTACOES.update(ESTACOES_COLETA_FIXA)
+
 
 def carregar_credenciais() -> tuple[str, str]:
     """Lê CEMADEN_EMAIL/CEMADEN_SENHA do ambiente ou de um .env.
