@@ -103,6 +103,11 @@ def eventos_ircnn(cfg: dict) -> dict[str, set[str]]:
     if not cv:
         return {"train": set(), "val": set(), "test": None}  # None = todos
     folds, k = cv["folds"], cv["fold"]
+    if k == "final":
+        # modelo de produção: todos os eventos no treino, menos 1 de val para
+        # escolher a época. Sem teste no irCNN — a nota dele é a média da CV.
+        val = {folds[0][0]}
+        return {"train": {e for f in folds for e in f} - val, "val": val, "test": set()}
     test = set(folds[k])
     val = {folds[(k + 1) % len(folds)][0]}
     train = {e for f in folds for e in f} - test - val
@@ -336,7 +341,7 @@ def _gravar_predicoes(path: Path, linhas: list[dict], probs: np.ndarray) -> None
             wr.writerow([r["caminho"], r["classe"], r["mm_h"], r["evento_id"], CLASSES[int(p.argmax())], *[f"{v:.4f}" for v in p], f"{s:.4f}"])
 
 
-def executar(config_path: Path, raiz: Path, so_avaliar: Path | None = None, fold: int | None = None) -> Path:
+def executar(config_path: Path, raiz: Path, so_avaliar: Path | None = None, fold: int | str | None = None) -> Path:
     cfg = yaml.safe_load(Path(config_path).read_text())
     if fold is not None:
         cfg["dados"]["ircnn_cv"]["fold"] = fold

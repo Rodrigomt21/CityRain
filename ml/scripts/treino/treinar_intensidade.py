@@ -5,6 +5,7 @@ Uso:
     ml/.venv/bin/python ml/scripts/treino/treinar_intensidade.py ml/configs/treino_intensidade_v1_mnv3.yaml
     ml/.venv/bin/python ml/scripts/treino/treinar_intensidade.py <config> --avaliar ml/runs/<run>/melhor.pt
     # validação cruzada por evento do irCNN (config com dados.ircnn_cv):
+    ml/.venv/bin/python ml/scripts/treino/treinar_intensidade.py <config_cv> --fold final   # modelo de produção
     ml/.venv/bin/python ml/scripts/treino/treinar_intensidade.py ml/configs/treino_intensidade_cv_mnv3.yaml --cv
 
 Saída em ``ml/runs/<nome>__<timestamp>/`` (gitignored): config, histórico,
@@ -44,13 +45,14 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("config", type=Path)
     ap.add_argument("--avaliar", type=Path, help="só avalia este checkpoint (não treina)")
-    ap.add_argument("--fold", type=int, help="roda só este fold do ircnn_cv")
+    ap.add_argument("--fold", help="roda só este fold do ircnn_cv (número) ou 'final' (todos os eventos no treino)")
     ap.add_argument("--cv", action="store_true", help="roda todos os folds do ircnn_cv e agrega")
     args = ap.parse_args()
     config = args.config.resolve()
 
     if not args.cv:
-        saida = executar(config, RAIZ, args.avaliar.resolve() if args.avaliar else None, args.fold)
+        fold = args.fold if args.fold in (None, "final") else int(args.fold)
+        saida = executar(config, RAIZ, args.avaliar.resolve() if args.avaliar else None, fold)
         _imprimir(saida)
         return
 
