@@ -124,6 +124,10 @@ def config_padrao() -> dict[str, Any]:
             "escurecimento_extra": 0.04,
             "pelicula_area_extra": 0.05,
             "pelicula_desfoque_extra": -0.4,
+            "pelicula_distorcao_extra": 0.0,  # px a mais de distorção da película (v2)
+            # véu: perda de contraste global, inclusive perto da câmera (água espalhada
+            # no vidro + spray). A névoa por profundidade não cobre o primeiro plano. 0 = v1.
+            "veu": 0.0,
             "gotas_grandes_mpx": 340.0,  # gotas grandes/borradas por Mpx (a 1.0)
             "raio_grande_mediana_px": 5.5,
             "raio_grande_sigma": 0.35,
@@ -442,6 +446,9 @@ def _camada_nevoa(
     # chuva forte real é mais cinza: dessatura para a média dos canais (mantém o brilho médio)
     cinza = saida.mean(axis=2, keepdims=True)
     saida = saida + fo["dessaturacao"] * s * (cinza - saida)
+    if fo.get("veu", 0.0) > 0:
+        media = saida.reshape(-1, 3).mean(axis=0)
+        saida = saida + fo["veu"] * s * (media[None, None, :] - saida)
     saida = img + prot[..., None] * (saida - img)
     t_hor = float(np.exp(-delta_km * cal["d_max_m"] / 1000.0))
     return saida, {
@@ -514,7 +521,7 @@ def _camada_pelicula(
     m = np.clip((campo - limiar) / 0.6 + 0.5, 0.0, 1.0)
     m = cv2.GaussianBlur(m, (0, 0), 6.0 * escala) * prot
     # distorção: deslocamento de baixa frequência (a água curva a luz)
-    amp = cfg["distorcao_px"] * escala
+    amp = (cfg["distorcao_px"] + fo.get("pelicula_distorcao_extra", 0.0) * s) * escala
     gx = _ruido_baixa_freq(h, w, cfg["distorcao_escala_px"] * escala, rng) * amp
     gy = _ruido_baixa_freq(h, w, cfg["distorcao_escala_px"] * escala, rng) * amp
     xx, yy = np.meshgrid(np.arange(w, dtype=np.float32), np.arange(h, dtype=np.float32))
