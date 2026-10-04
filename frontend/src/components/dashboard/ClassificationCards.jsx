@@ -41,8 +41,9 @@ function formatTime(date) {
   })
 }
 
-export default function ClassificationCards({ categoryCounts, mostSevereCategory, totalOnline, lastUpdate }) {
+export default function ClassificationCards({ categoryCounts, mostSevereCategory, totalOnline, lastUpdate, aoVivo = true }) {
   const cats = Object.values(CATEGORIES)
+  const corSelo = aoVivo ? '#22c55e' : '#fb923c'
 
   return (
     <div
@@ -73,13 +74,13 @@ export default function ClassificationCards({ categoryCounts, mostSevereCategory
         <span
           className="flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded shrink-0"
           style={{
-            color: '#22c55e',
-            background: '#22c55e1a',
-            border: '1px solid #22c55e33',
+            color: corSelo,
+            background: `${corSelo}1a`,
+            border: `1px solid ${corSelo}33`,
           }}
         >
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#22c55e' }} />
-          AO VIVO
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: corSelo }} />
+          {aoVivo ? 'AO VIVO' : 'SIMULAÇÃO'}
         </span>
       </div>
 

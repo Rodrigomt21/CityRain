@@ -58,6 +58,7 @@ export default function Dashboard() {
               mostSevereCategory={mostSevereCategory}
               totalOnline={totalOnline}
               lastUpdate={lastUpdate}
+              aoVivo={live.ativo}
             />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>

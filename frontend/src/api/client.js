@@ -1,5 +1,6 @@
 // Cliente HTTP para o backend FastAPI (ml/backend/CLAUDE.md > Stack de Backend)
-export const BASE_URL = 'https://api-production-046f.up.railway.app'
+// VITE_API_URL aponta o dashboard para outra API (ex.: backend local em testes ponta a ponta)
+export const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://api-production-046f.up.railway.app'
 
 export async function apiGet(path) {
   const res = await fetch(`${BASE_URL}${path}`)

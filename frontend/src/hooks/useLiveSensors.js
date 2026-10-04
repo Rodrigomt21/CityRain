@@ -41,7 +41,7 @@ export function capturasParaSensores(captures, agora = new Date()) {
  * Sensores reais a partir de GET /api/v1/captures/.
  * `ativo` é false enquanto a API não tem nenhuma captura (o Dashboard cai na simulação).
  */
-export function useLiveSensors(limit = 500) {
+export function useLiveSensors(limit = 200) { // 200 = máximo aceito por GET /captures/
   const [captures, setCaptures] = useState([])
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
