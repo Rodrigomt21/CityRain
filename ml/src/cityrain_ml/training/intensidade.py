@@ -216,6 +216,12 @@ def treinar(cfg: dict, raiz: Path, saida: Path) -> Path:
         historico.append({"epoca": ep + 1, "loss_treino": soma / n, "val_f1_macro": r_va["f1_macro"], "val_acuracia": r_va["acuracia"], "val_f1_por_dominio": f1_dom, "criterio": criterio, "s": round(time.time() - t0, 1)})
         doms = " ".join(f"{k} {v:.3f}" for k, v in f1_dom.items())
         print(f"[treino] época {ep + 1}/{epocas} loss {soma / n:.4f} | val F1 {r_va['f1_macro']:.4f} ({doms}) critério {criterio:.4f} | {time.time() - t0:.0f}s")
+        if cfg["treino"].get("sem_selecao_por_val"):
+            # modelo final: nº de épocas fixo (mediana da CV) e fica a ÚLTIMA. Com 1 só
+            # evento irCNN no val, escolher a época por ele é ruído (final v3: oscilou
+            # 0,37-0,76 e parou na época 4).
+            torch.save({"estado": modelo.state_dict(), "epoca": ep + 1, "config": cfg, "classes": list(CLASSES)}, melhor)
+            continue
         if criterio > melhor_f1:
             melhor_f1, sem_melhora = criterio, 0
             torch.save({"estado": modelo.state_dict(), "epoca": ep + 1, "config": cfg, "classes": list(CLASSES)}, melhor)
