@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -59,3 +59,21 @@ def test_falha_de_uma_fonte_nao_para_as_outras(tmp_path, monkeypatch):
     col.rodada(fontes, tmp_path, forcar=True)
     assert fontes[0].falhas == 1 and fontes[0].proxima > fontes[1].proxima
     assert len(list((tmp_path / "boa").glob("*.jpg"))) == 1
+
+
+def test_janelas_com_chuva_une_margem_e_respeita_raio_e_dvr():
+    sys.path.insert(0, str(_P.parent))
+    from recuperar_dvr import janelas_com_chuva
+
+    f = _fonte()  # -23.5, -46.6
+    perto = {"lat": "-23.51", "lon": "-46.60", "janela_min": "10"}  # ~1 km
+    longe = {"lat": "-23.70", "lon": "-46.60", "janela_min": "10"}  # ~22 km
+    L = [
+        {**perto, "ts_utc": "2026-10-04T17:10:00Z", "acumulado_mm": "1.0"},
+        {**perto, "ts_utc": "2026-10-04T17:40:00Z", "acumulado_mm": "0.4"},   # une com a anterior pela margem
+        {**perto, "ts_utc": "2026-10-04T20:00:00Z", "acumulado_mm": "0.0"},   # sem chuva: ignora
+        {**longe, "ts_utc": "2026-10-04T12:00:00Z", "acumulado_mm": "9.0"},   # fora do raio
+    ]
+    dvr0 = datetime(2026, 10, 4, 16, 50, tzinfo=timezone.utc)
+    j = janelas_com_chuva(f, L, 5.0, timedelta(minutes=15), dvr0)
+    assert j == [(dvr0, datetime(2026, 10, 4, 17, 55, tzinfo=timezone.utc))]  # corta no início do DVR
