@@ -1,10 +1,11 @@
 import { CATEGORIES } from '../../lib/categories'
 
 const DESCRIPTIONS = {
-  dry:      'Sem precipitação detectada. Condições normais de tráfego.',
-  drizzle:  'Precipitação leve. Atenção redobrada em pistas molhadas.',
-  moderate: 'Chuva moderada. Atenção a pontos de alagamento conhecidos.',
-  heavy:    'Chuva intensa. Risco elevado de alagamentos e deslizamentos.',
+  dry:        'Sem precipitação detectada. Condições normais de tráfego.',
+  drizzle:    'Precipitação leve. Atenção redobrada em pistas molhadas.',
+  moderate:   'Chuva moderada. Atenção a pontos de alagamento conhecidos.',
+  heavy:      'Chuva intensa. Risco elevado de alagamentos e deslizamentos.',
+  unmeasured: 'Nenhuma classificação disponível no momento. Não afirma chuva nem tempo seco.',
 }
 
 function CategoryIcon({ catKey, color }) {
@@ -24,6 +25,16 @@ function CategoryIcon({ catKey, color }) {
     dry:      `M ${cx} ${cy} L ${cx} ${cy - r} A ${r} ${r} 0 0 0 9.86 9.86 Z`,
     drizzle:  `M ${cx} ${cy} L ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx - r} ${cy} Z`,
     moderate: `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx - r} ${cy} A ${r} ${r} 0 0 0 ${cx} ${cy + r} Z`,
+  }
+
+  // 'unmeasured' não tem fatia: anel tracejado para não parecer uma medida.
+  if (!paths[catKey]) {
+    return (
+      <svg viewBox="0 0 48 48" width="76" height="76">
+        <circle cx={cx} cy={cy} r={r} fill={`${color}18`} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="2" strokeDasharray="4 3" />
+      </svg>
+    )
   }
 
   return (

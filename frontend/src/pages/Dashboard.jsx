@@ -42,11 +42,11 @@ export default function Dashboard() {
             </p>
           </div>
           <Link
-            to="/motoristas"
+            to="/dispositivos"
             className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
             style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}
           >
-            Motoristas →
+            Dispositivos →
           </Link>
         </div>
 

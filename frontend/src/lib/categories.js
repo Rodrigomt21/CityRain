@@ -35,12 +35,16 @@ export function categoryFromLabel(label) {
   return key ? CATEGORIES[key] : UNMEASURED
 }
 
-// Ordem de severidade decrescente — útil para ordenar alertas e status global
+// Ordem de severidade decrescente — útil para ordenar alertas e status global.
+// 'unmeasured' fica fora de propósito: não é mais nem menos grave que uma classe
+// real, é ausência de medida.
 export const SEVERITY_ORDER = ['heavy', 'moderate', 'drizzle', 'dry']
 
 export function getMostSevereCategory(categories) {
   for (const key of SEVERITY_ORDER) {
     if (categories.includes(key)) return CATEGORIES[key]
   }
-  return CATEGORIES.dry
+  // Nenhuma classe real presente: lista vazia (nada online) ou só 'unmeasured'.
+  // Mesmo princípio do UNMEASURED acima — sem medida que sustente, não afirmar "Seco".
+  return UNMEASURED
 }
