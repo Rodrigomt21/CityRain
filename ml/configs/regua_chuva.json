@@ -1,0 +1,466 @@
+{
+  "manifest_usado": {
+    "arquivo": "ml/data/manifests/manifest_imt.csv",
+    "linhas": 7413,
+    "por_evento_classe": {
+      "2026-08-04:seco": 493,
+      "2026-08-07:seco": 103,
+      "2026-09-01:garoa": 332,
+      "2026-09-13:garoa": 181
+    },
+    "sha256": "634b7b75874572e6"
+  },
+  "parametros_detector": {
+    "largura_norm": 640,
+    "excluir_base_frac": 0.15,
+    "dog_sigmas": [
+      1.0,
+      1.5,
+      2.2
+    ],
+    "dog_k": 1.6,
+    "dog_limiar": 0.012,
+    "isotropia_min": 0.5,
+    "textura_max": 0.015,
+    "isolamento_janela": 41,
+    "isolamento_razao": 3.5,
+    "raio_max_px": 4.0,
+    "horizonte_faixa": [
+      0.3,
+      0.6
+    ],
+    "ceu_saturado_gray": 225,
+    "ceu_dilatacao_px": 9,
+    "contraste_local_janela": 9,
+    "youtube_frames_por_video": 50,
+    "faixas_garoa_mm_h": [
+      0.9,
+      1.5
+    ]
+  },
+  "unidades": "frame normalizado em largura 640; ROI sem faixa inferior; gotas_mp = por megapixel da ROI",
+  "limpador_manual": {
+    "metodo": "manual, 50 frames amostrados uniformemente, inspeção visual",
+    "seco": {
+      "n": 10,
+      "com_limpador": 0
+    },
+    "garoa_01-09_0.6mm_h": {
+      "n": 10,
+      "com_limpador": 4
+    },
+    "garoa_13-09_1.2mm_h": {
+      "n": 10,
+      "com_limpador": 0
+    },
+    "chuva_2309": {
+      "n": 20,
+      "com_limpador": 8
+    }
+  },
+  "grupos": {
+    "seco_2026-08-04": {
+      "n": 493,
+      "gotas_mp": {
+        "media": 152.9843,
+        "desvio": 63.02656
+      },
+      "raio_medio_px": {
+        "media": 1.92311,
+        "desvio": 0.1828
+      },
+      "raio_p90_px": {
+        "media": 2.9117,
+        "desvio": 0.37096
+      },
+      "frac_gotas_grandes": {
+        "media": 0.20004,
+        "desvio": 0.1039
+      },
+      "contraste_rms": {
+        "media": 0.14573,
+        "desvio": 0.03486
+      },
+      "contraste_local": {
+        "media": 0.06055,
+        "desvio": 0.01238
+      },
+      "var_laplaciano": {
+        "media": 709.69275,
+        "desvio": 238.17709
+      }
+    },
+    "seco_2026-08-07": {
+      "n": 103,
+      "gotas_mp": {
+        "media": 254.35614,
+        "desvio": 194.73353
+      },
+      "raio_medio_px": {
+        "media": 2.2642,
+        "desvio": 0.27839
+      },
+      "raio_p90_px": {
+        "media": 3.06321,
+        "desvio": 0.21275
+      },
+      "frac_gotas_grandes": {
+        "media": 0.39626,
+        "desvio": 0.16946
+      },
+      "contraste_rms": {
+        "media": 0.12629,
+        "desvio": 0.04922
+      },
+      "contraste_local": {
+        "media": 0.03933,
+        "desvio": 0.01777
+      },
+      "var_laplaciano": {
+        "media": 258.71412,
+        "desvio": 127.22657
+      }
+    },
+    "garoa_mm_h_0_0.9": {
+      "n": 127,
+      "gotas_mp": {
+        "media": 224.44202,
+        "desvio": 68.05738
+      },
+      "raio_medio_px": {
+        "media": 1.94152,
+        "desvio": 0.11455
+      },
+      "raio_p90_px": {
+        "media": 3.05281,
+        "desvio": 0.22784
+      },
+      "frac_gotas_grandes": {
+        "media": 0.20447,
+        "desvio": 0.0685
+      },
+      "contraste_rms": {
+        "media": 0.14146,
+        "desvio": 0.05234
+      },
+      "contraste_local": {
+        "media": 0.02374,
+        "desvio": 0.01109
+      },
+      "var_laplaciano": {
+        "media": 210.40664,
+        "desvio": 72.80055
+      }
+    },
+    "garoa_mm_h_1.5_inf": {
+      "n": 205,
+      "gotas_mp": {
+        "media": 289.40997,
+        "desvio": 117.41878
+      },
+      "raio_medio_px": {
+        "media": 1.94578,
+        "desvio": 0.1638
+      },
+      "raio_p90_px": {
+        "media": 3.0369,
+        "desvio": 0.24875
+      },
+      "frac_gotas_grandes": {
+        "media": 0.20775,
+        "desvio": 0.08832
+      },
+      "contraste_rms": {
+        "media": 0.1634,
+        "desvio": 0.02625
+      },
+      "contraste_local": {
+        "media": 0.05507,
+        "desvio": 0.00769
+      },
+      "var_laplaciano": {
+        "media": 528.75133,
+        "desvio": 139.06702
+      }
+    },
+    "garoa_mm_h_0.9_1.5": {
+      "n": 181,
+      "gotas_mp": {
+        "media": 295.92034,
+        "desvio": 93.34714
+      },
+      "raio_medio_px": {
+        "media": 1.99435,
+        "desvio": 0.23265
+      },
+      "raio_p90_px": {
+        "media": 2.96032,
+        "desvio": 0.33665
+      },
+      "frac_gotas_grandes": {
+        "media": 0.23228,
+        "desvio": 0.13426
+      },
+      "contraste_rms": {
+        "media": 0.1667,
+        "desvio": 0.05353
+      },
+      "contraste_local": {
+        "media": 0.05294,
+        "desvio": 0.01535
+      },
+      "var_laplaciano": {
+        "media": 407.69558,
+        "desvio": 213.88248
+      }
+    },
+    "chuva_2309": {
+      "n": 242,
+      "gotas_mp": {
+        "media": 305.54965,
+        "desvio": 111.54162
+      },
+      "raio_medio_px": {
+        "media": 1.97762,
+        "desvio": 0.19031
+      },
+      "raio_p90_px": {
+        "media": 3.02373,
+        "desvio": 0.27019
+      },
+      "frac_gotas_grandes": {
+        "media": 0.22387,
+        "desvio": 0.11302
+      },
+      "contraste_rms": {
+        "media": 0.14377,
+        "desvio": 0.03278
+      },
+      "contraste_local": {
+        "media": 0.04715,
+        "desvio": 0.01051
+      },
+      "var_laplaciano": {
+        "media": 381.83895,
+        "desvio": 148.04885
+      }
+    },
+    "youtube_frames7": {
+      "n": 50,
+      "gotas_mp": {
+        "media": 244.68954,
+        "desvio": 48.13766
+      },
+      "raio_medio_px": {
+        "media": 2.43737,
+        "desvio": 0.15557
+      },
+      "raio_p90_px": {
+        "media": 3.11127,
+        "desvio": 0.0
+      },
+      "frac_gotas_grandes": {
+        "media": 0.50712,
+        "desvio": 0.10508
+      },
+      "contraste_rms": {
+        "media": 0.14995,
+        "desvio": 0.01848
+      },
+      "contraste_local": {
+        "media": 0.03189,
+        "desvio": 0.00529
+      },
+      "var_laplaciano": {
+        "media": 309.28144,
+        "desvio": 34.83294
+      }
+    },
+    "youtube_frames8": {
+      "n": 50,
+      "gotas_mp": {
+        "media": 1049.73448,
+        "desvio": 335.25223
+      },
+      "raio_medio_px": {
+        "media": 1.6898,
+        "desvio": 0.15738
+      },
+      "raio_p90_px": {
+        "media": 2.47374,
+        "desvio": 0.4644
+      },
+      "frac_gotas_grandes": {
+        "media": 0.10521,
+        "desvio": 0.09235
+      },
+      "contraste_rms": {
+        "media": 0.18987,
+        "desvio": 0.06076
+      },
+      "contraste_local": {
+        "media": 0.03657,
+        "desvio": 0.01218
+      },
+      "var_laplaciano": {
+        "media": 867.29523,
+        "desvio": 385.56462
+      }
+    },
+    "youtube_frames11": {
+      "n": 50,
+      "gotas_mp": {
+        "media": 202.88793,
+        "desvio": 80.49505
+      },
+      "raio_medio_px": {
+        "media": 2.40357,
+        "desvio": 0.17978
+      },
+      "raio_p90_px": {
+        "media": 3.11127,
+        "desvio": 0.0
+      },
+      "frac_gotas_grandes": {
+        "media": 0.46914,
+        "desvio": 0.11911
+      },
+      "contraste_rms": {
+        "media": 0.16439,
+        "desvio": 0.0363
+      },
+      "contraste_local": {
+        "media": 0.02664,
+        "desvio": 0.00959
+      },
+      "var_laplaciano": {
+        "media": 210.08818,
+        "desvio": 156.65613
+      }
+    },
+    "youtube_frames13": {
+      "n": 50,
+      "gotas_mp": {
+        "media": 297.89624,
+        "desvio": 180.64613
+      },
+      "raio_medio_px": {
+        "media": 1.96181,
+        "desvio": 0.23352
+      },
+      "raio_p90_px": {
+        "media": 3.00419,
+        "desvio": 0.30056
+      },
+      "frac_gotas_grandes": {
+        "media": 0.23527,
+        "desvio": 0.12665
+      },
+      "contraste_rms": {
+        "media": 0.17917,
+        "desvio": 0.05624
+      },
+      "contraste_local": {
+        "media": 0.03651,
+        "desvio": 0.01566
+      },
+      "var_laplaciano": {
+        "media": 256.37116,
+        "desvio": 175.64733
+      }
+    },
+    "youtube_frames14": {
+      "n": 50,
+      "gotas_mp": {
+        "media": 208.23121,
+        "desvio": 105.81707
+      },
+      "raio_medio_px": {
+        "media": 1.91946,
+        "desvio": 0.27269
+      },
+      "raio_p90_px": {
+        "media": 2.92799,
+        "desvio": 0.37613
+      },
+      "frac_gotas_grandes": {
+        "media": 0.22558,
+        "desvio": 0.16706
+      },
+      "contraste_rms": {
+        "media": 0.21043,
+        "desvio": 0.04493
+      },
+      "contraste_local": {
+        "media": 0.0584,
+        "desvio": 0.01897
+      },
+      "var_laplaciano": {
+        "media": 534.56199,
+        "desvio": 352.91204
+      }
+    },
+    "garoa_todas": {
+      "n": 513,
+      "gotas_mp": {
+        "media": 275.62332,
+        "desvio": 102.95817
+      },
+      "raio_medio_px": {
+        "media": 1.96186,
+        "desvio": 0.18343
+      },
+      "raio_p90_px": {
+        "media": 3.01382,
+        "desvio": 0.28136
+      },
+      "frac_gotas_grandes": {
+        "media": 0.21559,
+        "desvio": 0.10389
+      },
+      "contraste_rms": {
+        "media": 0.15913,
+        "desvio": 0.04549
+      },
+      "contraste_local": {
+        "media": 0.04656,
+        "desvio": 0.01759
+      },
+      "var_laplaciano": {
+        "media": 407.22917,
+        "desvio": 201.67409
+      }
+    },
+    "seco_todas": {
+      "n": 596,
+      "gotas_mp": {
+        "media": 170.50326,
+        "desvio": 106.34074
+      },
+      "raio_medio_px": {
+        "media": 1.98206,
+        "desvio": 0.24014
+      },
+      "raio_p90_px": {
+        "media": 2.93789,
+        "desvio": 0.35346
+      },
+      "frac_gotas_grandes": {
+        "media": 0.23395,
+        "desvio": 0.13927
+      },
+      "contraste_rms": {
+        "media": 0.14227,
+        "desvio": 0.03855
+      },
+      "contraste_local": {
+        "media": 0.05677,
+        "desvio": 0.01575
+      },
+      "var_laplaciano": {
+        "media": 631.75517,
+        "desvio": 280.70602
+      }
+    }
+  }
+}

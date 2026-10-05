@@ -134,7 +134,9 @@ O projeto tem dois caminhos possíveis (não mutuamente exclusivos) para estimar
 
 ## Coleta de Dados Próprios
 
-A coleta de dados próprios é **veicular**, com câmera instalada em um veículo percorrendo a Região Metropolitana de São Paulo e o ABC Paulista, e não em ponto fixo no campus. Setup:
+> **Desde 04/10/2026: qualquer dispositivo, validação no carro.** O produto aceita imagem de qualquer câmera (veicular, câmera fixa/CCTV, live pública, celular), então dados dessas fontes podem entrar no **treino**. A **validação da proposta** continua sendo a câmera veicular própria com rótulo de estação pública: é o teste principal do TCC; as outras câmeras são reportadas como domínios separados. Coleta fixa: `ml/scripts/coleta_fixa/` (`coletor.py` para lives/celular/webcam, `importar_celular.py` para fotos e vídeos com GPS), fontes em `ml/configs/coleta_fixa.yaml`.
+
+A coleta de dados próprios para validação é **veicular**, com câmera instalada em um veículo percorrendo a Região Metropolitana de São Paulo e o ABC Paulista, e não em ponto fixo no campus. Setup:
 - **Plataforma embarcada**: NVIDIA Jetson Nano com script de captura rodando no boot (`ml/scripts/captura/`) e botão físico de desligamento seguro.
 - **Câmera**: USB ou IP (720p+) montada no veículo.
 - **GPS** (em aquisição): associa cada frame à estação pública mais próxima naquele instante. Esse é o pivô do pipeline de rotulação, sem GPS funcional o alinhamento câmera ↔ estação fica inviável em deslocamento.

@@ -1,0 +1,114 @@
+# Rotulagem dos frames das câmeras fixas (lives + DVR, ml/scripts/coleta_fixa/). Mesmas regras
+# da coleta veicular (rotulagem_imt.yaml); só muda a origem dos frames e a saída.
+# Config da rotulagem frame -> classe de chuva (F1.3 do docs/plano-dataset.md).
+#
+# Associa cada frame da coleta própria (que tenha GPS fix) à estação pluviométrica
+# mais próxima, agrega a janela de tempo centrada no instante da captura, converte
+# para mm/h e aplica os limiares do plano.
+#
+# A conversão leitura -> mm/h depende da semântica da fonte. Para o CEMADEN/PED,
+# `valor` é o INCREMENTO de precipitação do intervalo de 10 min (confirmado em
+# 18/09/2026 — ver docs/fontes-estacoes.md, Adendo 2). Logo:
+#     mm_h = soma_dos_incrementos_na_janela / (n_leituras * minutos_por_leitura / 60)
+raiz_frames: ml/data/raw/coleta_fixa
+leituras_csv: ml/data/raw/estacoes/normalizado/cemaden_ped.csv
+
+# Saídas ficam em ml/data/manifests/, que NÃO é gitignorado — manifest e relatório
+# vão pro git; pixels não.
+saida_manifest: ml/data/manifests/manifest_coleta_fixa.csv
+saida_relatorio: ml/data/manifests/manifest_coleta_fixa_relatorio.json
+
+leitura:
+  # Duração do intervalo coberto por uma leitura da fonte, em minutos.
+  minutos_por_leitura: 10
+
+rotulagem:
+  # Raio máximo frame <-> estação. Acima disso o frame é excluído do manifest.
+  raio_max_km: 2.0
+  # Janela CENTRADA no instante da captura: [ts - janela_min, ts + janela_min].
+  janela_min: 15
+  # Zona morta em torno de cada limiar: frames na fronteira são descartados
+  # em vez de receberem um rótulo arbitrário. 0.15 = +-15% do valor do limiar.
+  zona_morta_frac: 0.15
+  limiares_mm_h:
+    # seco = 0 | garoa: 0 < i <= 2.5 | moderada: 2.5 < i <= 10 | forte: > 10
+    garoa_max: 2.5
+    moderada_max: 10.0
+
+  # Idade máxima aceita para a posição GPS de um frame, em segundos (J8, ver
+  # docs/specs/spec-pipeline-jetson.md). Quando o fix cai, `gps.py` mantém a
+  # última coordenada conhecida — esse valor limita há quanto tempo ela pode
+  # ser, para que ainda sirva pra casar o frame com uma estação.
+  #
+  # Derivação (física do problema: velocidade plausível x fração aceitável do
+  # raio de casamento):
+  #   velocidade_max_kmh = 60      # teto de via arterial/marginal na RMSP;
+  #                                # mais alto que os 40 km/h ilustrativos do
+  #                                # J8 de propósito — superestimar a
+  #                                # velocidade máxima é o lado conservador,
+  #                                # produz um teto de idade mais curto, não
+  #                                # mais generoso.
+  #   fracao_do_raio_aceitavel = 0.10   # mesma ordem de grandeza do
+  #                                     # zona_morta_frac (15%) já usado no
+  #                                     # projeto para incerteza nas fronteiras
+  #   idade_maxima_posicao_s = fracao_do_raio_aceitavel * raio_max_km * 1000
+  #                             / (velocidade_max_kmh / 3.6)
+  #                           = 0.10 * 2000 / 16.667 = 12.0 s
+  #
+  # Ou seja: em 12 s, a 60 km/h, o carro anda ~200 m — 10% do raio de 2 km, uma
+  # margem pequena frente às distâncias reais de casamento observadas (370-620
+  # m nas sessões rotuladas até 18/09). Configurável e sobrescrevível via
+  # --idade-maxima-posicao-s para reavaliar depois da coleta de outubro.
+  idade_maxima_posicao_s: 12.0
+
+  # Fallback quando nenhuma estação dentro de raio_max_km tem leitura: rotula o
+  # frame se TODAS as estações com leitura dentro de raio_km caírem na mesma
+  # classe (nenhuma na zona morta). Campo homogêneo => a classe no ponto do
+  # frame não depende da estação escolhida. Campo heterogêneo => exclui, nunca
+  # interpola. Motivação (30/09/2026): as duas estações CEMADEN mais próximas
+  # das rotas (Mooca, AC Almeida Lima) não devolvem dado no PED, então 04/08 e
+  # 13/09 ficavam inteiras fora do raio de 2 km com todas as estações a 3–5 km
+  # concordando. Desligável por --sem-consenso para o relatório comparativo.
+  # Confirmação regional do `seco` (30/09/2026): um frame só é `seco` se
+  # NENHUMA estação com leitura dentro do raio do consenso (raio_max_km, se o
+  # consenso estiver desligado) registrou chuva em ±janela_seco_min. Motivo:
+  # em 01/09 os 372 `seco` vinham de uma leitura de 10 min de AC Central a
+  # 1,5 km, com a estação Centro (2 km) registrando chuva no mesmo horário e as
+  # fotos mostrando pista molhada e guarda-chuvas. A báscula registra em
+  # degraus de 0,2 mm, então um zero isolado não prova ausência de chuva.
+  # Desligável por --sem-confirmacao-seco.
+  janela_seco_min: 60
+
+  consenso_regional:
+    ativo: true
+    raio_km: 5.0
+    min_estacoes: 3
+    # D2 (30/09/2026): a zona morta deixa de valer por estação e passa a valer
+    # uma vez, sobre a MEDIANA do consenso. Antes, uma estação a 2,4 mm/h
+    # (zona morta do limiar 2,5) descartava campos inteiros em que as demais
+    # liam ~1,2. As estações ainda precisam cair todas na mesma classe.
+    # Desligável por --sem-zona-morta-mediana.
+    zona_morta_na_mediana: true
+    # Zero de báscula (30/09): estação com zero em ±janela_min mas chuva em
+    # ±janela_seco_min não vota (é degrau de 0,2 mm, não seco). Só para
+    # consenso em garoa; exige ≥ 2 estações votantes. --sem-zero-de-bascula.
+    zero_de_bascula_neutro: true
+
+  # D1 (30/09/2026): `seco` para frames SEM posição GPS mas com horário (05/09,
+  # 06/08, 15/09). Rotula `seco` se >= min_estacoes estações da série têm
+  # leitura em +-janela_min e TODAS somam zero; qualquer chuva em qualquer
+  # estação mantém o frame em `sem_gps_fix`. Nunca rotula `garoa`/outras sem GPS.
+  # Desligável por --sem-consenso-metropolitano.
+  consenso_metropolitano:
+    ativo: true
+    min_estacoes: 5
+    janela_min: 60
+
+# Raios extras avaliados só para o relatório (não afetam o manifest escrito).
+# Servem para medir quanto dataset se ganha/perde ao afrouxar o raio.
+sensibilidade_raio_km: [2.0, 3.0, 5.0]
+
+# Idades máximas extras avaliadas só para o relatório (não afetam o manifest
+# escrito). Servem para medir o rendimento da recuperação de frames sem fix
+# (J8) em função do quão permissivo é o limite de idade da posição.
+sensibilidade_idade_maxima_s: [12.0, 30.0, 60.0, 90.0, 120.0]

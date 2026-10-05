@@ -8,6 +8,11 @@ aiofiles==24.1.0
 python-multipart==0.0.20
 h3==4.1.0
 
+# Inferência do modelo de intensidade (ONNX exportado pelo ml/)
+onnxruntime==1.20.1
+numpy==2.2.1
+pillow==11.1.0
+
 # Visualização
 folium==0.19.6
 

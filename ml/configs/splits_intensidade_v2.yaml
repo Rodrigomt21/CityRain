@@ -1,0 +1,48 @@
+# v2 = mesmas regras do v1, com o sintético forte v2 (configs/sintetico_v2.yaml).
+# Splits do dataset de intensidade (D3). Partições declaradas, nunca sorteadas.
+# Horários locais = UTC + utc_offset_h. Ver docs/specs/spec-dataset-balanceado.md (D3).
+utc_offset_h: -3
+imagens_dir: ml/data/processed/imt_coleta   # <pasta>/<arquivo>
+
+entradas:
+  imt: ml/data/manifests/manifest_imt.csv
+  ircnn: ml/data/manifests/manifest_ircnn.csv
+  youtube: ml/data/manifests/manifest_youtube_ordinal.csv
+  # O gerador (ml/scripts/sintetico/gerar.py) escreve manifest_sintetico.csv; coluna
+  # `arquivo` é relativa ao diretório do manifest. Opcional: se não existir, gera sem.
+  sinteticos: ml/data/synthetic/intensidade_v2/manifest_sintetico.csv
+  sinteticos_val: ml/data/synthetic/intensidade_v2_val/manifest_sintetico.csv
+
+saida:
+  intensidade: ml/data/splits/intensidade_v2.csv
+  gate: ml/data/splits/gate_v2.csv
+  resumo: ml/data/splits/intensidade_v2_resumo.json
+
+stride_s: 2   # aplicado só onde a regra tem stride: true
+
+# Regras do dataset de intensidade (só classe garoa; seco fica no gate).
+intensidade:
+  - {particao: train,    evento_id: cityrain_frames2__2026-09-01, classe: garoa, local_ate: "08:38:00", stride: true}
+  - {particao: val,      evento_id: cityrain_frames2__2026-09-01, classe: garoa, local_desde: "08:40:00", stride: false}
+  - {particao: test_real, evento_id: cityrain_frames3__2026-09-13, classe: garoa, stride: false}
+
+# 23/09: todos os frames da pasta nessa data local (inclusive sem classe), só ordenação.
+ordinal_2309:
+  particao: test_ordinal_2309
+  pasta: cityrain_frames4
+  data_local: "2026-09-23"
+  rotulo_fraco: ">=garoa"
+
+# Gate: chuva = as mesmas partições do garoa acima; seco por sessão.
+gate_seco:
+  - {particao: train, evento_id: cityrain_frames__2026-08-04,  classe: seco, stride: true}
+  - {particao: test,  evento_id: cityrain_frames2__2026-08-07, classe: seco, stride: false}  # noite de 06/08 local
+
+# Trechos com vidro protegido da chuva (viaduto, garagem): a estação diz garoa
+# para a rua, mas a imagem mostra vidro seco. Achados por inspeção visual de 1 a
+# cada 6 frames em 30/09/2026; limites com ±6 s de margem. Horário local.
+exclusoes:
+  - {evento_id: cityrain_frames2__2026-09-01, local_desde: "08:06:51", local_ate: "08:07:22", motivo: sob_viaduto}
+  - {evento_id: cityrain_frames2__2026-09-01, local_desde: "08:17:33", local_ate: "08:24:59", motivo: garagem_edificio}
+  - {evento_id: cityrain_frames2__2026-09-01, local_desde: "08:50:08", local_ate: "23:59:59", motivo: garagem}
+  - {evento_id: cityrain_frames3__2026-09-13, local_desde: "16:51:44", local_ate: "23:59:59", motivo: garagem}

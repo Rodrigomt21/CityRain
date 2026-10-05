@@ -1,0 +1,18 @@
+[Unit]
+Description=CityRain - Diagnostico de sessao (boot/desligamento) via boots.csv
+After=local-fs.target
+Before=citycam.service gps.service uploader.service
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+Type=oneshot
+RemainAfterExit=yes
+User=jetson
+WorkingDirectory=/home/jetson/scripts
+ExecStart=/usr/bin/python3 /home/jetson/scripts/sessao.py boot
+ExecStop=/usr/bin/python3 /home/jetson/scripts/sessao.py stop
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

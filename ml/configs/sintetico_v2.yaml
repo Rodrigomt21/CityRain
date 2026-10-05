@@ -1,0 +1,114 @@
+# Config do gerador sintético de chuva v2 (spec D7, revisão de 02/10/2026).
+# Diferença do v1 só no bloco `forte`: o v1 crescia por gotas grandes e o modelo
+# aprendeu a contar gotas (YouTube pico < início, taxa 0,26). No pico real o limpador
+# varre as gotas e o que domina é película larga e borrão. Moderada não muda.
+# Calibrado em 02/10 por contraste RMS e nitidez (var. do Laplaciano) contra YouTube
+# forte (contraste 0,22-0,28; nitidez 0,5 no pico do YT11 a 14 no frames8):
+# v1 forte 0,201 / 3,46 -> v2 0,194 / 1,99 (mesmo contraste, menos nitidez, poucas gotas).
+# Um arquivo = um experimento reprodutível.
+# Tudo em "geometria", "calibracao" e "camadas" sobrescreve config_padrao() em
+# ml/src/cityrain_ml/data/sintetico.py. Valores marcados PROVISÓRIO vêm de ajuste
+# visual/literatura e devem ser trocados pela régua do D6 (ml/configs/regua_chuva.json).
+
+entrada:
+  manifest: ml/data/manifests/manifest_imt.csv
+  imagens_dir: ml/data/processed/imt_coleta
+  classe_base: garoa
+  evento_prefixo: cityrain_frames2__2026-09-01   # partição de treino (spec D3)
+  hora_local_max: "083800"   # só frames antes de 08:38 locais (train do D3 revisado)
+  splits_csv: ml/data/splits/intensidade_v1.csv   # só bases na partição train (após stride)
+
+saida:
+  dir: ml/data/synthetic/intensidade_v2
+  manifest: ml/data/synthetic/intensidade_v2/manifest_sintetico.csv
+  review_dir: ml/data/review/sintetico_v2
+  jpeg_qualidade: 95
+
+amostragem:
+  seed_global: 20261001
+  faixas_mm_h:            # fora das zonas mortas
+    moderada: [3.5, 8.5]
+    forte: [12.0, 40.0]
+  max_por_base_por_classe: 2
+  n_por_classe: null      # null = nº de frames garoa real de treino (spec D7)
+  escada_mm_h: [5.0, 20.0, 40.0]   # colunas da escada visual
+  escada_n_bases: 12
+
+geometria:
+  horizonte_y: 0.56       # fração da altura. Conferir por sessão (câmera foi reposicionada)
+  capo_y: 0.80            # início do capô/painel; abaixo disso nada é alterado
+  capo_suavizacao: 0.035
+
+calibracao:
+  provisorio: true        # PROVISÓRIO: trocar após medir_regua.py (D6)
+  # Extinção por chuva β = gamma * R^epsilon [1/km] (Chu & Hogg, 1968; constantes
+  # transcritas de memória, NÃO conferidas no artigo -> provisórias).
+  beta_gamma_km: 1.076
+  beta_epsilon: 0.67
+  d_max_m: 120.0          # distância efetiva do horizonte; ajustar ao contraste ao longe de 23/09/YouTube
+  d_camera_m: 5.0         # profundidade ao nível do capô
+  perfil_expoente: 1.3
+  densidade_gotas_base_mpx: 290.0   # <- régua: gotas/Mpx medidas nos frames garoa (mm_h_base)
+  luz_ar_fator: 0.85      # A = média do céu x fator (<1: névoa não clareia a imagem)
+  escurecimento_max: 0.08 # escurecimento global em 40 mm/h
+
+# Exclusivo do forte: tudo abaixo é multiplicado por uma rampa 0 (mm_h_alvo <= mm_ini, moderada)
+# -> 1 (mm_h_alvo >= mm_fim, forte). Âncora: vídeos YouTube de chuva forte do D5
+# (frames7, 8, 11-pico, 13). Moderada (âncora 23/09) não é afetada.
+forte:
+  mm_ini: 8.5
+  mm_fim: 12.0
+  beta_extra: 0.15               # igual ao v1: névoa maior derrubava o contraste abaixo do real
+  dessaturacao: 0.3              # v1 0,25
+  escurecimento_extra: 0.04
+  veu: 0.0                       # testado 0,1-0,35: contraste 0,09-0,16, abaixo de todo forte real (0,22-0,28)
+  pelicula_area_extra: 0.25      # v1 0,05: película cobre boa parte do vidro
+  pelicula_desfoque_extra: 0.6   # v1 -0,4: película borra em vez de só distorcer
+  pelicula_distorcao_extra: 2.0  # NOVO: água espalhada distorce mais
+  gotas_grandes_mpx: 80.0        # v1 340: o limpador varre, sobram poucas gotas grandes
+  raio_grande_mediana_px: 5.5
+  raio_grande_sigma: 0.35
+  raio_grande_min_px: 3.5
+  raio_grande_max_px: 11.0
+  desfoque_grande_px: 1.5
+  coalescencia_frac: 0.3
+  escorridos_frac: 0.35
+  escorrido_comprimento_px: [14.0, 42.0]
+
+camadas:
+  nevoa:
+    ativa: true
+    escala_beta: 0.30
+  streaks:
+    ativa: true
+    por_mm_h: 14.0
+    max_streaks: 450
+    comprimento_px: [10.0, 26.0]
+    angulo_graus: 6.0
+    opacidade_max: 0.09
+  pelicula:
+    ativa: true
+    area_por_mm_h: 0.04
+    area_max: 0.3
+    escala_px: 70.0
+    desfoque_px: 0.8
+    distorcao_px: 1.8
+    distorcao_escala_px: 26.0
+  gotas:
+    ativa: true
+    teto_saturacao: 1.3   # limpador: razão máxima de densidade sobre a base
+    raio_mediana_px: 3.4
+    raio_sigma: 0.5
+    raio_max_px: 13.0
+    cauda_grande_por_mm_h: 0.002
+    formas_dir: ml/data/raw/public_datasets/raindrops_zenodo/masks
+    n_formas: 300
+    passo_arquivos: 6
+    borda_escura: 0.5
+    brilho: 0.15
+    agrupamento: 0.6
+    desfoque_gota_px: 0.9
+    escurecimento_gota: -0.12
+    varredura_reducao: 0.7   # menos gotas no arco central do limpador
+  spray:
+    ativa: false          # desligado no v1

@@ -71,6 +71,8 @@ ml/checkpoints/**
 *.pt
 *.pth
 *.onnx
+# exceção: o modelo de intensidade em produção vai no repo (o Railway builda do Git)
+!backend/app/inference/modelos/*.onnx
 *.engine
 *.tflite
 *.h5
@@ -121,3 +123,11 @@ docs/**/*.out
 docs/**/*.toc
 docs/**/*.synctex.gz
 docs/**/_build/
+
+# Config da Jetson: carrega a api_key do device em texto puro (o backend só a
+# devolve uma vez, no POST /api/v1/devices/). O schema fica versionado no
+# cityrain_config.example.json ao lado.
+ml/scripts/captura/cityrain_config.json
+
+# Painéis e amostras de revisão visual (gerados, pesados)
+ml/data/review/

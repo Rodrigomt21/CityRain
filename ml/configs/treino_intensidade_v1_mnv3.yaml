@@ -1,0 +1,33 @@
+# Experimento de intensidade v1: MobileNetV3-Large ImageNet, ajuste fino completo.
+# Dataset: ml/data/splits/intensidade_v1.csv (spec D3). Um arquivo = um experimento.
+# Rodar: ml/.venv/bin/python ml/scripts/treino/treinar_intensidade.py ml/configs/treino_intensidade_v1_mnv3.yaml
+nome: intensidade_v1_mnv3
+seed: 42
+
+dados:
+  splits_csv: ml/data/splits/intensidade_v1.csv
+  origens_treino: [real, sintetico]
+
+entrada:            # 4:3, igual ao frame da câmera (640x480)
+  altura: 288
+  largura: 384
+
+modelo:
+  arquitetura: mobilenet_v3_large
+  pretreinado: true
+
+aumentacao:
+  flip_horizontal: true
+  recorte_escala_min: 0.85
+  brilho_contraste: 0.2
+  jpeg_qualidade_min: 60   # recomprime tudo: tira o atalho da dupla compressão do sintético
+
+treino:
+  dispositivo: auto
+  epocas: 15
+  batch: 32
+  lr: 0.0005
+  weight_decay: 0.0001
+  label_smoothing: 0.1
+  paciencia: 5
+  workers: 4

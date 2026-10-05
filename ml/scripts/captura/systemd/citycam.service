@@ -1,0 +1,17 @@
+[Unit]
+Description=CityRain - Captura de frames da câmera
+After=network.target
+
+[Service]
+Environment=PYTHONUNBUFFERED=1
+Type=simple
+User=jetson
+WorkingDirectory=/home/jetson/scripts
+ExecStart=/usr/bin/python3 /home/jetson/scripts/captura.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
