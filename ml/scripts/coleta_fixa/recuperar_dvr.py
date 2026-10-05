@@ -43,7 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from coletor import carregar_fontes, gravar_frame  # noqa: E402
 
-SEG_S = 5.0  # duração nominal do segmento de live do YouTube (calibrada em 04/10/2026)
+SEG_S_PADRAO = 5.0  # chute inicial; a duração real varia por live (5 s em Ubatuba, 2 s no Centro) e é calibrada
 _WALL = re.compile(rb"Ingestion-Walltime-Us: (\d+)")
 _SEQ = re.compile(rb"Sequence-Number: (\d+)")
 
@@ -52,16 +52,27 @@ class StreamDVR:
     """Acesso por instante aos segmentos de uma live do YouTube."""
 
     def __init__(self, url_video: str, altura: int = 480) -> None:
+        self.url_video, self.altura = url_video, altura
+        self.renovar()
+
+    def renovar(self) -> None:
+        """Resolve a URL assinada do formato (expira em algumas horas) e recalibra."""
+        url_video, altura = self.url_video, self.altura
         r = subprocess.run(["yt-dlp", "--live-from-start", "-J", url_video], capture_output=True, text=True, timeout=120)
         if r.returncode != 0:
             raise RuntimeError(f"yt-dlp: {r.stderr.strip()[-200:]}")
-        fmts = [f for f in json.loads(r.stdout)["formats"]
+        info = json.loads(r.stdout)
+        self.inicio = datetime.fromtimestamp(info.get("release_timestamp") or 0, timezone.utc)
+        fmts = [f for f in info["formats"]
                 if f.get("protocol", "").startswith("http_dash") and f.get("vcodec") not in (None, "none")]
         if not fmts:
             raise RuntimeError("live sem DASH (sem DVR)")
         f = min(fmts, key=lambda f: abs((f.get("height") or 0) - altura))
         self.url, self.headers = f["url"], f.get("http_headers", {})
         self.head_sq, self.head_t = self._ler(None)
+        # duração real do segmento: walltime de um segmento ~1 h antes do topo
+        ref_sq, ref_t = self._ler(self.head_sq - round(3600 / SEG_S_PADRAO))
+        self.seg_s = (self.head_t - ref_t).total_seconds() / (self.head_sq - ref_sq)
 
     def _ler(self, sq: int | None) -> tuple[int, datetime]:
         b = self.segmento(sq)
@@ -76,9 +87,11 @@ class StreamDVR:
 
     def sq_para(self, quando: datetime) -> int:
         """Número do segmento que contém ``quando`` (estimativa linear + 1 correção)."""
-        sq = self.head_sq - round((self.head_t - quando).total_seconds() / SEG_S)
-        real_sq, real_t = self._ler(sq)
-        return real_sq + round((quando - real_t).total_seconds() / SEG_S)
+        sq = self.head_sq - round((self.head_t - quando).total_seconds() / self.seg_s)
+        for _ in range(2):  # duas correções: a taxa não é perfeitamente constante
+            real_sq, real_t = self._ler(sq)
+            sq = real_sq + round((quando - real_t).total_seconds() / self.seg_s)
+        return sq
 
     def frame(self, sq: int) -> tuple[bytes, datetime]:
         """JPEG do 1º quadro do segmento e o instante de ingestão dele."""
@@ -128,14 +141,27 @@ def recuperar(fonte, dvr: StreamDVR, de: datetime, ate: datetime, passo_s: float
     if ate <= de:
         return 0
     sq0, sq1 = dvr.sq_para(de), dvr.sq_para(ate)
-    passo = max(1, round(passo_s / SEG_S))
+    passo = max(1, round(passo_s / dvr.seg_s))
     n = 0
     for sq in range(sq0, sq1 + 1, passo):
         try:
             jpg, quando = dvr.frame(sq)
-        except (urllib.error.HTTPError, subprocess.CalledProcessError, RuntimeError) as e:
+        except urllib.error.HTTPError as e:
+            if e.code in (400, 403):  # URL assinada expirou: renova e tenta de novo
+                dvr.renovar()
+                try:
+                    jpg, quando = dvr.frame(sq)
+                except Exception as e2:  # noqa: BLE001
+                    print(f"  sq {sq}: {e2}", flush=True)
+                    continue
+            else:
+                print(f"  sq {sq}: {e}", flush=True)
+                continue
+        except (subprocess.CalledProcessError, RuntimeError) as e:
             print(f"  sq {sq}: {e}", flush=True)
             continue
+        if not (de - timedelta(minutes=2) <= quando <= ate + timedelta(minutes=2)):
+            continue  # fora da janela pedida (ex.: antes do início da live)
         fonte.tipo = "youtube_dvr"
         if gravar_frame(jpg, fonte, destino, quando):
             n += 1
@@ -174,16 +200,21 @@ def main() -> None:
         except Exception as e:  # noqa: BLE001
             print(f"[{f.id}] sem DVR: {e}", flush=True)
             continue
-        inicio_dvr = dvr.head_t - timedelta(hours=119)
+        # o DVR guarda ~120 h, mas nunca antes do início da própria live
+        inicio_dvr = max(dvr.head_t - timedelta(hours=119), dvr.inicio)
         if args.onde_choveu:
             janelas = janelas_com_chuva(f, leituras, args.raio_km, timedelta(minutes=args.margem_min), inicio_dvr)
         else:
             janelas = [(datetime.fromisoformat(args.de).astimezone(timezone.utc),
                         datetime.fromisoformat(args.ate).astimezone(timezone.utc))]
         total_min = sum((b - a).total_seconds() for a, b in janelas) / 60
-        print(f"[{f.id}] {len(janelas)} janela(s), {total_min:.0f} min", flush=True)
+        print(f"[{f.id}] {len(janelas)} janela(s), {total_min:.0f} min, segmento de {dvr.seg_s:.2f} s", flush=True)
         for a, b in janelas:
-            n = recuperar(f, dvr, a, b, args.passo_s, destino)
+            try:
+                n = recuperar(f, dvr, a, b, args.passo_s, destino)
+            except Exception as e:  # noqa: BLE001 — uma janela ruim não derruba as outras
+                print(f"  {a:%d/%m %H:%M}–{b:%H:%M}Z: FALHA {e}", flush=True)
+                continue
             print(f"  {a:%d/%m %H:%M}–{b:%H:%M}Z: {n} frames", flush=True)
 
 
