@@ -6,7 +6,10 @@
 # Para pluviômetro fora da capital é preciso acrescentar as estações CEMADEN da
 # cidade em ml/scripts/estacoes/baixar_cemaden_ped.py (hoje só tem SP capital).
 destino: ml/data/raw/coleta_fixa
-intervalo_s: 60
+# 1 frame a cada 10 min: só exemplos secos e variedade dia/noite. A CHUVA vem do
+# recuperar_dvr.py --onde-choveu (DVR de 120 h, baixa só os minutos em que choveu);
+# rodar a cada 1-2 dias, depois de baixar_cemaden_ped.py --dias <últimos dias>.
+intervalo_s: 600
 
 fontes:
   # --- capital (estações já cadastradas) ---
