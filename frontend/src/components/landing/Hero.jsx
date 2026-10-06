@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Droplets, ArrowRight } from 'lucide-react'
+import { useResumoPublico } from '../../hooks/useResumoPublico'
 
 // Gotas uniformes — mesma cor, 1px, espaçamento regular, velocidade lenta
 const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
@@ -9,15 +10,24 @@ const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   animationDelay: `${(i * 0.18) % 2.5}s`,
 }))
 
-const STATS = [
-  { value: '20',   label: 'Sensores Ativos' },
-  { value: '4',    label: 'Níveis de Alerta' },
-  { value: '30s',  label: 'Frequência de Leitura' },
-  { value: '24/7', label: 'Monitoramento Contínuo' },
-]
+function haQuanto(d) {
+  if (!d) return '—'
+  const min = Math.floor((Date.now() - d.getTime()) / 60_000)
+  if (min < 60) return `${min} min`
+  if (min < 1440) return `${Math.floor(min / 60)} h`
+  return `${Math.floor(min / 1440)} d`
+}
 
 export default function Hero() {
   const navigate = useNavigate()
+  const resumo = useResumoPublico()
+  // Números vindos da API (antes eram fixos: "20 sensores ativos" não existia)
+  const STATS = [
+    { value: resumo.capturas ?? '—', label: 'Capturas classificadas' },
+    { value: resumo.dispositivos ?? '—', label: 'Dispositivos registrados' },
+    { value: '4', label: 'Classes de intensidade' },
+    { value: haQuanto(resumo.ultima), label: 'Desde a última captura' },
+  ]
 
   return (
     <section

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import verificar_admin_key
-from app.schemas.device import DeviceCreate, DeviceCreatedResponse, DeviceResponse
+from app.schemas.device import DeviceCreate, DeviceCreatedResponse, DevicePublico, DeviceResponse
 from app.services.device_service import DeviceService
 
 router = APIRouter()
@@ -51,6 +51,17 @@ async def register_device(
 )
 async def list_devices(db: AsyncSession = Depends(get_db)):
     """Lista todos os dispositivos registrados com status e último contato."""
+    service = DeviceService(db)
+    return await service.list_devices()
+
+
+@router.get("/publico", response_model=list[DevicePublico])
+async def list_devices_publico(db: AsyncSession = Depends(get_db)):
+    """Lista pública dos dispositivos (sem placa, sem credencial) para o dashboard.
+
+    A listagem completa (com placa) continua em ``GET /`` protegida pela admin key —
+    nunca embutir essa chave no frontend, que é público.
+    """
     service = DeviceService(db)
     return await service.list_devices()
 

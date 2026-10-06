@@ -29,6 +29,23 @@ class DeviceResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class DevicePublico(BaseModel):
+    """Visão pública de um device, para o dashboard sem credencial.
+
+    Sem placa do veículo (dado pessoal) e sem nada de chave: o frontend é público, então
+    qualquer coisa que ele precise ler não pode exigir a admin key.
+    """
+
+    id: int
+    name: str
+    hw_model: Optional[str]
+    is_active: bool
+    registered_at: datetime
+    last_seen_at: Optional[datetime]
+
+    model_config = {"from_attributes": True}
+
+
 class DeviceCreatedResponse(DeviceResponse):
     """
     Retornado apenas no POST /devices — inclui a chave em texto puro.
