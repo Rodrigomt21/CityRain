@@ -28,6 +28,9 @@ async def get_captures_geo(
     ),
     from_date: Optional[datetime] = Query(default=None, description="Data inicial ISO 8601"),
     to_date: Optional[datetime] = Query(default=None, description="Data final ISO 8601"),
+    excluir_demo: bool = Query(
+        default=False, description="Exclui capturas de demonstração (metadata.demo), ex.: no histórico."
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -40,4 +43,4 @@ async def get_captures_geo(
     [{"cell": "88a8dc25cdfffff", "count": 14, "labels": {"forte": 10, "seco": 4}}]
     """
     service = CaptureService(db)
-    return await service.get_h3_heatmap(resolution, device_id, from_date, to_date)
+    return await service.get_h3_heatmap(resolution, device_id, from_date, to_date, excluir_demo)
