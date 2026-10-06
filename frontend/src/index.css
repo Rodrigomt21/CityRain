@@ -64,3 +64,6 @@
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg-surface); }
 ::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 2px; }
+
+/* Página Histórico: tiles do OpenStreetMap escurecidos para o tema escuro */
+.mapa-escuro { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6); }

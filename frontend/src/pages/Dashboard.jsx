@@ -41,6 +41,14 @@ export default function Dashboard() {
               </span>
             </p>
           </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+          <Link
+            to="/historico"
+            className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
+            style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}
+          >
+            Histórico →
+          </Link>
           <Link
             to="/dispositivos"
             className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
@@ -48,6 +56,7 @@ export default function Dashboard() {
           >
             Dispositivos →
           </Link>
+          </div>
         </div>
 
         {/* Painéis — preenchem todo o espaço restante com a mesma altura */}
