@@ -1,0 +1,262 @@
+{
+  "config_sha256": "90525e20237addca39a9a9c8c6b6945202dd2aa9e7c72ff2fbd309c8929ad392",
+  "timestamp_execucao_utc": "2026-10-05T14:53:25.311006+00:00",
+  "parametros": {
+    "raio_max_km": 2.0,
+    "janela_min": 15,
+    "zona_morta_frac": 0.15,
+    "minutos_por_leitura": 10,
+    "idade_maxima_posicao_s": 12.0,
+    "consenso_raio_km": 5.0,
+    "consenso_min_estacoes": 3,
+    "janela_seco_min": 60,
+    "consenso_zona_morta_na_mediana": true,
+    "consenso_metropolitano_min_estacoes": 5,
+    "consenso_metropolitano_janela_min": 60
+  },
+  "total_frames": 12428,
+  "total_jpg_sem_json": 0,
+  "rotulados": 4117,
+  "por_classe": {
+    "seco": 996,
+    "garoa": 3079,
+    "moderada": 42,
+    "forte": 0
+  },
+  "por_motivo": {
+    "poucas_estacoes_consenso": 5837,
+    "seco_incerto": 2184,
+    "sem_consenso_regional": 280,
+    "zona_morta": 10
+  },
+  "por_origem_idade_posicao": {
+    "ultimo_fix_em": 4117
+  },
+  "por_metodo_rotulo": {
+    "consenso_regional": 370,
+    "estacao_proxima": 3747
+  },
+  "por_evento": {
+    "bc_atlantica__2026-09-30": {
+      "total": 200,
+      "poucas_estacoes_consenso": 140,
+      "seco_incerto": 25,
+      "sem_consenso_regional": 35
+    },
+    "bc_atlantica__2026-10-01": {
+      "total": 552,
+      "sem_consenso_regional": 115,
+      "garoa": 250,
+      "moderada": 20,
+      "poucas_estacoes_consenso": 167
+    },
+    "bc_atlantica__2026-10-04": {
+      "total": 871,
+      "poucas_estacoes_consenso": 871
+    },
+    "bc_atlantica__2026-10-05": {
+      "total": 91,
+      "poucas_estacoes_consenso": 81,
+      "seco": 10
+    },
+    "guaruja_enseada__2026-10-02": {
+      "total": 1182,
+      "seco_incerto": 446,
+      "poucas_estacoes_consenso": 346,
+      "garoa": 390
+    },
+    "guaruja_enseada__2026-10-03": {
+      "total": 60,
+      "poucas_estacoes_consenso": 60
+    },
+    "guaruja_enseada__2026-10-04": {
+      "total": 420,
+      "poucas_estacoes_consenso": 420
+    },
+    "guaruja_enseada__2026-10-05": {
+      "total": 91,
+      "poucas_estacoes_consenso": 91
+    },
+    "praiagrande_boqueirao__2026-10-02": {
+      "total": 1111,
+      "poucas_estacoes_consenso": 1111
+    },
+    "praiagrande_boqueirao__2026-10-04": {
+      "total": 139,
+      "poucas_estacoes_consenso": 139
+    },
+    "praiagrande_boqueirao__2026-10-05": {
+      "total": 192,
+      "poucas_estacoes_consenso": 192
+    },
+    "praiagrande_tupi__2026-10-04": {
+      "total": 3,
+      "poucas_estacoes_consenso": 3
+    },
+    "rio_copacabana_p6__2026-10-04": {
+      "total": 2,
+      "poucas_estacoes_consenso": 2
+    },
+    "santos_gonzaga__2026-10-01": {
+      "total": 141,
+      "poucas_estacoes_consenso": 141
+    },
+    "santos_gonzaga__2026-10-02": {
+      "total": 440,
+      "poucas_estacoes_consenso": 440
+    },
+    "santos_gonzaga__2026-10-04": {
+      "total": 99,
+      "poucas_estacoes_consenso": 99
+    },
+    "santos_gonzaga__2026-10-05": {
+      "total": 91,
+      "poucas_estacoes_consenso": 91
+    },
+    "sp_centro_geolan__2026-10-02": {
+      "total": 820,
+      "seco": 114,
+      "seco_incerto": 498,
+      "garoa": 199,
+      "moderada": 9
+    },
+    "sp_centro_geolan__2026-10-03": {
+      "total": 1759,
+      "poucas_estacoes_consenso": 573,
+      "seco_incerto": 464,
+      "garoa": 336,
+      "seco": 373,
+      "moderada": 13
+    },
+    "sp_centro_geolan__2026-10-04": {
+      "total": 2663,
+      "seco_incerto": 677,
+      "seco": 499,
+      "garoa": 1477,
+      "zona_morta": 10
+    },
+    "sp_centro_geolan__2026-10-05": {
+      "total": 416,
+      "garoa": 337,
+      "seco_incerto": 64,
+      "poucas_estacoes_consenso": 15
+    },
+    "ubatuba_tenorio__2026-09-30": {
+      "total": 181,
+      "poucas_estacoes_consenso": 111,
+      "sem_consenso_regional": 70
+    },
+    "ubatuba_tenorio__2026-10-01": {
+      "total": 322,
+      "poucas_estacoes_consenso": 322
+    },
+    "ubatuba_tenorio__2026-10-02": {
+      "total": 30,
+      "poucas_estacoes_consenso": 30
+    },
+    "ubatuba_tenorio__2026-10-03": {
+      "total": 212,
+      "poucas_estacoes_consenso": 142,
+      "garoa": 70
+    },
+    "ubatuba_tenorio__2026-10-04": {
+      "total": 249,
+      "poucas_estacoes_consenso": 159,
+      "seco_incerto": 10,
+      "sem_consenso_regional": 60,
+      "garoa": 20
+    },
+    "ubatuba_tenorio__2026-10-05": {
+      "total": 91,
+      "poucas_estacoes_consenso": 91
+    }
+  },
+  "seco_por_evento_periodo": {
+    "bc_atlantica__2026-10-05": {
+      "noite": 10
+    },
+    "sp_centro_geolan__2026-10-02": {
+      "dia": 96,
+      "noite": 18
+    },
+    "sp_centro_geolan__2026-10-03": {
+      "dia": 225,
+      "noite": 148
+    },
+    "sp_centro_geolan__2026-10-04": {
+      "dia": 382,
+      "noite": 117
+    }
+  },
+  "ganho_zona_morta_mediana": {
+    "bc_atlantica__2026-10-01": {
+      "garoa": 100,
+      "moderada": 20
+    },
+    "ubatuba_tenorio__2026-10-03": {
+      "garoa": 40
+    },
+    "ubatuba_tenorio__2026-10-04": {
+      "garoa": 20
+    }
+  },
+  "estacoes_usadas": {
+    "(consenso regional)": 370,
+    "AC Central de SP": 2035,
+    "Centro": 886,
+    "Enseada (Guarujá)": 390,
+    "Luz": 436
+  },
+  "sensibilidade_raio": {
+    "2.0 km": {
+      "seco": 996,
+      "garoa": 3079,
+      "moderada": 42,
+      "forte": 0
+    },
+    "3.0 km": {
+      "seco": 1055,
+      "garoa": 3394,
+      "moderada": 42,
+      "forte": 0
+    },
+    "5.0 km": {
+      "seco": 1378,
+      "garoa": 5399,
+      "moderada": 412,
+      "forte": 10
+    }
+  },
+  "sensibilidade_idade_posicao": {
+    "12 s": {
+      "seco": 996,
+      "garoa": 3079,
+      "moderada": 42,
+      "forte": 0
+    },
+    "30 s": {
+      "seco": 996,
+      "garoa": 3079,
+      "moderada": 42,
+      "forte": 0
+    },
+    "60 s": {
+      "seco": 996,
+      "garoa": 3079,
+      "moderada": 42,
+      "forte": 0
+    },
+    "90 s": {
+      "seco": 996,
+      "garoa": 3079,
+      "moderada": 42,
+      "forte": 0
+    },
+    "120 s": {
+      "seco": 996,
+      "garoa": 3079,
+      "moderada": 42,
+      "forte": 0
+    }
+  }
+}

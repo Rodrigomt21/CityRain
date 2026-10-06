@@ -251,6 +251,8 @@ def avaliar(ckpt: Path, cfg: dict, raiz: Path, saida: Path) -> dict:
     csv_path = raiz / cfg["dados"]["splits_csv"]
 
     particoes = ["val", "test_real", "test_ircnn", "test_ordinal_2309", "test_ordinal_youtube"]
+    if ler_split(csv_path, {"test_lives"}):
+        particoes.append("test_lives")  # câmera fixa separada, nunca vista no treino
     papeis = eventos_ircnn(cfg)
     probs: dict[str, np.ndarray] = {}
     linhas: dict[str, list[dict]] = {}
@@ -278,7 +280,7 @@ def avaliar(ckpt: Path, cfg: dict, raiz: Path, saida: Path) -> dict:
         "ordenacao": {},
         "baseline_constante_garoa": {},
     }
-    for p in ["val", "test_real", "test_ircnn"]:
+    for p in [q for q in ("val", "test_real", "test_ircnn", "test_lives") if q in particoes]:
         y, pr = classificados(p)
         met["classificacao"][p] = resumo_classificacao(y, pr)
         met["baseline_constante_garoa"][p] = _constante_garoa(y)

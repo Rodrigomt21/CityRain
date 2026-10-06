@@ -1,0 +1,82 @@
+{
+  "tamanho_mb": {
+    "fp32": 16.8,
+    "int8": 4.7,
+    "fp16": 8.4
+  },
+  "test_real_1309": {
+    "n": 157,
+    "int8": {
+      "concordancia": 0.9936305732484076,
+      "dp_max": 0.5208466442593305
+    },
+    "fp16": {
+      "concordancia": 1.0,
+      "dp_max": 0.003421997932907095
+    }
+  },
+  "ircnn_amostra": {
+    "n": 1200,
+    "int8": {
+      "concordancia": 0.5191666666666667,
+      "dp_max": 0.8094156957792067
+    },
+    "fp16": {
+      "concordancia": 0.9991666666666666,
+      "dp_max": 0.013485096578378819
+    }
+  },
+  "ordinal_2309": {
+    "n": 242,
+    "int8": {
+      "concordancia": 0.9380165289256198,
+      "dp_max": 0.5918558604831509
+    },
+    "fp16": {
+      "concordancia": 1.0,
+      "dp_max": 0.011194840163880282
+    }
+  },
+  "youtube": {
+    "n": 650,
+    "int8": {
+      "concordancia": 0.40615384615384614,
+      "dp_max": 0.7267482748797791
+    },
+    "fp16": {
+      "concordancia": 0.9953846153846154,
+      "dp_max": 0.015024737591996351
+    }
+  },
+  "jetson_fp16": [
+    {
+      "modelo": "intensidade_fp16",
+      "provider": "CUDA",
+      "entrada": "288x384",
+      "tamanho_mb": 8.4,
+      "carga_s": 4.4,
+      "n": 60,
+      "prep_ms_mediana": 30.9,
+      "inferencia_ms_mediana": 40.1,
+      "inferencia_ms_p95": 40.4,
+      "total_ms_mediana": 71.0,
+      "fps": 14.1,
+      "rss_max_mb": 1159.0
+    },
+    {
+      "modelo": "intensidade_fp16",
+      "provider": "CPU",
+      "entrada": "288x384",
+      "tamanho_mb": 8.4,
+      "carga_s": 0.1,
+      "n": 60,
+      "prep_ms_mediana": 31.0,
+      "inferencia_ms_mediana": 199.5,
+      "inferencia_ms_p95": 209.1,
+      "total_ms_mediana": 230.6,
+      "fps": 4.3,
+      "rss_max_mb": 1231.0
+    }
+  ],
+  "nota": "INT8 rejeitado (concordância ~0,5 fora do domínio próprio; também incompatível com onnxruntime 1.10 da Jetson por opset ai.onnx.ml 5). FP16: concordância >= 99,5%, metade do tamanho, mesma latência em CUDA puro (Maxwell sem ganho FP16 sem TensorRT)."
+}
