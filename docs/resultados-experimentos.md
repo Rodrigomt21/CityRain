@@ -66,7 +66,13 @@ grande e inequívoco é **irCNN no treino** (0,07 → ~0,46). (`ml/resultados/in
    (`ml/scripts/avaliacao/checar_carimbo.py`). Grad-CAM (`ml/resultados/figuras/gradcam_v3_vs_v1.jpg`):
    no irCNN a v3 olha névoa (dia) e riscos iluminados (noite); na nossa câmera, asfalto molhado
    e reflexos.
-6. **CNN × físico:** a CNN classifica melhor (+0,06 F1, +0,18 Spearman), mas o baseline físico
+6. **Híbrido (CNN + físico, ensemble de probabilidades, peso escolhido NA VALIDAÇÃO = 0,95):**
+   irCNN 0,463 [0,403; 0,508] (= CNN), Spearman 0,645, **23/09 > 13/09 0,685 → 0,855**, YouTube >
+   13/09 0,966, pico > início 0,626, garoa 13/09 0,979. Ganho de ordenação no para-brisa sem
+   perda nas demais. Ressalva: a validação não tem dado ordinal e quase não distingue os pesos
+   (critério 0,8156 com e sem físico) — escolha legítima, mas pouco informada
+   (`ml/scripts/avaliacao/ensemble_hibrido.py`).
+7. **CNN × físico:** a CNN classifica melhor (+0,06 F1, +0,18 Spearman), mas o baseline físico
    ordena melhor no para-brisa (23/09: 0,875 × 0,685) — argumento para a abordagem híbrida.
 
 ## 3. Domínio do carro (validação da proposta)

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Híbrido por combinação de probabilidades: CNN v3 + baseline físico, nos mesmos folds.
 
-p = w·p_CNN + (1−w)·p_físico. O peso PADRÃO é w = 0,5, fixado ANTES de olhar o teste;
-os outros pesos são só análise de sensibilidade (escolher w pelo teste seria vazamento).
+p = w·p_CNN + (1−w)·p_físico. O peso é ESCOLHIDO NA VALIDAÇÃO de cada fold (mesmo critério
+do treino: média do F1 macro no domínio próprio e no evento irCNN de val), em grade de 0,05;
+os pesos fixos são só análise de sensibilidade (escolher w pelo teste seria vazamento).
 Avalia irCNN (agregado dos 4 folds, cada evento fora do treino), garoa 13/09 e as
 ordenações (média dos folds), com IC 95% por bootstrap de evento para o F1 do irCNN.
 
@@ -72,19 +73,40 @@ def avaliar(args, w: float) -> dict:
             **{k: float(np.mean([o[k] for o in ords])) for k in ords[0]}}
 
 
+def escolher_w_na_validacao(args) -> tuple[float, dict]:
+    """w que maximiza, na média dos folds, o critério de validação do treino."""
+    grade = np.round(np.arange(0, 1.0001, 0.05), 2)
+    crit = {}
+    for w in grade:
+        vals = []
+        for k in range(4):
+            v = combinar(fold_cnn(args.cnn, k, "val"), pd.read_csv(args.fisico / f"fold{k}_val.csv"), w)
+            v = v[v["classe"].isin(CLASSES)]
+            dom = v["evento_id"].str.startswith("ircnn")
+            f1s = [resumo_classificacao(g["classe"].map(CLASSES.index).to_numpy(), g[P].to_numpy())["f1_macro"]
+                   for g in (v[~dom], v[dom]) if len(g)]
+            vals.append(float(np.mean(f1s)))
+        crit[float(w)] = float(np.mean(vals))
+    return max(crit, key=crit.get), crit
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--cnn", required=True)
     ap.add_argument("--fisico", type=Path, required=True)
     ap.add_argument("--saida", type=Path, default=RAIZ / "ml/resultados/ensemble_hibrido.json")
     args = ap.parse_args()
-    res = [avaliar(args, w) for w in (1.0, 0.75, 0.5, 0.25, 0.0)]
+    w_val, crit = escolher_w_na_validacao(args)
+    print(f"[validação] w escolhido = {w_val:.2f} (critério {crit[w_val]:.4f}; só CNN {crit[1.0]:.4f}; só físico {crit[0.0]:.4f})")
+    pesos = sorted({1.0, 0.75, 0.5, 0.25, 0.0, w_val}, reverse=True)
+    res = [avaliar(args, w) for w in pesos]
     print(f"{'w_cnn':>6} {'irCNN F1':>9} {'IC95':>15} {'forte':>6} {'Spear':>6} {'23/09>13/09':>11} {'YT>13/09':>8} {'pico>ini':>8} {'garoa13/09':>10}")
     for r in res:
         print(f"{r['w_cnn']:6.2f} {r['ircnn_f1']:9.3f} [{r['ircnn_f1_ic95'][0]:.3f},{r['ircnn_f1_ic95'][1]:.3f}] "
               f"{r['ircnn_f1_por_classe'].get('forte', 0):6.3f} {r['spearman']:6.3f} {r['2309_maior_1309']:11.3f} "
               f"{r['youtube_maior_1309']:8.3f} {r['pico_maior_inicio']:8.3f} {r['garoa_1309_acuracia']:10.3f}")
-    args.saida.write_text(json.dumps({"peso_padrao_fixado_antes": 0.5, "resultados": res}, indent=2, ensure_ascii=False))
+    args.saida.write_text(json.dumps({"w_escolhido_na_validacao": w_val, "criterio_validacao": crit, "resultados": res},
+                                     indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
