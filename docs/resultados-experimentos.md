@@ -35,6 +35,22 @@
 eventos irCNN, 7 épocas fixas = mediana da CV): garoa 13/09 157/157; 23/09 > 13/09 0,645;
 YouTube > 13/09 0,978; pico > início 0,694. A estimativa de desempenho no irCNN é a da CV v3.
 
+### Intervalos de confiança (bootstrap por evento, 12 eventos, 1.000 reamostras, IC 95%)
+
+| Versão | irCNN F1 macro | F1 forte | Spearman |
+|---|---|---|---|
+| v1 | 0,458 [0,411; 0,491] | 0,803 [0,715; 0,852] | 0,595 [0,456; 0,673] |
+| v2 | 0,428 [0,356; 0,481] | 0,792 [0,708; 0,851] | 0,603 [0,394; 0,744] |
+| **v3** | **0,462 [0,401; 0,507]** | **0,817 [0,724; 0,876]** | **0,638 [0,421; 0,751]** |
+| v4 | 0,449 [0,361; 0,505] | 0,783 [0,600; 0,869] | 0,554 [0,367; 0,682] |
+| v5 | 0,419 [0,350; 0,466] | 0,771 [0,653; 0,842] | 0,596 [0,405; 0,700] |
+
+Diferenças **pareadas** (mesmos eventos sorteados), F1 macro: v3−v2 +0,032 [+0,002; +0,069];
+v3−v5 +0,044 [+0,016; +0,074] → v3 **significativamente melhor** que v2 e v5. v3−v1 +0,003
+[−0,035; +0,047] e v3−v4 +0,016 [−0,033; +0,076] → **empate estatístico** no irCNN; a
+vantagem da v3 sobre a v1 está na ordenação do YouTube (pico > início 0,61 × 0,32). O efeito
+grande e inequívoco é **irCNN no treino** (0,07 → ~0,46). (`ml/resultados/intervalos_confianca.json`)
+
 ### Leituras
 
 1. **Domínio manda mais que arquitetura.** Sem irCNN no treino, o modelo aprende "gota no
@@ -45,7 +61,12 @@ YouTube > 13/09 0,978; pico > início 0,694. A estimativa de desempenho no irCNN
    câmera fixa (v5) não melhoram. Falta **moderada/forte real**, não pixel nem garoa.
 4. **Garoa em câmera fixa é praticamente invisível** (F1 ≤ 0,06 em todas as versões, mediana
    1,1 mm/h). Limitação a declarar.
-5. **CNN × físico:** a CNN classifica melhor (+0,06 F1, +0,18 Spearman), mas o baseline físico
+5. **Sem atalho de carimbo:** borrar o carimbo de data/hora e o rodapé de 900 frames do irCNN
+   mantém 96,8% das predições (F1 0,868 → 0,856) — o modelo não usa o texto da câmera
+   (`ml/scripts/avaliacao/checar_carimbo.py`). Grad-CAM (`ml/resultados/figuras/gradcam_v3_vs_v1.jpg`):
+   no irCNN a v3 olha névoa (dia) e riscos iluminados (noite); na nossa câmera, asfalto molhado
+   e reflexos.
+6. **CNN × físico:** a CNN classifica melhor (+0,06 F1, +0,18 Spearman), mas o baseline físico
    ordena melhor no para-brisa (23/09: 0,875 × 0,685) — argumento para a abordagem híbrida.
 
 ## 3. Domínio do carro (validação da proposta)
