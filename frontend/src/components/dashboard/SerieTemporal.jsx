@@ -23,7 +23,7 @@ function escala(spanMs) {
  * não estima intensidade quantitativa, então derivar milímetros daqui seria
  * inventar número.
  */
-export default function SerieTemporal({ capturas, loading }) {
+export default function SerieTemporal({ capturas, loading, altura = 150 }) {
   const { dados, rotulo } = useMemo(() => {
     if (!capturas.length) return { dados: [], rotulo: null }
 
@@ -70,16 +70,16 @@ export default function SerieTemporal({ capturas, loading }) {
       </div>
 
       {loading ? (
-        <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: 0, padding: '28px 0', textAlign: 'center' }}>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: 0, height: altura, display: 'grid', placeItems: 'center' }}>
           Carregando…
         </p>
       ) : dados.length === 0 ? (
-        <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: 0, padding: '28px 0', textAlign: 'center' }}>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: 0, height: altura, display: 'grid', placeItems: 'center' }}>
           Sem capturas no período selecionado.
         </p>
       ) : (
         <>
-          <ResponsiveContainer width="100%" height={150}>
+          <ResponsiveContainer width="100%" height={altura}>
             <BarChart data={dados} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
               <CartesianGrid stroke="var(--bg-border)" vertical={false} />
               <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
