@@ -67,3 +67,7 @@
 
 /* Página Histórico: tiles do OpenStreetMap escurecidos para o tema escuro */
 .mapa-escuro { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.6); }
+
+/* Ao vivo: anel pulsando na posição atual do dispositivo */
+@keyframes pulso-ao-vivo { 0% { stroke-opacity: .9; } 70% { stroke-opacity: 0; } 100% { stroke-opacity: 0; } }
+.pulso-ao-vivo { animation: pulso-ao-vivo 1.6s ease-out infinite; }

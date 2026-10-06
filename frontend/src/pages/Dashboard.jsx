@@ -1,80 +1,49 @@
 import { Link } from 'react-router-dom'
-import { useClassificationData } from '../hooks/useClassificationData'
-import { useLiveSensors } from '../hooks/useLiveSensors'
 import Topbar from '../components/layout/Topbar'
-import ClassificationCards from '../components/dashboard/ClassificationCards'
-import HeatMap from '../components/dashboard/HeatMap'
+import MapaAoVivo from '../components/dashboard/MapaAoVivo'
+import PainelAgora from '../components/dashboard/PainelAgora'
+import { useLiveCaptures, JANELA_MIN } from '../hooks/useLiveCaptures'
 
+// Ao vivo = capturas reais dos últimos JANELA_MIN minutos, em mapa real.
+// (A versão anterior, com mapa esquemático e simulação quando não havia dado,
+// não mostrava onde o dispositivo estava nem o trajeto.)
 export default function Dashboard() {
-  const simulado = useClassificationData()
-  const live = useLiveSensors()
-  // Com capturas reais na API, o painel mostra só elas; sem nenhuma, cai na simulação
-  // e diz isso na tela — nunca misturar dado simulado com medido.
-  const { sensors, categoryCounts, mostSevereCategory, lastUpdate, totalOnline } = live.ativo ? live : simulado
+  const { recentes, ultima, atualizadoEm, error, pollMs } = useLiveCaptures()
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
-      <Topbar breadcrumb="Dashboard" backTo="/" />
-
+      <Topbar breadcrumb="Ao vivo" backTo="/" />
       <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: '12px' }}>
-
-        {/* Título */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <h1
-              className="font-mono font-bold"
-              style={{ fontSize: '22px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}
-            >
-              São Paulo · Setor 04
+            <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+              Monitoramento ao vivo
             </h1>
             <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-              Classificação de intensidade pluviométrica e distribuição geoespacial
-              {' · '}
-              <span
-                className="font-mono"
-                title={live.error ? `API indisponível: ${live.error.message}` : undefined}
-                style={{ color: live.ativo ? 'var(--cat-dry)' : 'var(--cat-moderate)' }}
-              >
-                {live.ativo
-                  ? `AO VIVO · ${live.sensors.length} dispositivo(s)${live.naoMedidos ? ` · ${live.naoMedidos} sem intensidade` : ''}`
-                  : live.loading ? 'conectando…' : 'SIMULAÇÃO · API sem capturas'}
-              </span>
+              Intensidade de chuva estimada por câmera embarcada · trajeto dos últimos {JANELA_MIN} min ·
+              atualiza a cada {Math.round(pollMs / 1000)} s
+              {atualizadoEm && ` · última consulta ${atualizadoEm.toLocaleTimeString('pt-BR')}`}
+              {error && <span style={{ color: '#ef4444' }}> · API indisponível: {error.message}</span>}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-          <Link
-            to="/historico"
-            className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
-            style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}
-          >
-            Histórico →
-          </Link>
-          <Link
-            to="/dispositivos"
-            className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
-            style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}
-          >
-            Dispositivos →
-          </Link>
+            {[['/historico', 'Histórico →'], ['/dispositivos', 'Dispositivos →']].map(([to, txt]) => (
+              <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
+                style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
+                {txt}
+              </Link>
+            ))}
           </div>
         </div>
 
-        {/* Painéis — preenchem todo o espaço restante com a mesma altura */}
-        <div style={{ display: 'flex', gap: '14px', flex: 1, minHeight: 0 }}>
-          <div style={{ width: '500px', flexShrink: 0 }}>
-            <ClassificationCards
-              categoryCounts={categoryCounts}
-              mostSevereCategory={mostSevereCategory}
-              totalOnline={totalOnline}
-              lastUpdate={lastUpdate}
-              aoVivo={live.ativo}
-            />
+        <div style={{ display: 'flex', gap: 14, flex: 1, minHeight: 0 }}>
+          <div style={{ width: 400, flexShrink: 0 }}>
+            <PainelAgora capturas={recentes} ultima={ultima} janelaMin={JANELA_MIN} />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <HeatMap sensors={sensors} />
+          <div className="rounded-xl" style={{ flex: 1, minWidth: 0, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
+            <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} />
           </div>
         </div>
-
       </main>
     </div>
   )
