@@ -23,6 +23,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pandas as pd
 import yaml
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
@@ -54,6 +55,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("config", type=Path)
     ap.add_argument("--saida", type=Path, default=RAIZ / "ml/resultados/baseline_fisico.json")
+    ap.add_argument("--predicoes-dir", type=Path, help="grava probabilidades por frame e fold (para ensemble)")
     args = ap.parse_args()
     cfg = yaml.safe_load(args.config.read_text())
     csv_path = RAIZ / cfg["dados"]["splits_csv"]
@@ -84,6 +86,12 @@ def main() -> None:
         y = [CLASSES.index(r["classe"]) for r in teste]
         y_ag += y; p_ag.append(p); mm_ag += [float(r["mm_h"]) for r in teste]
         s13, s23, syt = (score_intensidade(clf.predict_proba(mat(l))) for l in (teste_real, o2309, oyt))
+        if args.predicoes_dir:
+            args.predicoes_dir.mkdir(parents=True, exist_ok=True)
+            for nome, l in (("test_ircnn", teste), ("test_real", teste_real), ("test_ordinal_2309", o2309), ("test_ordinal_youtube", oyt)):
+                pr = clf.predict_proba(mat(l))
+                pd.DataFrame({"caminho": [r["caminho"] for r in l], **{f"p_{c}": pr[:, i] for i, c in enumerate(CLASSES)}}).to_csv(
+                    args.predicoes_dir / f"fold{k}_{nome}.csv", index=False)
         por_fold.append({
             "ircnn_f1": resumo_classificacao(y, p)["f1_macro"],
             "test_real_f1": resumo_classificacao([0] * len(teste_real), clf.predict_proba(mat(teste_real)))["f1_macro"],
