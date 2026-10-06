@@ -61,7 +61,7 @@ def main() -> None:
     csv_path = RAIZ / cfg["dados"]["splits_csv"]
 
     todas = {r["caminho"]: r for r in ler_split(csv_path)
-             if r["particao"] in ("train", "test_real", "test_ircnn", "test_ordinal_2309", "test_ordinal_youtube")
+             if r["particao"] in ("train", "val", "test_real", "test_ircnn", "test_ordinal_2309", "test_ordinal_youtube")
              and (r["particao"] != "train" or r["origem"] in ("real", "sintetico"))}
     caminhos = sorted(todas)
     print(f"[baseline] extraindo atributos de {len(caminhos)} frames...", flush=True)
@@ -78,7 +78,7 @@ def main() -> None:
     y_ag, p_ag, mm_ag, por_fold = [], [], [], []
     for k in range(len(cfg["dados"]["ircnn_cv"]["folds"])):
         cfg["dados"]["ircnn_cv"]["fold"] = k
-        tr, _ = montar_particoes(cfg, csv_path)
+        tr, va = montar_particoes(cfg, csv_path)
         clf = make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000, class_weight="balanced"))
         clf.fit(mat(tr), [CLASSES.index(r["classe"]) for r in tr])
         teste = [r for r in ir_todos if r["evento_id"] in eventos_ircnn(cfg)["test"]]
@@ -88,7 +88,7 @@ def main() -> None:
         s13, s23, syt = (score_intensidade(clf.predict_proba(mat(l))) for l in (teste_real, o2309, oyt))
         if args.predicoes_dir:
             args.predicoes_dir.mkdir(parents=True, exist_ok=True)
-            for nome, l in (("test_ircnn", teste), ("test_real", teste_real), ("test_ordinal_2309", o2309), ("test_ordinal_youtube", oyt)):
+            for nome, l in (("val", va), ("test_ircnn", teste), ("test_real", teste_real), ("test_ordinal_2309", o2309), ("test_ordinal_youtube", oyt)):
                 pr = clf.predict_proba(mat(l))
                 pd.DataFrame({"caminho": [r["caminho"] for r in l], **{f"p_{c}": pr[:, i] for i, c in enumerate(CLASSES)}}).to_csv(
                     args.predicoes_dir / f"fold{k}_{nome}.csv", index=False)
