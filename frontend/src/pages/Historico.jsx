@@ -1,0 +1,146 @@
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { MapContainer, TileLayer, Polygon, Tooltip, useMap } from 'react-leaflet'
+import { cellToBoundary } from 'h3-js'
+import 'leaflet/dist/leaflet.css'
+import Topbar from '../components/layout/Topbar'
+import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../lib/categories'
+import { useHistorico, PERIODOS } from '../hooks/useHistorico'
+
+const CENTRO_SP = [-23.56, -46.62]
+const ORDEM = [...SEVERITY_ORDER.slice().reverse(), 'unmeasured'] // seco, garoa, moderada, forte, não medido
+
+// Classe predominante da célula (a de mais capturas; empate -> a mais severa)
+function predominante(labels) {
+  let melhor = null
+  for (const [label, n] of Object.entries(labels)) {
+    const cat = categoryFromLabel(label === 'unknown' ? null : label)
+    const sev = SEVERITY_ORDER.indexOf(cat.key)
+    if (!melhor || n > melhor.n || (n === melhor.n && sev !== -1 && sev < melhor.sev)) melhor = { cat, n, sev }
+  }
+  return melhor?.cat ?? UNMEASURED
+}
+
+function contarPorClasse(celulas) {
+  const tot = Object.fromEntries(ORDEM.map(k => [k, 0]))
+  for (const c of celulas) {
+    for (const [label, n] of Object.entries(c.labels)) {
+      tot[categoryFromLabel(label === 'unknown' ? null : label).key] += n
+    }
+  }
+  return tot
+}
+
+// Enquadra o mapa nas células com dado sempre que elas mudam
+function Enquadrar({ poligonos }) {
+  const map = useMap()
+  useEffect(() => {
+    const pts = poligonos.flatMap(p => p.contorno)
+    if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 15 })
+  }, [map, poligonos])
+  return null
+}
+
+const corDe = key => (CATEGORIES[key] ?? UNMEASURED).color
+const nomeDe = key => (CATEGORIES[key] ?? UNMEASURED).label
+
+export default function Historico() {
+  const [periodo, setPeriodo] = useState(PERIODOS[3])
+  const [resolucao, setResolucao] = useState(8)
+  const { celulas, capturas, loading, error } = useHistorico(periodo, resolucao)
+
+  const poligonos = useMemo(() => celulas.map(c => ({ ...c, cat: predominante(c.labels), contorno: cellToBoundary(c.cell) })), [celulas])
+  const totais = useMemo(() => contarPorClasse(celulas), [celulas])
+  const total = Object.values(totais).reduce((a, b) => a + b, 0)
+  const maxN = Math.max(1, ...celulas.map(c => c.count))
+
+  return (
+    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+      <Topbar breadcrumb="Histórico" backTo="/dashboard" />
+      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0 }}>Histórico de capturas</h1>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+              Células H3 coloridas pela classe predominante · intensidade estimada pelo modelo no backend
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {PERIODOS.map(p => (
+              <button key={p.key} onClick={() => setPeriodo(p)} className="font-mono text-xs px-3 py-1.5 rounded"
+                style={{ cursor: 'pointer', color: p.key === periodo.key ? 'var(--bg-base)' : 'var(--text-secondary)',
+                  background: p.key === periodo.key ? 'var(--accent-brand)' : 'transparent', border: '1px solid var(--bg-border)' }}>
+                {p.label}
+              </button>
+            ))}
+            <select value={resolucao} onChange={e => setResolucao(Number(e.target.value))} className="font-mono text-xs px-2 py-1.5 rounded"
+              style={{ background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--bg-border)' }}>
+              <option value={7}>H3 res 7 (~5 km²)</option>
+              <option value={8}>H3 res 8 (~0,7 km²)</option>
+              <option value={9}>H3 res 9 (~0,1 km²)</option>
+            </select>
+            <Link to="/dashboard" className="font-mono text-xs px-3 py-1.5 rounded no-underline"
+              style={{ color: 'var(--accent-brand)', border: '1px solid #3b82f633' }}>← Ao vivo</Link>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 14, flex: 1, minHeight: 0 }}>
+          <aside className="rounded-xl p-4" style={{ width: 340, flexShrink: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', overflowY: 'auto' }}>
+            <p className="text-xs font-mono" style={{ color: 'var(--text-secondary)', letterSpacing: 1, margin: 0 }}>CAPTURAS NO PERÍODO</p>
+            <p className="font-mono font-bold" style={{ fontSize: 34, color: 'var(--text-primary)', margin: '4px 0 12px' }}>
+              {loading ? '…' : total}
+              <span className="text-xs" style={{ color: 'var(--text-secondary)', fontWeight: 400 }}> em {celulas.length} células</span>
+            </p>
+            {error && <p className="text-xs" style={{ color: '#ef4444' }}>API indisponível: {error.message}</p>}
+            {ORDEM.map(k => (
+              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '6px 0' }}>
+                <span style={{ width: 10, height: 10, borderRadius: 2, background: corDe(k) }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary)', flex: 1 }}>{nomeDe(k)}</span>
+                <span className="font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{totais[k]}</span>
+                <div style={{ width: 90, height: 6, background: 'var(--bg-border)', borderRadius: 3 }}>
+                  <div style={{ width: `${total ? (100 * totais[k]) / total : 0}%`, height: '100%', background: corDe(k), borderRadius: 3 }} />
+                </div>
+              </div>
+            ))}
+            <p className="text-xs font-mono" style={{ color: 'var(--text-secondary)', letterSpacing: 1, margin: '18px 0 6px' }}>ÚLTIMAS CAPTURAS</p>
+            {capturas.slice(0, 25).map(c => {
+              const cat = categoryFromLabel(c.weather_label)
+              return (
+                <div key={c.id} className="text-xs" style={{ display: 'flex', gap: 8, padding: '5px 0', borderTop: '1px solid var(--bg-border)' }}>
+                  <span style={{ width: 8, height: 8, marginTop: 4, borderRadius: 4, background: cat.color, flexShrink: 0 }} />
+                  <span className="font-mono" style={{ color: 'var(--text-secondary)', width: 118 }}>
+                    {new Date(c.captured_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span style={{ color: cat.color, flex: 1 }}>{cat.label}</span>
+                  <span className="font-mono" style={{ color: 'var(--text-secondary)' }}>{c.confidence != null ? `${Math.round(c.confidence * 100)}%` : '—'}</span>
+                </div>
+              )
+            })}
+          </aside>
+
+          <div className="rounded-xl" style={{ flex: 1, minWidth: 0, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
+            <MapContainer center={CENTRO_SP} zoom={12} style={{ height: '100%', width: '100%', background: '#0b1220' }}>
+              <TileLayer
+                className="mapa-escuro"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Enquadrar poligonos={poligonos} />
+              {poligonos.map(p => (
+                <Polygon key={p.cell} positions={p.contorno}
+                  pathOptions={{ color: p.cat.color, weight: 1, fillColor: p.cat.color, fillOpacity: 0.25 + 0.55 * (p.count / maxN) }}>
+                  <Tooltip sticky>
+                    <div style={{ fontSize: 12 }}>
+                      <b>{p.cat.label}</b> · {p.count} captura(s)<br />
+                      {Object.entries(p.labels).map(([l, n]) => `${categoryFromLabel(l === 'unknown' ? null : l).label}: ${n}`).join(' · ')}
+                    </div>
+                  </Tooltip>
+                </Polygon>
+              ))}
+            </MapContainer>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
