@@ -271,6 +271,12 @@ def envia_par(caminho_jpg, metadado, config):
         "weather_label": metadado["weather_label"],
         "confidence": metadado["confidence"],
     }
+    # Marca de origem não-ao-vivo (demonstração, envio histórico) vai para o campo
+    # livre `metadata` do backend: sem isso, essas capturas ficariam
+    # indistinguíveis das reais no banco de produção.
+    extra = {k: metadado[k] for k in ("demo", "backfill") if k in metadado}
+    if extra:
+        payload["metadata"] = extra
 
     headers = {}
     if config.get("token"):

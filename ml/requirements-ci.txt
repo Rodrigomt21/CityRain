@@ -1,0 +1,12 @@
+# Dependências para rodar ml/tests no CI (sem torch: o único teste que usa torch faz importorskip).
+numpy
+pandas
+pillow
+opencv-python-headless
+pyyaml
+scipy
+scikit-learn
+requests
+pynmea2
+pyserial
+pytest

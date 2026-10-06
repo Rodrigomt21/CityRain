@@ -6,7 +6,8 @@ import { categoryFromLabel, CATEGORIES, getMostSevereCategory } from '../lib/cat
 // Projeção linear simples: é um painel esquemático, não um mapa georreferenciado.
 const BBOX = { latN: -23.35, latS: -23.80, lonW: -46.85, lonE: -46.35 }
 const ONLINE_MIN = 15 // dispositivo sem captura há mais que isso aparece offline
-const POLL_MS = 30_000
+// VITE_POLL_MS encurta a atualização (ex.: 5000 no modo demonstração da defesa)
+const POLL_MS = Number(import.meta.env.VITE_POLL_MS) || 30_000
 
 function projetar(lat, lon) {
   const x = ((lon - BBOX.lonW) / (BBOX.lonE - BBOX.lonW)) * 600
