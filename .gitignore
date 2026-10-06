@@ -131,3 +131,7 @@ ml/scripts/captura/cityrain_config.json
 
 # Painéis e amostras de revisão visual (gerados, pesados)
 ml/data/review/
+
+# Sessões do Claude Code: contém worktrees com cópias inteiras do repositório.
+# Um `git add -A` distraído mandaria tudo isso pra dentro do projeto.
+.claude/

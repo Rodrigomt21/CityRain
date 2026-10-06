@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Polygon, Tooltip, useMap } from 'react-leaflet
 import { cellToBoundary } from 'h3-js'
 import 'leaflet/dist/leaflet.css'
 import Topbar from '../components/layout/Topbar'
+import SerieTemporal from '../components/dashboard/SerieTemporal'
 import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../lib/categories'
 import { useHistorico, PERIODOS } from '../hooks/useHistorico'
 
@@ -144,6 +145,10 @@ export default function Historico() {
               ))}
             </MapContainer>
           </div>
+        </div>
+
+        <div style={{ flexShrink: 0 }}>
+          <SerieTemporal capturas={capturas} loading={loading} />
         </div>
       </main>
     </div>
