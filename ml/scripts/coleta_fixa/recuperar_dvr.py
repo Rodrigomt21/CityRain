@@ -179,6 +179,7 @@ def main() -> None:
     ap.add_argument("--raio-km", type=float, default=5.0)
     ap.add_argument("--margem-min", type=float, default=30.0)
     ap.add_argument("--estacoes", type=Path, default=RAIZ / "ml/data/raw/estacoes/normalizado/cemaden_ped.csv")
+    ap.add_argument("--desde", help="ISO 8601: ignora o que vem antes (evita re-baixar colheitas anteriores)")
     args = ap.parse_args()
 
     cfg = yaml.safe_load(args.config.read_text())
@@ -202,6 +203,8 @@ def main() -> None:
             continue
         # o DVR guarda ~120 h, mas nunca antes do início da própria live
         inicio_dvr = max(dvr.head_t - timedelta(hours=119), dvr.inicio)
+        if args.desde:
+            inicio_dvr = max(inicio_dvr, datetime.fromisoformat(args.desde).astimezone(timezone.utc))
         if args.onde_choveu:
             janelas = janelas_com_chuva(f, leituras, args.raio_km, timedelta(minutes=args.margem_min), inicio_dvr)
         else:
