@@ -47,7 +47,8 @@ const nomeDe = key => (CATEGORIES[key] ?? UNMEASURED).label
 export default function Historico() {
   const [periodo, setPeriodo] = useState(PERIODOS[3])
   const [resolucao, setResolucao] = useState(8)
-  const { celulas, capturas, loading, error } = useHistorico(periodo, resolucao)
+  const [incluirDemo, setIncluirDemo] = useState(false)
+  const { celulas, capturas, loading, error } = useHistorico(periodo, resolucao, incluirDemo)
 
   const poligonos = useMemo(() => celulas.map(c => ({ ...c, cat: predominante(c.labels), contorno: cellToBoundary(c.cell) })), [celulas])
   const totais = useMemo(() => contarPorClasse(celulas), [celulas])
@@ -79,6 +80,10 @@ export default function Historico() {
               <option value={8}>H3 res 8 (~0,7 km²)</option>
               <option value={9}>H3 res 9 (~0,1 km²)</option>
             </select>
+            <label className="font-mono text-xs" style={{ color: 'var(--text-secondary)', display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+              <input type="checkbox" checked={incluirDemo} onChange={e => setIncluirDemo(e.target.checked)} />
+              incluir demonstração
+            </label>
             <Link to="/dashboard" className="font-mono text-xs px-3 py-1.5 rounded no-underline"
               style={{ color: 'var(--accent-brand)', border: '1px solid #3b82f633' }}>← Ao vivo</Link>
           </div>

@@ -9,6 +9,14 @@ from app.models.capture import Capture
 from app.services.geo_service import GeoService
 
 
+def _sem_demo(query):
+    """Exclui capturas de demonstração (``metadata.demo``, ver ml/scripts/captura/demo_replay.py).
+
+    Capturas sem metadata ou sem a chave ``demo`` passam: ``metadata ->> 'demo'`` é NULL nelas.
+    """
+    return query.where(Capture.metadata_["demo"].as_string().is_(None))
+
+
 class CaptureService:
     """Queries de leitura para o dashboard (React e Streamlit)."""
 
@@ -24,6 +32,7 @@ class CaptureService:
         from_date: Optional[datetime],
         to_date: Optional[datetime],
         device_id: Optional[int] = None,
+        excluir_demo: bool = False,
     ) -> list[Capture]:
         """Lista capturas com filtros opcionais, ordenadas da mais recente para a mais antiga."""
         query = select(Capture).order_by(Capture.captured_at.desc())
@@ -36,6 +45,8 @@ class CaptureService:
             query = query.where(Capture.captured_at <= to_date)
         if device_id is not None:
             query = query.where(Capture.device_id == device_id)
+        if excluir_demo:
+            query = _sem_demo(query)
 
         query = query.offset(skip).limit(limit)
         result = await self.db.execute(query)
@@ -64,6 +75,7 @@ class CaptureService:
         device_id: Optional[int] = None,
         from_date: Optional[datetime] = None,
         to_date: Optional[datetime] = None,
+        excluir_demo: bool = False,
     ) -> list[dict]:
         """
         Retorna capturas agrupadas por célula H3 para o mapa de calor do dashboard.
@@ -83,6 +95,8 @@ class CaptureService:
             query = query.where(Capture.captured_at >= from_date)
         if to_date:
             query = query.where(Capture.captured_at <= to_date)
+        if excluir_demo:
+            query = _sem_demo(query)
 
         result = await self.db.execute(query)
         return GeoService.aggregate_cells(list(result.all()), resolution)
