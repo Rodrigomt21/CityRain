@@ -64,9 +64,9 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <Droplets size={14} color="var(--accent-brand)" />
             <span className="font-mono font-semibold" style={{ color: 'var(--text-primary)' }}>City Rain</span>
-            <span>© 2025</span>
+            <span>© 2026</span>
           </div>
-          <span>Defesa Civil Tech — Fase 1: Visualização com Dados Mock</span>
+          <span>TCC em Ciência da Computação · Instituto Mauá de Tecnologia</span>
         </div>
       </footer>
     </div>

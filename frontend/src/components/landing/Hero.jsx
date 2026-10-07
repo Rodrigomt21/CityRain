@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Droplets, ArrowRight } from 'lucide-react'
 
-// Gotas uniformes — mesma cor, 1px, espaçamento regular, velocidade lenta
+// Gotas uniformes: mesma cor, 1px, espaçamento regular, velocidade lenta
 const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   left: `${(i * 2) % 100}%`,
   height: `${16 + (i % 4) * 6}px`,
@@ -9,11 +9,13 @@ const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   animationDelay: `${(i * 0.18) % 2.5}s`,
 }))
 
+// Números verificáveis no sistema, não promessas: 4 classes do modelo, CNN como
+// método, 30 s de polling do painel ao vivo e H3 como unidade de agregação.
 const STATS = [
-  { value: '20',   label: 'Sensores Ativos' },
-  { value: '4',    label: 'Níveis de Alerta' },
-  { value: '30s',  label: 'Frequência de Leitura' },
-  { value: '24/7', label: 'Monitoramento Contínuo' },
+  { value: '4',    label: 'Níveis de Intensidade' },
+  { value: 'CNN',  label: 'Classificação por Imagem' },
+  { value: '30s',  label: 'Atualização do Painel' },
+  { value: 'H3',   label: 'Agregação Espacial' },
 ]
 
 export default function Hero() {
@@ -85,9 +87,10 @@ export default function Hero() {
         {/* Texto principal */}
         <p
           className="font-sans mb-10"
-          style={{ color: 'var(--text-secondary)', fontSize: '1.05rem' }}
+          style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.6 }}
         >
-          Tecnologia de ponta para operadores de defesa civil
+          Monitoramento de chuva urbana por visão computacional. Uma câmera embarcada
+          classifica a intensidade da precipitação enquanto o veículo percorre a cidade.
         </p>
 
         {/* CTA */}

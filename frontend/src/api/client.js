@@ -16,7 +16,7 @@ export class ApiError extends Error {
  * GET no backend, opcionalmente autenticado por Bearer token.
  *
  * Leituras do dashboard (capturas, mapa de calor) são públicas e não passam
- * `token`. Endpoints administrativos — hoje só GET /devices/ — exigem a chave
+ * `token`. Endpoints administrativos (hoje só GET /devices/) exigem a chave
  * de admin (ver backend/app/core/security.py:verificar_admin_key).
  */
 export async function apiGet(path, { token } = {}) {

@@ -45,6 +45,6 @@ export function getMostSevereCategory(categories) {
     if (categories.includes(key)) return CATEGORIES[key]
   }
   // Nenhuma classe real presente: lista vazia (nada online) ou só 'unmeasured'.
-  // Mesmo princípio do UNMEASURED acima — sem medida que sustente, não afirmar "Seco".
+  // Mesmo princípio do UNMEASURED acima: sem medida que sustente, não afirmar "Seco".
   return UNMEASURED
 }

@@ -1,40 +1,42 @@
-import { CloudRain, Map, AlertTriangle, Activity, Shield, Clock } from 'lucide-react'
+import { CloudRain, Map, Hexagon, Activity, Cpu, Car } from 'lucide-react'
 
+// Cada item descreve algo que existe hoje no sistema. Prometer tela que não
+// existe (alerta automático, tabela paginada) é o que estava errado aqui antes.
 const FEATURES = [
   {
     icon: CloudRain,
-    title: 'Detecção em Tempo Real',
-    description: 'Leituras a cada 30 segundos de múltiplos sensores distribuídos pela cidade, com correlação espacial entre bairros adjacentes.',
+    title: 'Intensidade pela Imagem',
+    description: 'A rede neural lê o frame da câmera e classifica a chuva em quatro níveis. Nenhum pluviômetro a bordo.',
     borderColor: 'var(--cat-dry)',
   },
   {
-    icon: Map,
-    title: 'Cobertura Geoespacial',
-    description: 'Visualização interativa dos 20 sensores por bairro com código de cor por intensidade de precipitação e hover com dados detalhados.',
-    borderColor: 'var(--cat-drizzle)',
-  },
-  {
-    icon: AlertTriangle,
-    title: 'Alertas Operacionais',
-    description: 'Notificações imediatas ao exceder limiares críticos, com ordenação por severidade e histórico auditável das últimas 6 horas.',
-    borderColor: 'var(--cat-heavy)',
-  },
-  {
-    icon: Activity,
-    title: 'Histórico Temporal',
-    description: 'Gráfico contínuo das últimas 2 horas com linhas de referência por categoria e área preenchida para identificar tendências.',
-    borderColor: 'var(--cat-moderate)',
-  },
-  {
-    icon: Shield,
-    title: 'Confiabilidade Operacional',
-    description: 'Monitoramento do status de cada sensor com identificação imediata de dispositivos offline para garantir cobertura total.',
+    icon: Cpu,
+    title: 'Processamento na Borda',
+    description: 'A Jetson Nano decide se está chovendo ainda dentro do carro. Frame seco é descartado ali mesmo e não gasta rede.',
     borderColor: 'var(--accent-brand)',
   },
   {
-    icon: Clock,
-    title: 'Registro Auditável',
-    description: 'Tabela de leituras com timestamp preciso, paginação e animação de novos eventos para rastreabilidade completa das ocorrências.',
+    icon: Map,
+    title: 'Trajeto ao Vivo',
+    description: 'O mapa segue o veículo pela cidade e pinta o caminho dos últimos 30 minutos conforme a intensidade de cada ponto.',
+    borderColor: 'var(--cat-drizzle)',
+  },
+  {
+    icon: Hexagon,
+    title: 'Agregação Hexagonal',
+    description: 'Cada captura cai numa célula H3. O mapa mostra a chuva por região, não pontos soltos.',
+    borderColor: 'var(--cat-moderate)',
+  },
+  {
+    icon: Activity,
+    title: 'Série Temporal',
+    description: 'Quantas capturas de cada classe ao longo do tempo, com recortes de 24 horas a 30 dias.',
+    borderColor: 'var(--cat-heavy)',
+  },
+  {
+    icon: Car,
+    title: 'Frota de Dispositivos',
+    description: 'Quais dispositivos estão registrados, em que veículo e quando cada um reportou pela última vez.',
     borderColor: 'var(--cat-dry)',
   },
 ]
@@ -42,26 +44,30 @@ const FEATURES = [
 const STEPS = [
   {
     n: '01',
-    title: 'Sensores coletam dados',
-    desc: 'Cada sensor pluviométrico registra a intensidade de chuva local a cada 30 segundos e transmite para o sistema central.',
+    title: 'A câmera captura',
+    desc: 'O carro percorre São Paulo e o ABC registrando frames com GPS e horário. A Jetson separa chuva de tempo seco ali mesmo.',
   },
   {
     n: '02',
-    title: 'Sistema classifica e alerta',
-    desc: 'O algoritmo classifica a leitura em uma das 4 categorias de risco e dispara alertas automáticos ao ultrapassar limiares.',
+    title: 'O modelo classifica',
+    desc: 'Os frames com chuva sobem para o servidor, onde a rede neural estima se é garoa, moderada ou forte.',
   },
   {
     n: '03',
-    title: 'Operador toma decisão',
-    desc: 'O dashboard apresenta todos os dados de forma clara para que o operador de defesa civil possa agir com rapidez e precisão.',
+    title: 'O painel agrega',
+    desc: 'O dashboard desenha o trajeto, agrupa as capturas em células H3 e mostra como a chuva evoluiu no tempo.',
   },
 ]
 
+// As faixas em mm/h são a régua usada para ROTULAR o dataset a partir das
+// estações públicas (mesmos cortes de ml/configs/rotulagem_imt.yaml). O modelo
+// devolve a classe, não o milímetro: mudar aqui sem mudar lá faz a página
+// contradizer o modelo.
 const CATEGORIES = [
-  { key: 'Seco',     range: '0 mm/h',      color: '#22c55e', desc: 'Sem precipitação detectada. Condições normais de operação.' },
-  { key: 'Garoa',    range: '0 – 2,5 mm/h', color: '#67e8f9', desc: 'Precipitação leve. Monitoramento contínuo recomendado.' },
-  { key: 'Moderada', range: '2,5 – 10 mm/h', color: '#fb923c', desc: 'Chuva moderada. Atenção a pontos de alagamento conhecidos.' },
-  { key: 'Forte',    range: '> 10 mm/h',    color: '#ef4444', desc: 'Chuva intensa. Acionar protocolo de emergência imediatamente.' },
+  { key: 'Seco',     range: '0 mm/h',        color: '#22c55e', desc: 'Sem precipitação. O classificador na borda descarta o frame antes do envio.' },
+  { key: 'Garoa',    range: '0 – 2,5 mm/h',  color: '#67e8f9', desc: 'Precipitação leve, com pouca alteração visível na via.' },
+  { key: 'Moderada', range: '2,5 – 10 mm/h', color: '#fb923c', desc: 'Chuva moderada. Degradação perceptível da visibilidade na imagem.' },
+  { key: 'Forte',    range: '> 10 mm/h',     color: '#ef4444', desc: 'Chuva intensa, associada a risco de alagamento na região.' },
 ]
 
 export default function Features() {
@@ -87,7 +93,7 @@ export default function Features() {
               Tudo que você precisa numa tela
             </h2>
             <p className="font-sans mt-3 text-sm" style={{ color: 'var(--text-secondary)', maxWidth: '440px', margin: '12px auto 0' }}>
-              Um dashboard pensado para operadores sob pressão — denso em informação, zero em ruído.
+              Um dashboard pensado para operadores sob pressão: denso em informação, zero em ruído.
             </p>
           </div>
 
@@ -191,8 +197,9 @@ export default function Features() {
             <h2 className="font-mono font-bold mt-2" style={{ fontSize: '1.6rem', color: 'var(--text-primary)' }}>
               Categorias de Intensidade
             </h2>
-            <p className="font-sans mt-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Classificação padronizada para comunicação entre equipes
+            <p className="font-sans mt-3 text-sm" style={{ color: 'var(--text-secondary)', maxWidth: '560px', margin: '12px auto 0', lineHeight: 1.6 }}>
+              As faixas em mm/h vêm das estações públicas (CGE-SP, INMET, CEMADEN) e servem
+              para rotular o dataset. Em operação o modelo vê só a imagem e devolve a classe.
             </p>
           </div>
 

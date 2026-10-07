@@ -5,7 +5,7 @@ const ADMIN_KEY = import.meta.env.VITE_ADMIN_API_KEY
 const POLL_MS = 60_000 // registro de dispositivos muda devagar; não precisa dos 30s do mapa
 
 /**
- * Dispositivos registrados via GET /api/v1/devices/ — endpoint administrativo
+ * Dispositivos registrados via GET /api/v1/devices/, endpoint administrativo
  * (exige Bearer token, ver backend/app/core/security.py:verificar_admin_key).
  *
  * Sem VITE_ADMIN_API_KEY configurada nem tenta a requisição: expõe

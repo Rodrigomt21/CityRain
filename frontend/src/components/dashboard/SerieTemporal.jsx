@@ -78,33 +78,24 @@ export default function SerieTemporal({ capturas, loading, altura = 150 }) {
           Sem capturas no período selecionado.
         </p>
       ) : (
-        <>
-          <ResponsiveContainer width="100%" height={altura}>
-            <BarChart data={dados} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
-              <CartesianGrid stroke="var(--bg-border)" vertical={false} />
-              <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-                axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
-              <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-                axisLine={false} tickLine={false} />
-              <Tooltip
-                cursor={{ fill: '#ffffff0d' }}
-                contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 6, fontSize: 12 }}
-                labelStyle={{ color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono' }}
-                formatter={(v, k) => [`${v} captura(s)`, nomeDe(k)]}
-              />
-              {ORDEM.map(k => (
-                <Bar key={k} dataKey={k} stackId="classe" fill={corDe(k)} isAnimationActive={false} />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-          {/* A API devolve no máximo 200 capturas por consulta — dizer isso evita ler
-              o gráfico como se fosse o período inteiro quando há mais que isso. */}
-          {capturas.length >= 200 && (
-            <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.7, margin: '6px 0 0' }}>
-              Mostrando as {capturas.length} capturas mais recentes do período (limite da API).
-            </p>
-          )}
-        </>
+        <ResponsiveContainer width="100%" height={altura}>
+          <BarChart data={dados} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
+            <CartesianGrid stroke="var(--bg-border)" vertical={false} />
+            <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+              axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
+            <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+              axisLine={false} tickLine={false} />
+            <Tooltip
+              cursor={{ fill: '#ffffff0d' }}
+              contentStyle={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', borderRadius: 6, fontSize: 12 }}
+              labelStyle={{ color: 'var(--text-secondary)', fontFamily: 'JetBrains Mono' }}
+              formatter={(v, k) => [`${v} captura(s)`, nomeDe(k)]}
+            />
+            {ORDEM.map(k => (
+              <Bar key={k} dataKey={k} stackId="classe" fill={corDe(k)} isAnimationActive={false} />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
       )}
     </div>
   )
