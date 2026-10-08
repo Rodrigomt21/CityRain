@@ -1,11 +1,14 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.schemas.capture import CaptureResponse, CaptureWithDetails
+from app.services.camera_service import CameraService
 from app.services.capture_service import CaptureService
 
 router = APIRouter()
@@ -32,6 +35,15 @@ async def list_captures(
     return await service.list_captures(
         skip, limit, weather_label, from_date, to_date, device_id=device_id, excluir_demo=excluir_demo, tipo=tipo
     )
+
+
+@router.get("/{capture_id}/imagem")
+async def imagem_da_captura(capture_id: int, db: AsyncSession = Depends(get_db)):
+    """Arquivo da imagem; 404 se não houver ou se o disco do servidor não o tiver mais."""
+    mf = await CameraService(db).arquivo_da_captura(capture_id)
+    if mf is None or not Path(mf.file_path).is_file():
+        raise HTTPException(status_code=404, detail="Imagem indisponível.")
+    return FileResponse(mf.file_path, media_type=mf.mime_type)
 
 
 @router.get("/{capture_id}", response_model=CaptureWithDetails)
