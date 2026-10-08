@@ -77,3 +77,71 @@ def test_janelas_com_chuva_une_margem_e_respeita_raio_e_dvr():
     dvr0 = datetime(2026, 10, 4, 16, 50, tzinfo=timezone.utc)
     j = janelas_com_chuva(f, L, 5.0, timedelta(minutes=15), dvr0)
     assert j == [(dvr0, datetime(2026, 10, 4, 17, 55, tzinfo=timezone.utc))]  # corta no início do DVR
+
+
+class _Resp:
+    def __init__(self, status):
+        self.status_code = status
+
+
+class _SessaoFalsa:
+    def __init__(self, status=201, erro=None):
+        self.status, self.erro, self.chamadas = status, erro, []
+
+    def post(self, url, files=None, data=None, headers=None, timeout=None):
+        self.chamadas.append({"url": url, "files": files, "data": data, "headers": headers})
+        if self.erro:
+            raise self.erro
+        return _Resp(self.status)
+
+
+def test_nome_device_segue_convencao():
+    assert col.nome_device("sp_centro_geolan") == "fixa-sp_centro_geolan"
+
+
+def test_token_da_variavel_tem_precedencia(tmp_path, monkeypatch):
+    arq = tmp_path / "tokens.json"
+    arq.write_text(json.dumps({"cam1": "do-arquivo"}))
+    assert col.token_da_fonte("cam1", arq) == "do-arquivo"
+    monkeypatch.setenv("CITYRAIN_TOKEN_CAM1", "da-env")
+    assert col.token_da_fonte("cam1", arq) == "da-env"
+    assert col.token_da_fonte("outra", arq) is None
+    assert col.token_da_fonte("cam1", tmp_path / "nao_existe.json") == "da-env"
+
+
+def test_metadados_do_ingest(tmp_path):
+    quando = datetime(2026, 10, 9, 18, 0, tzinfo=timezone.utc)
+    jpg = col.gravar_frame(JPEG, _fonte(), tmp_path, quando)
+    meta = col.metadados_ingest(json.loads(jpg.with_suffix(".json").read_text()))
+    assert meta["captured_at"] == quando.isoformat()
+    assert (meta["latitude"], meta["longitude"]) == (-23.5, -46.6)
+    assert meta["source_type"] == "camera_fixa"
+    assert meta["metadata"]["fonte"] == "cam1"
+    assert "demo" not in meta["metadata"]
+    com_demo = col.metadados_ingest(json.loads(jpg.with_suffix(".json").read_text()), demo={"origem": "x"})
+    assert com_demo["metadata"]["demo"] == {"origem": "x"}
+
+
+def test_enviar_frame_faz_post_multipart(tmp_path):
+    jpg = col.gravar_frame(JPEG, _fonte(), tmp_path, datetime.now(timezone.utc))
+    s = _SessaoFalsa(201)
+    assert col.enviar_frame(jpg, "http://api/api/v1/ingest", "tok", sessao=s) == 201
+    ch = s.chamadas[0]
+    assert ch["headers"] == {"Authorization": "Bearer tok"}
+    assert ch["files"]["image"][2] == "image/jpeg"
+    assert json.loads(ch["data"]["metadata"])["source_type"] == "camera_fixa"
+
+
+def test_enviar_frame_com_rede_fora_devolve_zero(tmp_path):
+    import requests
+
+    jpg = col.gravar_frame(JPEG, _fonte(), tmp_path, datetime.now(timezone.utc))
+    s = _SessaoFalsa(erro=requests.ConnectionError("sem rede"))
+    assert col.enviar_frame(jpg, "http://api", "tok", sessao=s) == 0
+    assert jpg.exists()
+
+
+def test_carrega_campos_novos_da_fonte():
+    f = _fonte(posicao_verificada=True, fonte_publica="https://exemplo.gov.br/cameras")
+    assert f.posicao_verificada is True and f.fonte_publica.startswith("https://")
+    assert _fonte().posicao_verificada is False
