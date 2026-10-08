@@ -39,11 +39,19 @@ async def list_captures(
 
 @router.get("/{capture_id}/imagem")
 async def imagem_da_captura(capture_id: int, db: AsyncSession = Depends(get_db)):
-    """Arquivo da imagem; 404 se não houver ou se o disco do servidor não o tiver mais."""
+    """Imagem da captura: só câmera fixa; captura do carro ou sem device → 404 (privacidade).
+
+    Também 404 se o disco do servidor não tiver mais o arquivo.
+    """
     mf = await CameraService(db).arquivo_da_captura(capture_id)
     if mf is None or not Path(mf.file_path).is_file():
         raise HTTPException(status_code=404, detail="Imagem indisponível.")
-    return FileResponse(mf.file_path, media_type=mf.mime_type)
+    # A imagem atrás de um id de captura nunca muda.
+    return FileResponse(
+        mf.file_path,
+        media_type=mf.mime_type,
+        headers={"Cache-Control": "public, max-age=86400, immutable"},
+    )
 
 
 @router.get("/{capture_id}", response_model=CaptureWithDetails)

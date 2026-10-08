@@ -45,5 +45,13 @@ class CameraService:
         return [PontoSerie.model_validate(c, from_attributes=True) for c in caps]
 
     async def arquivo_da_captura(self, capture_id: int) -> Optional[MediaFile]:
-        q = select(MediaFile).where(MediaFile.capture_id == capture_id).order_by(MediaFile.id).limit(1)
+        # Privacidade (LGPD): só imagens de câmera fixa; frames do carro nunca saem.
+        q = (
+            select(MediaFile)
+            .join(Capture, MediaFile.capture_id == Capture.id)
+            .join(Device, Capture.device_id == Device.id)
+            .where(MediaFile.capture_id == capture_id, Device.tipo == "fixa")
+            .order_by(MediaFile.id)
+            .limit(1)
+        )
         return (await self.db.execute(q)).scalar_one_or_none()

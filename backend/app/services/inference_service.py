@@ -104,7 +104,7 @@ class _ModeloOnnx:
 
 
 class InferenceService:
-    """Classifica intensidade de chuva (garoa/moderado/forte) a partir dos bytes da imagem."""
+    """Classifica a intensidade da chuva com o modelo carregado (o de câmera fixa pode devolver ``seco``)."""
 
     def __init__(
         self,

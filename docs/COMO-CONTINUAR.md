@@ -84,10 +84,10 @@ cd backend && TEST_DATABASE_URL=postgresql+asyncpg://cityrain:cityrain@localhost
 
 **Aviso sobre deploy no Railway:**
 
-O diretório `UPLOAD_DIR` (padrão `storage/`) armazena miniaturas de câmeras e outros artefatos servidos por `/api/v1/captures/{id}/imagem`.
+O diretório `UPLOAD_DIR` (padrão `storage/`) armazena TODAS as imagens recebidas (Jetson e câmeras fixas), que também são dados de treino; só as de câmera fixa são servidas por `/api/v1/captures/{id}/imagem`.
 Em um container efêmero (Railway), esses arquivos são perdidos a cada deploy.
 **Montar um volume persistente em `UPLOAD_DIR`** para que as imagens sobrevivam entre deploys.
-Sem o volume, o dashboard mostrará quebras de imagem após redeploy.
+Sem o volume, o dashboard mostrará "imagem indisponível" após redeploy.
 
 ### Frontend
 
