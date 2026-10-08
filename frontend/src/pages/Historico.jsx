@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Polygon, Tooltip, useMap } from 'react-leaflet
 import { cellToBoundary } from 'h3-js'
 import 'leaflet/dist/leaflet.css'
 import Topbar from '../components/layout/Topbar'
+import SerieTemporal from '../components/dashboard/SerieTemporal'
 import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../lib/categories'
 import { useHistorico, PERIODOS } from '../hooks/useHistorico'
 
@@ -31,6 +32,15 @@ function contarPorClasse(celulas) {
   return tot
 }
 
+// O Leaflet guarda o tamanho do container em cache e não percebe sozinho quando
+// ele muda. Sem avisar, arrastar a alça do gráfico deixa faixa cinza e tiles
+// desalinhados no mapa até o próximo zoom.
+function AvisarRedimensionamento({ altura }) {
+  const map = useMap()
+  useEffect(() => { map.invalidateSize({ animate: false }) }, [map, altura])
+  return null
+}
+
 // Enquadra o mapa nas células com dado sempre que elas mudam
 function Enquadrar({ poligonos }) {
   const map = useMap()
@@ -44,11 +54,59 @@ function Enquadrar({ poligonos }) {
 const corDe = key => (CATEGORIES[key] ?? UNMEASURED).color
 const nomeDe = key => (CATEGORIES[key] ?? UNMEASURED).label
 
+// Altura do gráfico: arrastável pela alça. O teto é relativo à janela para a
+// alça nunca empurrar o mapa para fora da tela em monitor pequeno.
+const ALTURA_PADRAO = 150
+const ALTURA_MIN = 80
+const CHAVE_ALTURA = 'cityrain:altura-serie'
+const limitar = h => Math.max(ALTURA_MIN, Math.min(h, Math.round(window.innerHeight * 0.55)))
+
+function alturaSalva() {
+  // localStorage lança em aba anônima / cookies bloqueados: o gráfico não pode
+  // deixar de renderizar por causa de uma preferência de tamanho.
+  try {
+    const h = Number(localStorage.getItem(CHAVE_ALTURA))
+    return h ? limitar(h) : ALTURA_PADRAO
+  } catch {
+    return ALTURA_PADRAO
+  }
+}
+
 export default function Historico() {
   const [periodo, setPeriodo] = useState(PERIODOS[3])
   const [resolucao, setResolucao] = useState(8)
   const [incluirDemo, setIncluirDemo] = useState(false)
+  const [alturaSerie, setAlturaSerie] = useState(alturaSalva)
   const { celulas, capturas, loading, error } = useHistorico(periodo, resolucao, incluirDemo)
+
+  // Arrastar a alça para cima aumenta o gráfico (e encolhe o mapa), para baixo diminui.
+  function arrastar(e) {
+    e.preventDefault()
+    const yInicial = e.clientY
+    const alturaInicial = alturaSerie
+    const mover = ev => setAlturaSerie(limitar(alturaInicial + (yInicial - ev.clientY)))
+    const soltar = ev => {
+      window.removeEventListener('pointermove', mover)
+      window.removeEventListener('pointerup', soltar)
+      try {
+        localStorage.setItem(CHAVE_ALTURA, String(limitar(alturaInicial + (yInicial - ev.clientY))))
+      } catch { /* preferência é opcional */ }
+    }
+    window.addEventListener('pointermove', mover)
+    window.addEventListener('pointerup', soltar)
+  }
+
+  // Setas redimensionam sem mouse; a alça é focável por teclado.
+  function teclado(e) {
+    const passo = e.shiftKey ? 40 : 10
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return
+    e.preventDefault()
+    setAlturaSerie(h => {
+      const nova = limitar(h + (e.key === 'ArrowUp' ? passo : -passo))
+      try { localStorage.setItem(CHAVE_ALTURA, String(nova)) } catch { /* opcional */ }
+      return nova
+    })
+  }
 
   const poligonos = useMemo(() => celulas.map(c => ({ ...c, cat: predominante(c.labels), contorno: cellToBoundary(c.cell) })), [celulas])
   const totais = useMemo(() => contarPorClasse(celulas), [celulas])
@@ -131,6 +189,7 @@ export default function Historico() {
                 url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <Enquadrar poligonos={poligonos} />
+              <AvisarRedimensionamento altura={alturaSerie} />
               {poligonos.map(p => (
                 <Polygon key={p.cell} positions={p.contorno}
                   pathOptions={{ color: p.cat.color, weight: 1, fillColor: p.cat.color, fillOpacity: 0.25 + 0.55 * (p.count / maxN) }}>
@@ -144,6 +203,26 @@ export default function Historico() {
               ))}
             </MapContainer>
           </div>
+        </div>
+
+        <div style={{ flexShrink: 0 }}>
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Redimensionar o gráfico (setas para cima e para baixo)"
+            aria-valuenow={alturaSerie}
+            tabIndex={0}
+            onPointerDown={arrastar}
+            onKeyDown={teclado}
+            title="Arraste para redimensionar o gráfico"
+            style={{
+              height: 14, cursor: 'ns-resize', display: 'grid', placeItems: 'center',
+              touchAction: 'none', // sem isso o navegador rola a página em vez de arrastar
+            }}
+          >
+            <span style={{ width: 46, height: 3, borderRadius: 2, background: 'var(--bg-border)' }} />
+          </div>
+          <SerieTemporal capturas={capturas} loading={loading} altura={alturaSerie} />
         </div>
       </main>
     </div>

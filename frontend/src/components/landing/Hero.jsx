@@ -1,8 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Droplets, ArrowRight } from 'lucide-react'
-import { useResumoPublico } from '../../hooks/useResumoPublico'
 
-// Gotas uniformes — mesma cor, 1px, espaçamento regular, velocidade lenta
+// Gotas uniformes: mesma cor, 1px, espaçamento regular, velocidade lenta
 const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   left: `${(i * 2) % 100}%`,
   height: `${16 + (i % 4) * 6}px`,
@@ -10,24 +9,17 @@ const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   animationDelay: `${(i * 0.18) % 2.5}s`,
 }))
 
-function haQuanto(d) {
-  if (!d) return '—'
-  const min = Math.floor((Date.now() - d.getTime()) / 60_000)
-  if (min < 60) return `${min} min`
-  if (min < 1440) return `${Math.floor(min / 60)} h`
-  return `${Math.floor(min / 1440)} d`
-}
+// Números verificáveis no sistema, não promessas: 4 classes do modelo, CNN como
+// método, 30 s de polling do painel ao vivo e H3 como unidade de agregação.
+const STATS = [
+  { value: '4',    label: 'Níveis de Intensidade' },
+  { value: 'CNN',  label: 'Classificação por Imagem' },
+  { value: '30s',  label: 'Atualização do Painel' },
+  { value: 'H3',   label: 'Agregação Espacial' },
+]
 
 export default function Hero() {
   const navigate = useNavigate()
-  const resumo = useResumoPublico()
-  // Números vindos da API (antes eram fixos: "20 sensores ativos" não existia)
-  const STATS = [
-    { value: resumo.capturas ?? '—', label: 'Capturas classificadas' },
-    { value: resumo.dispositivos ?? '—', label: 'Dispositivos registrados' },
-    { value: '4', label: 'Classes de intensidade' },
-    { value: haQuanto(resumo.ultima), label: 'Desde a última captura' },
-  ]
 
   return (
     <section
@@ -95,9 +87,10 @@ export default function Hero() {
         {/* Texto principal */}
         <p
           className="font-sans mb-10"
-          style={{ color: 'var(--text-secondary)', fontSize: '1.05rem' }}
+          style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.6 }}
         >
-          Tecnologia de ponta para operadores de defesa civil
+          Monitoramento de chuva urbana por visão computacional. Uma câmera embarcada
+          classifica a intensidade da precipitação enquanto o veículo percorre a cidade.
         </p>
 
         {/* CTA */}

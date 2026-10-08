@@ -3,9 +3,9 @@ import { Wifi, WifiOff, Cpu } from 'lucide-react'
 import Topbar from '../components/layout/Topbar'
 import { useDevices } from '../hooks/useDevices'
 
-// Sem captura há mais que isso, o dispositivo aparece como sem contato recente.
-// Mesmo limite do mapa (useLiveSensors.ONLINE_MIN) para os dois painéis não se
-// contradizerem sobre quem está ativo.
+// Sem contato há mais que isso, o dispositivo deixa de contar como reportando.
+// É só o corte visual desta página: "ativo" no banco (is_active) diz que o
+// dispositivo está habilitado, não que ele mandou algo recentemente.
 const CONTATO_MIN = 15
 
 function formatarContato(iso) {
