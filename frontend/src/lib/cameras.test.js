@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aoVivo, haQuanto, pontosSerie, resumoCamera } from './cameras'
+import { aoVivo, haQuanto, pontosSerie, resumoCamera, separarMedidos } from './cameras'
 
 const AGORA = new Date('2026-10-09T18:00:00Z')
 const iso = (minAtras) => new Date(AGORA.getTime() - minAtras * 60e3).toISOString()
@@ -61,5 +61,16 @@ describe('pontosSerie', () => {
     expect(p.map(x => x.nivel)).toEqual([0, 3, null])
     expect(p[2].rotulo).toBe('Não medido')
     expect(p[0].t).toBeLessThan(p[1].t)
+  })
+})
+
+describe('separarMedidos', () => {
+  it('conta os pontos sem medida e mantém só os medidos', () => {
+    const r = separarMedidos([{ t: 1, nivel: 0 }, { t: 2, nivel: null }, { t: 3, nivel: 2 }, { t: 4, nivel: null }])
+    expect(r.medidos.map(p => p.t)).toEqual([1, 3])
+    expect(r.semMedida).toBe(2)
+  })
+  it('série vazia', () => {
+    expect(separarMedidos([])).toEqual({ medidos: [], semMedida: 0 })
   })
 })

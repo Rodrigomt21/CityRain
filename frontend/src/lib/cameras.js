@@ -39,3 +39,15 @@ export function pontosSerie(serie) {
     return { t: new Date(p.captured_at).getTime(), nivel: NIVEL[cat.key] ?? null, cor: cat.color, rotulo: cat.label }
   })
 }
+
+export const ROTULOS_NIVEL = ['Seco', 'Garoa', 'Moderada', 'Forte']
+
+/** Separa os pontos medidos dos sem medida (nivel nulo), que não entram no eixo de classes. */
+export function separarMedidos(pontos) {
+  const medidos = pontos.filter(p => p.nivel != null)
+  return { medidos, semMedida: pontos.length - medidos.length }
+}
+
+export function horaMinuto(t) {
+  return new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}

@@ -8,6 +8,7 @@ import Cameras from './pages/Cameras'
 // Histórico carrega sob demanda: é a única tela que usa recharts (~360 kB), e
 // quem abre só o monitoramento ao vivo não precisa baixar o gráfico.
 const Historico = lazy(() => import('./pages/Historico'))
+const CameraDetalhe = lazy(() => import('./pages/CameraDetalhe'))
 
 function Carregando() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/dispositivos" element={<Devices />} />
           <Route path="/historico"   element={<Historico />} />
           <Route path="/cameras"     element={<Cameras />} />
+          <Route path="/cameras/:id" element={<CameraDetalhe />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
