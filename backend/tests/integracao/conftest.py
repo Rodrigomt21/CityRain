@@ -15,6 +15,17 @@ URL = os.environ.get("TEST_DATABASE_URL", "")
 if not URL:
     pytest.skip("TEST_DATABASE_URL não definida", allow_module_level=True)
 
+from sqlalchemy.engine import make_url  # noqa: E402
+
+_NOME_BANCO = make_url(URL).database or ""
+if "test" not in _NOME_BANCO:
+    # O conftest apaga o schema inteiro: nunca rodar contra um banco que não seja de teste.
+    pytest.exit(
+        f"TEST_DATABASE_URL aponta para '{_NOME_BANCO}': o nome do banco precisa conter "
+        "'test' (ex.: cityrain_teste) porque o schema é apagado a cada sessão.",
+        returncode=2,
+    )
+
 BACKEND = Path(__file__).resolve().parents[2]
 ADMIN_KEY = "admin-de-teste"
 
