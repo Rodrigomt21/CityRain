@@ -14,6 +14,20 @@ Este é um TCC do curso de Ciência da Computação do Centro Universitário do 
 
 **Título formal:** CityRain: Sistema Embarcado de Monitoramento Climático Urbano por Visão Computacional
 
+## Codebase Overview
+
+Sistema em produção (out/2026): Jetson no carro (gate chuva/seco) e coletor de câmeras fixas enviam
+frames ao `POST /api/v1/ingest`; o backend classifica a intensidade com um modelo ONNX
+(MobileNetV3-Large treinado em PyTorch) e grava em PostgreSQL com índice H3; o dashboard React
+mostra ao vivo e o histórico.
+
+**Stack**: FastAPI + SQLAlchemy async + Alembic (Python 3.11) · React 19 + Vite + Leaflet + h3-js ·
+PyTorch/torchvision + ONNX Runtime · Jetson Nano (Python 3.6).
+**Structure**: `backend/`, `frontend/`, `ml/` (código, configs, scripts da Jetson) e `docs/`.
+
+Mapa detalhado: [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md). Estado e pendências:
+[docs/COMO-CONTINUAR.md](docs/COMO-CONTINUAR.md).
+
 ## Equipe
 
 - **Rodrigo Monteiro Toffoli Teixeira** — 23.00068-6

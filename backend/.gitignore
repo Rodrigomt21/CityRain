@@ -32,3 +32,6 @@ ml/weights/*.onnx
 .vscode/
 .idea/
 *.swp
+
+# Uploads dos testes de integração
+.storage_teste/

@@ -31,6 +31,11 @@ async def register_device(
         vehicle_plate=body.vehicle_plate,
         hw_model=body.hw_model,
         metadata_=body.metadata_,
+        tipo=body.tipo,
+        latitude=body.latitude,
+        longitude=body.longitude,
+        stream_url=body.stream_url,
+        descricao=body.descricao,
     )
     return DeviceCreatedResponse(
         id=device.id,
@@ -40,6 +45,11 @@ async def register_device(
         is_active=device.is_active,
         registered_at=device.registered_at,
         last_seen_at=device.last_seen_at,
+        tipo=device.tipo,
+        latitude=device.latitude,
+        longitude=device.longitude,
+        stream_url=device.stream_url,
+        descricao=device.descricao,
         api_key=plaintext_key,
     )
 

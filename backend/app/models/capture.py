@@ -51,6 +51,10 @@ class Capture(Base):
     # afirmou ausência de chuva ao descartar o frame.
     weather_label: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    # Qual ONNX classificou (metadata `experimento` e `epoca` do arquivo). Nulo quando
+    # não houve inferência (captura sem imagem ou sem modelo carregado).
+    modelo: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    modelo_versao: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     # metadata_ evita conflito com Base.metadata do SQLAlchemy; coluna no banco é "metadata"
     metadata_: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
     source_type: Mapped[str] = mapped_column(String(20))

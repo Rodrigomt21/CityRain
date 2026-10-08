@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import MapaAoVivo from '../components/dashboard/MapaAoVivo'
 import PainelAgora from '../components/dashboard/PainelAgora'
+import { useCameras } from '../hooks/useCameras'
 import { useLiveCaptures, JANELA_MIN } from '../hooks/useLiveCaptures'
 
 // Ao vivo = capturas reais dos últimos JANELA_MIN minutos, em mapa real.
@@ -9,6 +10,7 @@ import { useLiveCaptures, JANELA_MIN } from '../hooks/useLiveCaptures'
 // não mostrava onde o dispositivo estava nem o trajeto.)
 export default function Dashboard() {
   const { recentes, ultima, atualizadoEm, error, pollMs } = useLiveCaptures()
+  const { cameras } = useCameras()
 
   return (
     <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
@@ -27,7 +29,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {[['/historico', 'Histórico →'], ['/dispositivos', 'Dispositivos →']].map(([to, txt]) => (
+            {[['/historico', 'Histórico →'], ['/dispositivos', 'Dispositivos →'], ['/cameras', 'Câmeras →']].map(([to, txt]) => (
               <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
                 style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
                 {txt}
@@ -41,7 +43,7 @@ export default function Dashboard() {
             <PainelAgora capturas={recentes} ultima={ultima} janelaMin={JANELA_MIN} />
           </div>
           <div className="rounded-xl" style={{ flex: 1, minWidth: 0, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
-            <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} />
+            <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} cameras={cameras} />
           </div>
         </div>
       </main>

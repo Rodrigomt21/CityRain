@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     port: int = 8000
     # Caminho do .onnx de intensidade; vazio = app/inference/modelos/intensidade.onnx
     inference_model_path: str = ""
+    # Modelo da câmera fixa (4 classes); vazio = app/inference/modelos/intensidade_fixa.onnx
+    inference_model_fixa_path: str = ""
+    # Referências secas por câmera: <dir>/<device_name>/{dia,noite}.jpg; vazio = app/inference/referencias
+    referencias_dir: str = ""
 
     @field_validator("cors_origins", mode="before")
     @classmethod

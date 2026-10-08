@@ -61,12 +61,42 @@ Avaliações extras (Grad-CAM, IC por bootstrap, híbrido, baseline físico) est
 ### Backend
 
 ```bash
-cd backend && python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+cd backend && python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env   # preencher DATABASE_URL etc.
 .venv/bin/python -m pytest -q tests
 ```
 
+Rodar a API local (Postgres local; `ADMIN_KEY` é o Bearer de admin):
+
+```bash
+cd backend
+export DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/cityrain ADMIN_KEY=demo
+.venv/bin/alembic upgrade head
+.venv/bin/python -m uvicorn app.main:app --port 8000
+```
+
 Use Python 3.11 (SQLAlchemy 2.0.37 quebra no 3.14). Deploy no Railway a partir da `main`.
+
+**Testes de integração com PostgreSQL local:**
+
+```bash
+# Subir container PostgreSQL para testes
+docker run -d --name cityrain-pg-teste \
+  -e POSTGRES_USER=cityrain \
+  -e POSTGRES_PASSWORD=cityrain \
+  -e POSTGRES_DB=cityrain_teste \
+  -p 5433:5432 postgres:16
+
+# Executar testes apontando para o banco de testes
+cd backend && TEST_DATABASE_URL=postgresql+asyncpg://cityrain:cityrain@localhost:5433/cityrain_teste .venv/bin/python -m pytest -q tests
+```
+
+**Aviso sobre deploy no Railway:**
+
+O diretório `UPLOAD_DIR` (padrão `storage/`) armazena TODAS as imagens recebidas (Jetson e câmeras fixas), que também são dados de treino; só as de câmera fixa são servidas por `/api/v1/captures/{id}/imagem`.
+Em um container efêmero (Railway), esses arquivos são perdidos a cada deploy.
+**Montar um volume persistente em `UPLOAD_DIR`** para que as imagens sobrevivam entre deploys.
+Sem o volume, o dashboard mostrará "imagem indisponível" após redeploy.
 
 ### Frontend
 

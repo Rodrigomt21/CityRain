@@ -33,6 +33,10 @@ app = FastAPI(
         "carregado, capturas com imagem são gravadas com `weather_label` **nulo**. Nulo "
         "significa *não medido* e é diferente de `seco`, que afirma ausência de chuva. "
         "Não renderizar um como o outro.\n\n"
+        "**Câmera fixa:** dispositivo cadastrado com `tipo='fixa'`, latitude e longitude. "
+        "Sempre envia a imagem (sem imagem → 422). A posição vem do cadastro. A classe vem "
+        "do modelo fixo de 4 classes, que pode devolver `seco`. Use `GET /api/v1/cameras/` "
+        "e `?tipo=fixa|movel` em `/captures` e `/stats/geo`.\n\n"
         "**Para o dashboard:** use `/api/v1/captures` e `/api/v1/stats`."
     ),
     version="0.1.0",

@@ -74,7 +74,7 @@ export default function PainelAgora({ capturas, ultima, janelaMin }) {
           </div>
         </div>
       ) : (
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma captura recebida ainda.</p>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma captura do carro recebida ainda.</p>
       )}
 
       <div>
@@ -97,7 +97,7 @@ export default function PainelAgora({ capturas, ultima, janelaMin }) {
         </div>
         {!aoVivo && (
           <p className="text-xs" style={{ color: 'var(--text-secondary)', marginTop: 12 }}>
-            Nenhum dispositivo enviou captura nos últimos {janelaMin} min. O mapa mostra a última posição conhecida;
+            O carro não enviou captura nos últimos {janelaMin} min. O mapa mostra a última posição conhecida;
             o trajeto completo está no Histórico.
           </p>
         )}

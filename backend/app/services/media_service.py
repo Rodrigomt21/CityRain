@@ -15,7 +15,7 @@ from app.models.device import Device
 from app.models.ingestion_log import IngestionLog
 from app.models.media_file import MediaFile
 from app.services.geo_service import GeoService
-from app.services.inference_service import inference_service
+from app.services.inference_service import roteador_inferencia
 
 
 class MediaService:
@@ -57,7 +57,8 @@ class MediaService:
           Commit 2: MediaFile + IngestionLog("success")
                     ou IngestionLog("error") se o commit 2 falhar
         """
-        required = {"captured_at", "latitude", "longitude", "source_type"}
+        fixa = device is not None and getattr(device, "tipo", "movel") == "fixa"
+        required = {"captured_at", "source_type"} if fixa else {"captured_at", "latitude", "longitude", "source_type"}
         missing = required - meta.keys()
         if missing:
             raise HTTPException(
@@ -75,17 +76,29 @@ class MediaService:
                 detail="captured_at deve ser ISO 8601. Ex: 2026-05-01T14:30:00Z",
             )
 
-        latitude, longitude = meta["latitude"], meta["longitude"]
-        if (
-            not isinstance(latitude, (int, float))
-            or not isinstance(longitude, (int, float))
-            or not (-90.0 <= latitude <= 90.0)
-            or not (-180.0 <= longitude <= 180.0)
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
-            )
+        if fixa:
+            # Câmera fixa: posição é a do cadastro, não a do JSON, e o "seco" sem imagem
+            # é decisão do gate da Jetson, que a câmera fixa não tem.
+            if image is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail="Câmera fixa sempre envia a imagem; o modelo fixo decide se está seco.",
+                )
+            latitude, longitude = device.latitude, device.longitude
+            source_type = "camera_fixa"
+        else:
+            latitude, longitude = meta["latitude"], meta["longitude"]
+            source_type = meta["source_type"]
+            if (
+                not isinstance(latitude, (int, float))
+                or not isinstance(longitude, (int, float))
+                or not (-90.0 <= latitude <= 90.0)
+                or not (-180.0 <= longitude <= 180.0)
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail="latitude deve estar entre -90 e 90 e longitude entre -180 e 180.",
+                )
 
         if image is None:
             # A ausência de imagem é, em si, a decisão do gate: sem chuva.
@@ -99,7 +112,7 @@ class MediaService:
                 latitude=latitude,
                 longitude=longitude,
                 h3_cell=GeoService.to_h3_cell(latitude, longitude),
-                source_type=meta["source_type"],
+                source_type=source_type,
                 weather_label=weather_label,
                 confidence=confidence,
                 metadata_=meta.get("metadata"),
@@ -142,7 +155,10 @@ class MediaService:
 
         # Classifica a intensidade da chuva no backend.
         # Retorna confidence=None enquanto nenhum modelo ONNX estiver configurado.
-        weather_label, confidence = await inference_service.classify(content)
+        c = await roteador_inferencia.classificar(
+            content, "fixa" if fixa else "movel", device.name if device else None, captured_at
+        )
+        weather_label, confidence = c.label, c.confianca
 
         # Commit 1: persiste o Capture antes de tentar salvar o arquivo.
         # Isso garante que capture.id existe mesmo se o commit 2 falhar,
@@ -153,9 +169,11 @@ class MediaService:
             latitude=latitude,
             longitude=longitude,
             h3_cell=GeoService.to_h3_cell(latitude, longitude),
-            source_type=meta["source_type"],
+            source_type=source_type,
             weather_label=weather_label,
             confidence=confidence,
+            modelo=c.modelo,
+            modelo_versao=c.versao,
             metadata_=meta.get("metadata"),
             device_id=device.id if device and device.id else None,
         )

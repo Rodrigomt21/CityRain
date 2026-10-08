@@ -18,25 +18,25 @@ function query(params) {
  * Células H3 (GET /api/v1/stats/geo) e últimas capturas (GET /api/v1/captures/) de um período.
  * Diferente do Dashboard (só os últimos 15 min), aqui o dado antigo aparece.
  */
-export function useHistorico(periodo, resolucao, incluirDemo = false) {
+export function useHistorico(periodo, resolucao, incluirDemo = false, tipo = null) {
   const [celulas, setCelulas] = useState([])
   const [capturas, setCapturas] = useState([])
   const [carregada, setCarregada] = useState(null) // chave do último período carregado
   const [error, setError] = useState(null)
-  const chave = `${periodo.key}|${resolucao}|${incluirDemo}`
+  const chave = `${periodo.key}|${resolucao}|${incluirDemo}|${tipo}`
 
   useEffect(() => {
     let cancelado = false
     const desde = periodo.horas ? new Date(Date.now() - periodo.horas * 3600e3).toISOString() : null
     Promise.all([
-      apiGet(`/api/v1/stats/geo${query({ resolution: resolucao, from_date: desde, excluir_demo: !incluirDemo })}`),
-      apiGet(`/api/v1/captures/${query({ limit: 200, from_date: desde, excluir_demo: !incluirDemo })}`),
+      apiGet(`/api/v1/stats/geo${query({ resolution: resolucao, from_date: desde, excluir_demo: !incluirDemo, tipo })}`),
+      apiGet(`/api/v1/captures/${query({ limit: 200, from_date: desde, excluir_demo: !incluirDemo, tipo })}`),
     ])
       .then(([c, cap]) => { if (!cancelado) { setCelulas(c); setCapturas(cap); setError(null) } })
       .catch(e => { if (!cancelado) setError(e) })
       .finally(() => { if (!cancelado) setCarregada(chave) })
     return () => { cancelado = true }
-  }, [periodo, resolucao, incluirDemo, chave])
+  }, [periodo, resolucao, incluirDemo, tipo, chave])
 
   return { celulas, capturas, loading: carregada !== chave, error }
 }

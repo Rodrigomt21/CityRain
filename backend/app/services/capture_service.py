@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.capture import Capture
+from app.models.device import Device
 from app.services.geo_service import GeoService
 
 
@@ -15,6 +16,15 @@ def _sem_demo(query):
     Capturas sem metadata ou sem a chave ``demo`` passam: ``metadata ->> 'demo'`` é NULL nelas.
     """
     return query.where(Capture.metadata_["demo"].as_string().is_(None))
+
+
+def _por_tipo(query, tipo: str):
+    """Só capturas de dispositivos do tipo pedido. Captura sem device é legado da Jetson: conta como 'movel'."""
+    if tipo == "fixa":
+        return query.join(Device, Capture.device_id == Device.id).where(Device.tipo == "fixa")
+    return query.outerjoin(Device, Capture.device_id == Device.id).where(
+        or_(Device.tipo == "movel", Capture.device_id.is_(None))
+    )
 
 
 class CaptureService:
@@ -33,6 +43,7 @@ class CaptureService:
         to_date: Optional[datetime],
         device_id: Optional[int] = None,
         excluir_demo: bool = False,
+        tipo: Optional[str] = None,
     ) -> list[Capture]:
         """Lista capturas com filtros opcionais, ordenadas da mais recente para a mais antiga."""
         query = select(Capture).order_by(Capture.captured_at.desc())
@@ -47,6 +58,8 @@ class CaptureService:
             query = query.where(Capture.device_id == device_id)
         if excluir_demo:
             query = _sem_demo(query)
+        if tipo:
+            query = _por_tipo(query, tipo)
 
         query = query.offset(skip).limit(limit)
         result = await self.db.execute(query)
@@ -76,6 +89,7 @@ class CaptureService:
         from_date: Optional[datetime] = None,
         to_date: Optional[datetime] = None,
         excluir_demo: bool = False,
+        tipo: Optional[str] = None,
     ) -> list[dict]:
         """
         Retorna capturas agrupadas por célula H3 para o mapa de calor do dashboard.
@@ -97,6 +111,8 @@ class CaptureService:
             query = query.where(Capture.captured_at <= to_date)
         if excluir_demo:
             query = _sem_demo(query)
+        if tipo:
+            query = _por_tipo(query, tipo)
 
         result = await self.db.execute(query)
         return GeoService.aggregate_cells(list(result.all()), resolution)
