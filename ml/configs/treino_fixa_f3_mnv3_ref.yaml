@@ -1,0 +1,41 @@
+# F3: MobileNetV3-Large com frame + referência seca da câmera (6 canais).
+# Rodar: ml/.venv/bin/python ml/scripts/treino/treinar_fixa.py ml/configs/treino_fixa_f3_mnv3_ref.yaml --cv
+nome: fixa_f3_mnv3_ref
+seed: 42
+
+dados:
+  splits_csv: ml/data/splits/fixa_v1.csv
+  com_referencia: true
+  # Folds do irCNN iguais aos do v3 (declarados, nunca sorteados).
+  ircnn_cv:
+    fold: 0
+    max_por_evento: 150        # por (evento, classe)
+    folds:
+      - [ircnn__event_2, ircnn__event_7, ircnn__event_8]    # dia, noite, noite (garoa)
+      - [ircnn__event_6, ircnn__event_9, ircnn__event_4]    # dia, noite (garoa), dia
+      - [ircnn__event_3, ircnn__event_10, ircnn__event_1]   # dia (garoa), noite (garoa), dia
+      - [ircnn__event_5, ircnn__event_11, ircnn__event_12]  # dia, noite, noite (garoa)
+
+entrada:            # 4:3, igual ao frame da câmera (640x480)
+  altura: 288
+  largura: 384
+
+modelo:
+  arquitetura: mobilenet_v3_large
+  pretreinado: true
+
+aumentacao:
+  flip_horizontal: true
+  recorte_escala_min: 0.85
+  brilho_contraste: 0.2
+  jpeg_qualidade_min: 60   # recomprime tudo: tira o atalho da dupla compressão do sintético
+
+treino:
+  dispositivo: auto
+  epocas: 12
+  batch: 32
+  lr: 0.0005
+  weight_decay: 0.0001
+  label_smoothing: 0.1
+  paciencia: 5
+  workers: 4
