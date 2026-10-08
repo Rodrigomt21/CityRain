@@ -19,9 +19,10 @@ export function useLiveCaptures() {
     let cancelado = false
     const buscar = () => {
       const desde = new Date(Date.now() - JANELA_MIN * 60e3).toISOString()
+      // câmeras fixas têm página própria; aqui é só o trajeto do carro
       Promise.all([
-        apiGet(`/api/v1/captures/?limit=200&from_date=${encodeURIComponent(desde)}`),
-        apiGet('/api/v1/captures/?limit=1'),
+        apiGet(`/api/v1/captures/?limit=200&tipo=movel&from_date=${encodeURIComponent(desde)}`),
+        apiGet('/api/v1/captures/?limit=1&tipo=movel'),
       ])
         .then(([r, u]) => {
           if (cancelado) return
