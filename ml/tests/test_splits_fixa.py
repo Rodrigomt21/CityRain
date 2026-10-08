@@ -115,7 +115,8 @@ def test_camera_sem_seco_fica_sem_referencia_e_aparece_no_resumo(tmp_path):
 def test_5km_so_acrescenta_moderada_forte_sem_rotulo_estrito(tmp_path):
     lives = [L("a", 1, 15, "garoa"), L("a", 1, 16, "", motivo="poucas_estacoes_consenso"), L("a", 1, 17, "", motivo="x")]
     l5 = [L("a", 1, 15, "moderada"), L("a", 1, 16, "forte"), L("a", 1, 17, "garoa")]
-    linhas, _ = ms.montar(_cfg(tmp_path, lives, l5=l5), tmp_path)
+    rev = _revisao(tmp_path, ["a,frame_1_16.jpg,a,forte,l5.csv,,\n"])  # 5 km só entra revisado
+    linhas, _ = ms.montar(_cfg(tmp_path, lives, l5=l5, revisao=rev), tmp_path)
     assert {(r["caminho"].split("/")[-1], r["classe"], r["metodo_rotulo"]) for r in _por(linhas, camera="a")} == {
         ("frame_1_15.jpg", "garoa", "estacao"), ("frame_1_16.jpg", "forte", "raio_5km")}
 
@@ -152,3 +153,40 @@ def test_csv_tem_colunas_exatas(tmp_path):
     ms.escrever(linhas, saida)
     with open(saida) as f:
         assert f.readline().strip() == ",".join(ms.COLUNAS)
+
+
+def _revisao(tmp_path, linhas):
+    rev = tmp_path / "revisao.csv"
+    rev.write_text("pasta,arquivo,camera,classe,manifest,excluir,motivo\n" + "".join(linhas))
+    return str(rev)
+
+
+def _caminhos_5km(linhas):
+    return {r["caminho"].split("/")[-1] for r in linhas if r["metodo_rotulo"] == "raio_5km"}
+
+
+def test_5km_sem_manifest_nao_quebra_e_e_ignorado(tmp_path, capsys):
+    cfg = _cfg(tmp_path, [L("a", 1, 15, "garoa")])
+    cfg["manifest_lives_5km"] = str(tmp_path / "nao_existe_5km.csv")
+    linhas, resumo = ms.montar(cfg, tmp_path)
+    assert len(_por(linhas, camera="a")) == 1
+    assert "5km" in capsys.readouterr().out
+
+
+def test_5km_sem_revisao_e_descartado_e_contado(tmp_path):
+    lives = [L("a", 1, 15, "garoa")]
+    l5 = [L("a", 1, 16, "forte"), L("a", 1, 17, "moderada")]
+    linhas, resumo = ms.montar(_cfg(tmp_path, lives, l5=l5), tmp_path)
+    assert _caminhos_5km(linhas) == set()
+    assert resumo["excluidos"]["5km_sem_revisao"] == 2
+
+
+def test_5km_revisado_por_camera_e_classe_entra(tmp_path):
+    lives = [L("a", 1, 15, "garoa")]
+    l5 = [L("a", 1, 16, "forte"), L("a", 1, 17, "moderada"), L("b", 1, 16, "forte")]
+    # revisão do manifest 5 km só cobre (a, forte); a revisão de OUTRO manifest não vale
+    rev = _revisao(tmp_path, ["a,frame_1_16.jpg,a,forte,l5.csv,,\n", "a,frame_1_17.jpg,a,moderada,lives.csv,,\n"])
+    linhas, resumo = ms.montar(_cfg(tmp_path, lives, l5=l5, revisao=rev), tmp_path)
+    assert _caminhos_5km(linhas) == {"frame_1_16.jpg"}
+    assert resumo["excluidos"]["5km_sem_revisao"] == 2
+    assert resumo["por_metodo_rotulo"] == {"estacao": 1, "raio_5km": 1}

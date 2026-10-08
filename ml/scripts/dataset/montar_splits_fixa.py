@@ -84,6 +84,14 @@ def acrescentar_5km(lives: list[dict], linhas_5km: list[dict], classes: set[str]
     return lives + extras
 
 
+def _revisados(revisao_csv: Path | None, nome_manifest: str) -> set[tuple[str, str]]:
+    """Pares (câmera, classe) que têm linhas no revisao.csv vindas do manifest `nome_manifest`."""
+    if not revisao_csv or not Path(revisao_csv).is_file():
+        return set()
+    return {(r.get("camera") or r["pasta"], r["classe"]) for r in _ler(Path(revisao_csv))
+            if r.get("manifest") == nome_manifest}
+
+
 def carregar_ircnn(manifest: Path, prefixo: str) -> list[dict]:
     """Carrega eventos do irCNN com caminho prefixado.
 
@@ -195,8 +203,22 @@ def montar(cfg: dict, raiz: Path) -> tuple[list[dict], dict]:
 
     lives = carregar_lives(Path(cfg["manifest_lives"]), cfg["raiz_frames_lives"])
     if cfg.get("manifest_lives_5km"):
-        l5 = carregar_lives(Path(cfg["manifest_lives_5km"]), cfg["raiz_frames_lives"])
-        lives = acrescentar_5km(lives, l5, set(cfg.get("classes_5km", ["moderada", "forte"])))
+        man5 = Path(cfg["manifest_lives_5km"])
+        if not man5.is_file():
+            print(f"[splits] nota: manifest a 5 km ausente ({man5.name}); seguindo só com a regra estrita")
+        else:
+            l5 = carregar_lives(man5, cfg["raiz_frames_lives"])
+            todas = acrescentar_5km(lives, l5, set(cfg.get("classes_5km", ["moderada", "forte"])))
+            extras = todas[len(lives):]
+            # rótulo a 5 km só entra depois de revisão visual: exige linhas do revisao.csv
+            # deste manifest para o (câmera, classe)
+            revisados = _revisados(Path(cfg["revisao_csv"]) if cfg.get("revisao_csv") else None, man5.name)
+            aceitos = [r for r in extras if (r["camera"], r["classe"]) in revisados]
+            excluidos["5km_sem_revisao"] = len(extras) - len(aceitos)
+            if excluidos["5km_sem_revisao"]:
+                print(f"[splits] nota: {excluidos['5km_sem_revisao']} frames a 5 km descartados por falta de revisão "
+                      f"visual (revisao.csv sem linhas de {man5.name} para o par câmera/classe)")
+            lives = lives + aceitos
 
     if cfg.get("exigir_posicao_verificada", True):
         fontes = yaml.safe_load(Path(cfg["coleta_fixa_config"]).read_text())["fontes"]
@@ -237,6 +259,7 @@ def montar(cfg: dict, raiz: Path) -> tuple[list[dict], dict]:
                        for c in sorted({r["camera"] for r in linhas})},
         "eventos_por_particao": {p: len({r["evento_id"] for r in linhas if r["particao"] == p})
                                  for p in sorted({r["particao"] for r in linhas})},
+        "por_metodo_rotulo": dict(Counter(r["metodo_rotulo"] for r in linhas)),
         "excluidos": dict(excluidos),
         "referencias_faltando": sorted(faltando),
         "congelamento_utc": cfg["congelamento_utc"],
