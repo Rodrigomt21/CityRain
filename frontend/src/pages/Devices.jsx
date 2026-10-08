@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Wifi, WifiOff, Car, Cpu } from 'lucide-react'
+import { Wifi, WifiOff, Cpu } from 'lucide-react'
 import Topbar from '../components/layout/Topbar'
 import { useDevices } from '../hooks/useDevices'
 
@@ -79,10 +79,6 @@ function DeviceCard({ device }) {
           {device.name}
         </p>
         <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-          <Car size={10} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
-          {device.vehicle_plate ?? 'placa não informada'}
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
           <Cpu size={10} style={{ display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
           {device.hw_model ?? 'modelo não informado'}
         </p>
@@ -120,7 +116,7 @@ function Aviso({ children, cor = 'var(--bg-border)', texto = 'var(--text-seconda
 
 export default function Devices() {
   const [filtro, setFiltro] = useState('todos')
-  const { devices, loading, error, semChave, naoAutorizado } = useDevices()
+  const { devices, loading, error } = useDevices()
 
   const ativos = devices.filter(d => d.is_active).length
   const desativados = devices.length - ativos
@@ -149,16 +145,7 @@ export default function Devices() {
           </p>
         </div>
 
-        {semChave || naoAutorizado ? (
-          <Aviso>
-            {semChave
-              ? <>A listagem de dispositivos é um endpoint administrativo. Defina{' '}
-                  <code style={{ color: 'var(--text-primary)' }}>VITE_ADMIN_API_KEY</code> no{' '}
-                  <code style={{ color: 'var(--text-primary)' }}>.env</code> do frontend
-                  (veja <code style={{ color: 'var(--text-primary)' }}>.env.example</code>) e recarregue.</>
-              : 'Chave de administração rejeitada pela API (401). Confira o valor de VITE_ADMIN_API_KEY.'}
-          </Aviso>
-        ) : error ? (
+        {error ? (
           <Aviso cor="var(--cat-heavy)" texto="var(--cat-heavy)">
             Erro ao carregar dispositivos: {error.message}
           </Aviso>

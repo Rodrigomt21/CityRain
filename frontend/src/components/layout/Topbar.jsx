@@ -1,3 +1,4 @@
+import { useResumoPublico } from '../../hooks/useResumoPublico'
 import { useEffect, useState } from 'react'
 import { Droplets, ChevronLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -8,7 +9,16 @@ function formatDateTime(date) {
   return `${d}, ${t}`
 }
 
+// Selo de status ligado à API de verdade (antes era sempre "SISTEMA ATIVO", mesmo fora do ar)
+const STATUS = {
+  ok: { texto: 'SISTEMA ATIVO', cor: '#22c55e' },
+  banco: { texto: 'BANCO INDISPONÍVEL', cor: '#fb923c' },
+  fora: { texto: 'API FORA DO AR', cor: '#ef4444' },
+  carregando: { texto: 'VERIFICANDO…', cor: '#94a3b8' },
+}
+
 export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
+  const { saude } = useResumoPublico()
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -44,9 +54,10 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
       </div>
 
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="flex items-center gap-1.5" style={{ color: '#22c55e' }}>
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#22c55e' }} />
-          SISTEMA ATIVO
+        <span className="flex items-center gap-1.5" style={{ color: STATUS[saude ?? 'carregando'].cor }}
+          title="Estado real da API e do banco (GET /health/db, a cada 60 s)">
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS[saude ?? 'carregando'].cor }} />
+          {STATUS[saude ?? 'carregando'].texto}
         </span>
         <span style={{ color: 'var(--text-secondary)' }}>{formatDateTime(now)}</span>
       </div>
