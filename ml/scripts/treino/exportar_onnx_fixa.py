@@ -116,6 +116,8 @@ def copiar_referencias(splits_csv: Path, raiz: Path, dir_refs: Path) -> list[Pat
     for r in ler_split(splits_csv, {"referencia"}):
         if r["origem"] != "live":
             continue
+        if r["periodo"] not in ("dia", "noite"):
+            raise ValueError(f"período inválido na referência de {r['camera']}: {r['periodo']!r} (esperado dia ou noite)")
         alvo = dir_refs / f"fixa-{r['camera']}" / f"{r['periodo']}.jpg"
         alvo.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(raiz / r["caminho"], alvo)

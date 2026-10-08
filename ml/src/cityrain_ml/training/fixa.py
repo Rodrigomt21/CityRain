@@ -144,21 +144,88 @@ def _gravar(path: Path, linhas, probs) -> None:
                          C[int(p.argmax())], *[f"{v:.4f}" for v in p], f"{s:.4f}"])
 
 
-def avaliar_fixa(ckpt: Path, cfg: dict, raiz: Path, saida: Path) -> dict:
-    disp = _disp(cfg["treino"].get("dispositivo", "auto"))
+def mapa_referencia_trocada(linhas_split: list[dict]) -> dict[tuple[str, str], str]:
+    """(câmera, período) -> câmera DIFERENTE cuja referência será usada na ablação de atalho.
+
+    Rotação determinística sobre as câmeras que têm referência (ordem alfabética, começando
+    na câmera seguinte): prefere uma câmera com referência do MESMO período; se nenhuma tiver,
+    usa a primeira outra câmera com referência.
+    """
+    refs = [r for r in linhas_split if r["particao"] == "referencia"]
+    por_cam: dict[str, dict[str, str]] = {}
+    for r in refs:
+        por_cam.setdefault(r["camera"], {})[r["periodo"]] = r["caminho"]
+    cams = sorted(por_cam)
+    mapa: dict[tuple[str, str], str] = {}
+    for cam in sorted({r["camera"] for r in linhas_split} | set(cams)):
+        candidatas = [c for c in cams if c > cam] + [c for c in cams if c < cam]
+        if not candidatas:
+            raise ValueError("a ablação de referência trocada precisa de referências de pelo menos 2 câmeras")
+        for per in ("dia", "noite"):
+            mesma = [c for c in candidatas if per in por_cam[c]]
+            mapa[(cam, per)] = (mesma or candidatas)[0]
+    return mapa
+
+
+def _trocar_referencias(linhas: list[dict], linhas_split: list[dict]) -> list[dict]:
+    """Cópia das linhas com ``referencia`` apontando para a de OUTRA câmera (mesmo período se houver)."""
+    mapa = mapa_referencia_trocada(linhas_split)
+    por_cam_per = {(r["camera"], r["periodo"]): r["caminho"] for r in linhas_split if r["particao"] == "referencia"}
+    qualquer = {}
+    for (cam, _), caminho in sorted(por_cam_per.items()):
+        qualquer.setdefault(cam, caminho)
+    saida = []
+    for r in linhas:
+        outra = mapa[(r["camera"], r["periodo"])]
+        ref = por_cam_per.get((outra, r["periodo"])) or qualquer[outra]
+        saida.append({**r, "referencia": ref})
+    return saida
+
+
+def avaliar_fixa(ckpt: Path, cfg: dict, raiz: Path, saida: Path, referencia_trocada: bool = False,
+                 carimbo: str | None = None) -> dict:
+    """Avalia um checkpoint em val e nos três testes.
+
+    Papéis das partições (fold do irCNN, exigir_referencia, splits) vêm da config GRAVADA NO
+    CHECKPOINT: avaliar com outra config não pode mudar quais eventos foram de teste. De ``cfg``
+    só entram dispositivo, batch e workers. Sem ``carimbo`` grava ``metricas.json`` e
+    ``predicoes_<partição>.csv`` (o run de treino); com ``carimbo`` grava
+    ``metricas_avaliacao_<carimbo>.json`` e ``predicoes_avaliacao_<partição>_<carimbo>.csv`` sem tocar nos
+    arquivos do run. ``referencia_trocada`` (só F3) dá a cada linha a referência de OUTRA câmera, o
+    teste de que o modelo usa a referência como comparação e não como atalho de identificar a câmera;
+    os arquivos ganham o sufixo ``_ref_trocada``.
+    """
     estado = torch.load(ckpt, map_location="cpu", weights_only=False)
-    modelo = construir(cfg["modelo"]["arquitetura"], len(C), pretreinado=False, canais_entrada=estado.get("canais_entrada", 3))
+    cfg_ck = estado.get("config") or cfg
+    cfg_av = {**cfg_ck, "treino": {**cfg_ck.get("treino", {}), **{k: v for k, v in cfg["treino"].items()
+                                                                    if k in ("dispositivo", "batch", "workers")}}}
+    canais = estado.get("canais_entrada", 3)
+    if referencia_trocada and canais != 6:
+        raise ValueError("referencia_trocada só faz sentido para modelo de 6 canais (F3)")
+    disp = _disp(cfg_av["treino"].get("dispositivo", "auto"))
+    modelo = construir(cfg_av["modelo"]["arquitetura"], len(C), pretreinado=False, canais_entrada=canais)
     modelo.load_state_dict(estado["estado"])
     modelo.to(disp)
-    parts, _ = _particoes(cfg, raiz)
-    met = {"checkpoint_epoca": estado["epoca"],
-           "ircnn_eventos": {k: sorted(v) if v is not None else "todos" for k, v in papeis_ircnn(cfg["dados"].get("ircnn_cv")).items()},
-           "particoes": {}}
+    parts, info = _particoes(cfg_av, raiz)
+    cv = cfg_av["dados"].get("ircnn_cv")
+    met = {"checkpoint_epoca": estado["epoca"], "fold": (cv or {}).get("fold"), "papeis_da_config": "checkpoint",
+           "ircnn_eventos": {k: sorted(v) if v is not None else "todos" for k, v in papeis_ircnn(cv).items()},
+           "info_particoes": info, "referencia_trocada": referencia_trocada, "particoes": {}}
+    if referencia_trocada:
+        split = ler_split(raiz / cfg_av["dados"]["splits_csv"])
+        parts = {p: _trocar_referencias(rs, split) for p, rs in parts.items()}
+        mapa = mapa_referencia_trocada(split)
+        met["referencia_trocada_mapa"] = {cam: outra for (cam, per), outra in sorted(mapa.items()) if per == "dia"}
+    sufixo = ("_ref_trocada" if referencia_trocada else "")
     for p in ("val", *TESTES):
-        probs = prever(modelo, _ds(parts[p], raiz, cfg), cfg, disp) if parts[p] else np.zeros((0, len(C)))
-        _gravar(saida / f"predicoes_{p}.csv", parts[p], probs)
+        probs = prever(modelo, _ds(parts[p], raiz, cfg_av), cfg_av, disp) if parts[p] else np.zeros((0, len(C)))
+        nome = f"predicoes_avaliacao_{p}_{carimbo}{sufixo}.csv" if carimbo else f"predicoes_{p}{sufixo}.csv"
+        _gravar(saida / nome, parts[p], probs)
         met["particoes"][p] = metricas_particao(parts[p], probs, C)
-    (saida / "metricas.json").write_text(json.dumps(met, indent=2, ensure_ascii=False, default=float))
+        if p in ("test_camera", "test_prospectivo") and met["particoes"][p].get("n", 0) > 0:
+            met["particoes"][p]["bootstrap"] = bootstrap_eventos(parts[p], probs, C)
+    nome_met = f"metricas_avaliacao_{carimbo}{sufixo}.json" if carimbo else f"metricas{sufixo}.json"
+    (saida / nome_met).write_text(json.dumps(met, indent=2, ensure_ascii=False, default=float))
     return met
 
 
@@ -169,6 +236,14 @@ def _ler_predicoes(path: Path) -> tuple[list[dict], np.ndarray]:
 
 
 def agregar_cv_fixa(runs: list[Path], saida: Path) -> dict:
+    """Agrega os folds de uma CV. Falha se algum evento declarado na config não foi testado.
+
+    O ``desvio`` entre folds é o desvio amostral (ddof=1); com um único fold fica ``None``.
+    """
+    cfg_run = yaml.safe_load((runs[0] / "config.yaml").read_text()) if runs and (runs[0] / "config.yaml").exists() else None
+    if cfg_run is None or not (cfg_run["dados"].get("ircnn_cv") or {}).get("folds"):
+        raise ValueError("sem config.yaml com dados.ircnn_cv.folds no primeiro run: não dá para checar a cobertura da CV")
+    declarados = {e for f in cfg_run["dados"]["ircnn_cv"]["folds"] for e in f}
     linhas, probs, vistos = [], [], set()
     for run in runs:
         l, p = _ler_predicoes(run / "predicoes_test_ircnn.csv")
@@ -178,6 +253,9 @@ def agregar_cv_fixa(runs: list[Path], saida: Path) -> dict:
         vistos |= evs
         linhas += l
         probs.append(p)
+    faltam = declarados - vistos
+    if faltam:
+        raise ValueError(f"CV incompleta: eventos declarados e nunca testados: {sorted(faltam)}")
     probs_np = np.concatenate(probs) if probs else np.zeros((0, len(C)))
     met = {"folds": [r.name for r in runs],
            "test_ircnn_agregado": metricas_particao(linhas, probs_np, C),
@@ -193,20 +271,24 @@ def agregar_cv_fixa(runs: list[Path], saida: Path) -> dict:
                 v = m[p]["resumo"]["f1_macro"] if chave == "resumo.f1_macro" else m[p][chave]
                 if v is not None and not (isinstance(v, float) and math.isnan(v)):
                     vals.append(v)
-            met[p][chave] = {"media": float(np.mean(vals)), "desvio": float(np.std(vals)), "valores": vals} if vals else None
+            met[p][chave] = {"media": float(np.mean(vals)), "desvio": float(np.std(vals, ddof=1)) if len(vals) > 1 else None, "valores": vals} if vals else None
     saida.mkdir(parents=True, exist_ok=True)
     (saida / "metricas_cv.json").write_text(json.dumps(met, indent=2, ensure_ascii=False, default=float))
     return met
 
 
-def executar_fixa(config_path: Path, raiz: Path, so_avaliar: Path | None = None, fold: int | str | None = None) -> Path:
+def executar_fixa(config_path: Path, raiz: Path, so_avaliar: Path | None = None, fold: int | str | None = None,
+                  referencia_trocada: bool = False) -> Path:
     cfg = yaml.safe_load(Path(config_path).read_text())
+    if so_avaliar is not None:
+        # papéis das partições vêm do checkpoint; resultados novos, com carimbo, sem sobrescrever o run
+        avaliar_fixa(so_avaliar, cfg, raiz, so_avaliar.parent, referencia_trocada, f"{datetime.now():%Y%m%d_%H%M%S}")
+        return so_avaliar.parent
+    if referencia_trocada:
+        raise ValueError("referencia_trocada só vale com so_avaliar")
     if fold is not None:
         cfg["dados"]["ircnn_cv"]["fold"] = fold
         cfg["nome"] = f"{cfg['nome']}_fold{fold}"
-    if so_avaliar is not None:
-        avaliar_fixa(so_avaliar, cfg, raiz, so_avaliar.parent)
-        return so_avaliar.parent
     saida = raiz / "ml" / "runs" / f"{cfg['nome']}__{datetime.now():%Y%m%d_%H%M%S_%f}"
     saida.mkdir(parents=True, exist_ok=False)
     (saida / "config.yaml").write_text(yaml.safe_dump(cfg, allow_unicode=True, sort_keys=False))

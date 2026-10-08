@@ -51,3 +51,15 @@ def test_exporta_com_metadados_paridade_e_referencias(tmp_path, canais):
     assert ex.conferir_paridade_fixa(info, destino, tmp_path) < 1e-4
     refs = ex.copiar_referencias(tmp_path / "ml/s.csv", tmp_path, tmp_path / "refs")
     assert refs == [tmp_path / "refs/fixa-cam1/dia.jpg"] and refs[0].is_file()
+
+
+def test_copiar_referencias_recusa_periodo_invalido(tmp_path):
+    (tmp_path / "ml").mkdir()
+    (tmp_path / "ml/r.jpg").write_bytes(b"x")
+    with open(tmp_path / "ml/s.csv", "w", newline="") as f:
+        wr = csv.DictWriter(f, fieldnames=COLS)
+        wr.writeheader()
+        wr.writerow({"caminho": "ml/r.jpg", "classe": "seco", "particao": "referencia", "origem": "live",
+                     "camera": "cam1", "periodo": "madrugada"})
+    with pytest.raises(ValueError, match="madrugada"):
+        ex.copiar_referencias(tmp_path / "ml/s.csv", tmp_path, tmp_path / "refs")

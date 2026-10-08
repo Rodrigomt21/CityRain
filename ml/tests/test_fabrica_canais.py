@@ -31,3 +31,15 @@ def test_seis_canais_aceita_entrada_e_comeca_igual(arq):
 def test_canais_invalidos():
     with pytest.raises(ValueError):
         construir("mobilenet_v3_small", 4, pretreinado=False, canais_entrada=4)
+
+
+@pytest.mark.parametrize("arq", ["mobilenet_v3_small", "efficientnet_b0", "resnet18"])
+def test_seis_canais_preserva_pesos_originais_da_primeira_conv(arq):
+    torch.manual_seed(7)
+    m3 = construir(arq, 4, pretreinado=False)
+    torch.manual_seed(7)
+    m6 = construir(arq, 4, pretreinado=False, canais_entrada=6)
+    conv3 = next(mm for mm in m3.modules() if isinstance(mm, torch.nn.Conv2d))
+    conv6 = next(mm for mm in m6.modules() if isinstance(mm, torch.nn.Conv2d))
+    assert torch.equal(conv6.weight[:, :3], conv3.weight)
+    assert torch.all(conv6.weight[:, 3:] == 0)
