@@ -12,12 +12,19 @@ algum pluviômetro a <= ``--raio-km`` da câmera registrou chuva, abre
 ``--margem-min`` antes e depois (inclui o começo/fim seco do evento) e baixa 1
 frame a cada ``--passo-s``. Rodar antes ``baixar_cemaden_ped.py --dias ...``.
 
+Modo ``--modo-seco`` (novo): lê a série de 10 min do CEMADEN e encontra trechos
+comprovadamente secos (≥ 2 estações a <= ``--raio-km`` com leitura acumulado_mm=0).
+Janelas são blocos de ``--duracao-min`` (default 30) com folga de 60 min dos dois lados.
+Até ``--max-janelas`` (default 6), alternando dia e noite sem sobreposição.
+Recomendado: ``--passo-s 300`` neste modo.
+
 O frame sai no contrato da Jetson (mesmo do ``coletor.py``) com
 ``capturado_em_utc`` = walltime do segmento, então ``gerar_manifest.py`` rotula
 sem mudança.
 
 Uso:
     ml/.venv/bin/python ml/scripts/coleta_fixa/recuperar_dvr.py --onde-choveu
+    ml/.venv/bin/python ml/scripts/coleta_fixa/recuperar_dvr.py --modo-seco --passo-s 300
     ml/.venv/bin/python ml/scripts/coleta_fixa/recuperar_dvr.py --fonte ubatuba_tenorio \
         --de 2026-10-04T18:00-03:00 --ate 2026-10-04T20:00-03:00
 """
@@ -111,6 +118,21 @@ def _hav_km(a: float, b: float, c: float, d: float) -> float:
     return 2 * 6371 * math.asin(math.sqrt(h))
 
 
+FUSO_LOCAL = timezone(timedelta(hours=-3))
+BLOCO = timedelta(minutes=10)
+
+
+def periodo_local(quando: datetime) -> str:
+    """Mesma regra de gerar_manifest.py: dia = [06:00, 18:30) no horário local."""
+    h = quando.astimezone(FUSO_LOCAL)
+    minutos = h.hour * 60 + h.minute
+    return "dia" if 6 * 60 <= minutos < 18 * 60 + 30 else "noite"
+
+
+def _bloco(ts: datetime) -> datetime:
+    return ts - timedelta(minutes=ts.minute % 10, seconds=ts.second, microseconds=ts.microsecond)
+
+
 def janelas_com_chuva(fonte, leituras: list[dict], raio_km: float, margem: timedelta,
                       inicio_dvr: datetime) -> list[tuple[datetime, datetime]]:
     """Intervalos (UTC) com chuva em algum pluviômetro perto, com margem, unidos e cortados ao DVR."""
@@ -133,6 +155,53 @@ def janelas_com_chuva(fonte, leituras: list[dict], raio_km: float, margem: timed
         else:
             unidos.append((a, b))
     return unidos
+
+
+def janelas_secas(fonte, leituras: list[dict], raio_km: float, inicio: datetime, fim: datetime,
+                  duracao: timedelta = timedelta(minutes=30), folga: timedelta = timedelta(minutes=60),
+                  min_estacoes: int = 2, max_janelas: int = 6) -> list[tuple[datetime, datetime]]:
+    """Trechos comprovadamente secos (várias estações perto, todas zeradas, com folga dos dois lados).
+
+    Bloco sem leitura não é seco: buraco no CEMADEN não pode virar rótulo.
+    """
+    por_bloco: dict[datetime, dict[str, float]] = {}
+    for r in leituras:
+        if _hav_km(fonte.lat, fonte.lon, float(r["lat"]), float(r["lon"])) > raio_km:
+            continue
+        fim_leitura = datetime.fromisoformat(r["ts_utc"].replace("Z", "+00:00"))
+        b = _bloco(fim_leitura - timedelta(minutes=int(r.get("janela_min") or 10)))
+        por_bloco.setdefault(b, {})[r.get("estacao_id", f"{r['lat']},{r['lon']}")] = float(r["acumulado_mm"])
+
+    def seco(b: datetime) -> bool:
+        v = por_bloco.get(b, {})
+        return len(v) >= min_estacoes and all(x == 0 for x in v.values())
+
+    candidatas = []
+    a = _bloco(inicio) + (BLOCO if inicio != _bloco(inicio) else timedelta(0))
+    while a + duracao <= fim:
+        b = a + duracao
+        t, ok = a - folga, True
+        while t < b + folga:
+            if not seco(_bloco(t)):
+                ok = False
+                break
+            t += BLOCO
+        if ok:
+            candidatas.append((a, b))
+        a += BLOCO
+
+    escolhidas: list[tuple[datetime, datetime]] = []
+    filas = {p: [c for c in candidatas if periodo_local(c[0]) == p] for p in ("noite", "dia")}
+    vez = 0
+    while len(escolhidas) < max_janelas and any(filas.values()):
+        p = ("noite", "dia")[vez % 2]
+        vez += 1
+        while filas[p]:
+            c = filas[p].pop(0)
+            if all(c[1] <= e[0] or c[0] >= e[1] for e in escolhidas):
+                escolhidas.append(c)
+                break
+    return sorted(escolhidas)
 
 
 def recuperar(fonte, dvr: StreamDVR, de: datetime, ate: datetime, passo_s: float, destino: Path) -> int:
@@ -172,12 +241,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", type=Path, default=RAIZ / "ml/configs/coleta_fixa.yaml")
     ap.add_argument("--onde-choveu", action="store_true")
+    ap.add_argument("--modo-seco", action="store_true")
     ap.add_argument("--fonte", help="id da fonte (modo manual)")
     ap.add_argument("--de", help="ISO 8601 com fuso (modo manual)")
     ap.add_argument("--ate", help="ISO 8601 com fuso (modo manual)")
     ap.add_argument("--passo-s", type=float, default=60.0)
     ap.add_argument("--raio-km", type=float, default=5.0)
     ap.add_argument("--margem-min", type=float, default=30.0)
+    ap.add_argument("--max-janelas", type=int, default=6)
+    ap.add_argument("--duracao-min", type=float, default=30.0)
     ap.add_argument("--estacoes", type=Path, default=RAIZ / "ml/data/raw/estacoes/normalizado/cemaden_ped.csv")
     ap.add_argument("--desde", help="ISO 8601: ignora o que vem antes (evita re-baixar colheitas anteriores)")
     args = ap.parse_args()
@@ -189,7 +261,7 @@ def main() -> None:
         fontes = [f for f in fontes if f.id == args.fonte]
 
     leituras = []
-    if args.onde_choveu:
+    if args.onde_choveu or args.modo_seco:
         import csv
 
         with open(args.estacoes, newline="") as fh:
@@ -205,7 +277,10 @@ def main() -> None:
         inicio_dvr = max(dvr.head_t - timedelta(hours=119), dvr.inicio)
         if args.desde:
             inicio_dvr = max(inicio_dvr, datetime.fromisoformat(args.desde).astimezone(timezone.utc))
-        if args.onde_choveu:
+        if args.modo_seco:
+            janelas = janelas_secas(f, leituras, args.raio_km, inicio_dvr, dvr.head_t,
+                                    duracao=timedelta(minutes=args.duracao_min), max_janelas=args.max_janelas)
+        elif args.onde_choveu:
             janelas = janelas_com_chuva(f, leituras, args.raio_km, timedelta(minutes=args.margem_min), inicio_dvr)
         else:
             janelas = [(datetime.fromisoformat(args.de).astimezone(timezone.utc),
