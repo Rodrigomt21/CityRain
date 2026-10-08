@@ -238,6 +238,11 @@ def _ler_predicoes(path: Path) -> tuple[list[dict], np.ndarray]:
 def agregar_cv_fixa(runs: list[Path], saida: Path) -> dict:
     """Agrega os folds de uma CV. Falha se algum evento declarado na config não foi testado.
 
+    Evento que foi designado ao teste de um fold mas ficou sem nenhuma linha avaliável (só tinha
+    ``seco`` do evento da referência, excluídos por ``particoes_fixa``) não derruba a agregação:
+    a cobertura é checada contra os eventos com linhas avaliáveis e esses eventos vão para
+    ``eventos_sem_linhas_avaliaveis`` em ``metricas_cv.json``.
+
     O ``desvio`` entre folds é o desvio amostral (ddof=1); com um único fold fica ``None``.
     """
     cfg_run = yaml.safe_load((runs[0] / "config.yaml").read_text()) if runs and (runs[0] / "config.yaml").exists() else None
@@ -253,11 +258,18 @@ def agregar_cv_fixa(runs: list[Path], saida: Path) -> dict:
         vistos |= evs
         linhas += l
         probs.append(p)
-    faltam = declarados - vistos
+    designados = set()
+    for run in runs:
+        ev = json.loads((run / "metricas.json").read_text()).get("ircnn_eventos", {}).get("test")
+        if isinstance(ev, list):
+            designados |= set(ev)
+    sem_linhas = (designados & declarados) - vistos
+    faltam = declarados - vistos - sem_linhas
     if faltam:
         raise ValueError(f"CV incompleta: eventos declarados e nunca testados: {sorted(faltam)}")
     probs_np = np.concatenate(probs) if probs else np.zeros((0, len(C)))
     met = {"folds": [r.name for r in runs],
+           "eventos_sem_linhas_avaliaveis": sorted(sem_linhas),
            "test_ircnn_agregado": metricas_particao(linhas, probs_np, C),
            "bootstrap_ircnn": bootstrap_eventos(linhas, probs_np, C) if linhas else None}
     por_fold = [json.loads((r / "metricas.json").read_text())["particoes"] for r in runs]

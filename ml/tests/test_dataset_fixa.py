@@ -111,33 +111,46 @@ def _com_refs():
             R("referencia", "seco", camera="bc", ev="bc__9", caminho="ml/ref_bc.jpg", ref="ml/ref_bc.jpg")]
 
 
-def test_exclui_do_teste_o_evento_da_referencia_mas_mantem_no_treino():
+def test_exclui_do_teste_so_o_seco_do_evento_da_referencia_mas_mantem_no_treino():
     linhas = _com_refs() + [
-        R("train", "seco", ev="a__9", ref="ml/ref_a.jpg"),
-        R("val", "seco", ev="a__9", ref="ml/ref_a.jpg"),           # mesmo evento da referência -> sai
-        R("val", "seco", ev="a__2", ref="ml/ref_a.jpg"),           # outro evento -> fica
+        R("train", "seco", ev="a__3", ref="ml/ref_a.jpg"),         # treino não muda
+        R("val", "seco", ev="a__9", ref="ml/ref_a.jpg"),           # seco do evento da referência -> sai
+        R("val", "garoa", ev="a__9", ref="ml/ref_a.jpg"),          # chuva do mesmo evento -> fica
+        R("val", "seco", ev="a__2", ref="ml/ref_a.jpg"),           # seco de outro evento -> fica
         R("test_camera", "seco", camera="bc", ev="bc__9", ref="ml/ref_bc.jpg"),  # sai
+        R("test_camera", "forte", camera="bc", ev="bc__9", ref="ml/ref_bc.jpg"),  # fica
         R("test_camera", "forte", camera="bc", ev="bc__1", ref="ml/ref_bc.jpg"),  # fica
         R("test_prospectivo", "seco", camera="d", ev="d__1", ref="ml/ref_a.jpg"),  # referência de outro evento: fica
     ]
     parts, info = particoes_fixa(linhas, _cfg(com_ref=True))
-    assert [r["evento_id"] for r in parts["train"]] == ["a__9"]
-    assert [r["evento_id"] for r in parts["val"]] == ["a__2"]
-    assert [r["evento_id"] for r in parts["test_camera"]] == ["bc__1"]
+    assert [(r["evento_id"], r["classe"]) for r in parts["train"]] == [("a__3", "seco")]
+    assert sorted((r["evento_id"], r["classe"]) for r in parts["val"]) == [("a__2", "seco"), ("a__9", "garoa")]
+    assert sorted((r["evento_id"], r["classe"]) for r in parts["test_camera"]) == [("bc__1", "forte"), ("bc__9", "forte")]
     assert len(parts["test_prospectivo"]) == 1
-    assert info["excluidas_mesmo_evento_da_referencia"] == 2
+    assert info["excluidas_mesmo_evento_da_referencia"] == 2   # só os dois secos
 
 
-def test_exclusao_do_evento_da_referencia_vale_tambem_sem_referencia_no_modelo():
+def test_exclusao_do_seco_do_evento_da_referencia_vale_tambem_sem_referencia_no_modelo():
     """F1/F2 (sem canal de referência) excluem as MESMAS linhas que F3."""
     linhas = _com_refs() + [
         R("test_camera", "seco", camera="bc", ev="bc__9", ref="ml/ref_bc.jpg"),
+        R("test_camera", "garoa", camera="bc", ev="bc__9", ref="ml/ref_bc.jpg"),
         R("test_camera", "forte", camera="bc", ev="bc__1", ref="ml/ref_bc.jpg"),
     ]
     p1, i1 = particoes_fixa(linhas, _cfg(com_ref=False))
     p3, i3 = particoes_fixa(linhas, _cfg(com_ref=True))
     assert [r["caminho"] for r in p1["test_camera"]] == [r["caminho"] for r in p3["test_camera"]]
+    assert len(p1["test_camera"]) == 2
     assert i1["excluidas_mesmo_evento_da_referencia"] == i3["excluidas_mesmo_evento_da_referencia"] == 1
+
+
+def test_evento_da_referencia_do_ircnn_segue_testado_pela_chuva():
+    linhas = [R("referencia", "seco", camera="ircnn", ev="ircnn__e3", caminho="ml/ref_ir.jpg", ref="ml/ref_ir.jpg"),
+              R("ircnn", "seco", camera="ircnn", ev="ircnn__e3", ref="ml/ref_ir.jpg"),
+              R("ircnn", "garoa", camera="ircnn", ev="ircnn__e3", ref="ml/ref_ir.jpg")]
+    parts, info = particoes_fixa(linhas, _cfg(fold=1))
+    assert [(r["evento_id"], r["classe"]) for r in parts["test_ircnn"]] == [("ircnn__e3", "garoa")]
+    assert info["excluidas_mesmo_evento_da_referencia"] == 1
 
 
 # --- Achado 2: exigir_referencia ---
