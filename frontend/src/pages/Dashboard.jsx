@@ -27,7 +27,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {[['/historico', 'Histórico →'], ['/dispositivos', 'Dispositivos →']].map(([to, txt]) => (
+            {[['/historico', 'Histórico →'], ['/dispositivos', 'Dispositivos →'], ['/cameras', 'Câmeras →']].map(([to, txt]) => (
               <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
                 style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
                 {txt}
