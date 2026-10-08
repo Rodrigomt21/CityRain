@@ -142,3 +142,45 @@ def test_agregar_cv_exige_cobertura_completa(runs_ref, tmp_path):
     valores = agg["test_camera"]["resumo.f1_macro"]["valores"]
     assert len(valores) == 2 and agg["test_camera"]["resumo.f1_macro"]["desvio"] == pytest.approx(
         __import__("numpy").std(valores, ddof=1))
+
+
+def _copiar_run(origem: Path, destino: Path, evs_teste: list[str], linhas_ok: bool) -> Path:
+    """Run sintético: reaproveita config/metricas de um run real, ajustando predições e papéis."""
+    destino.mkdir(parents=True)
+    (destino / "config.yaml").write_text((origem / "config.yaml").read_text())
+    met = json.loads((origem / "metricas.json").read_text())
+    met["ircnn_eventos"]["test"] = evs_teste
+    (destino / "metricas.json").write_text(json.dumps(met))
+    linhas = list(csv.DictReader(open(origem / "predicoes_test_ircnn.csv", newline="")))
+    campos = list(linhas[0].keys())
+    with open(destino / "predicoes_test_ircnn.csv", "w", newline="") as f:
+        wr = csv.DictWriter(f, fieldnames=campos)
+        wr.writeheader()
+        if linhas_ok:
+            wr.writerows(linhas)
+    return destino
+
+
+def test_agregar_cv_registra_evento_sem_linhas_avaliaveis_e_nao_falha(runs_ref, tmp_path):
+    _, _, runs = runs_ref
+    # fold 0 testa e1 (com chuva avaliável); fold 1 designa e2 mas só tinha seco da referência
+    r0 = _copiar_run(runs[0], tmp_path / "r0", ["ircnn__e1"], True)
+    r1 = _copiar_run(runs[1], tmp_path / "r1", ["ircnn__e2"], False)
+    for r, ev in ((r0, "ircnn__e1"),):
+        linhas = list(csv.DictReader(open(r / "predicoes_test_ircnn.csv", newline="")))
+        for x in linhas:
+            x["evento_id"] = ev
+        with open(r / "predicoes_test_ircnn.csv", "w", newline="") as f:
+            wr = csv.DictWriter(f, fieldnames=list(linhas[0].keys()))
+            wr.writeheader()
+            wr.writerows(linhas)
+    agg = agregar_cv_fixa([r0, r1], tmp_path / "agg")
+    assert agg["eventos_sem_linhas_avaliaveis"] == ["ircnn__e2"]
+    gravado = json.loads(next((tmp_path / "agg").glob("*.json")).read_text())
+    assert gravado["eventos_sem_linhas_avaliaveis"] == ["ircnn__e2"]
+
+
+def test_agregar_cv_com_chuva_do_evento_da_referencia_testada_passa_sem_sem_linhas(runs_ref, tmp_path):
+    _, _, runs = runs_ref
+    agg = agregar_cv_fixa(runs, tmp_path / "agg")
+    assert agg["eventos_sem_linhas_avaliaveis"] == []

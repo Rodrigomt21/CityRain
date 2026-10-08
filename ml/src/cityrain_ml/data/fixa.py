@@ -57,10 +57,12 @@ def particoes_fixa(linhas: list[dict], cfg: dict) -> tuple[dict[str, list[dict]]
 
     Regras que valem IGUAL para F1, F2 e F3 (para compará-los nas mesmas linhas):
     - ``dados.exigir_referencia`` (padrão: ``com_referencia``) descarta linhas sem referência;
-    - nas partições de AVALIAÇÃO (val, test_*) saem as linhas do mesmo ``evento_id`` da
-      referência delas: a referência é o frame seco mediano do (câmera, período) e os
-      vizinhos do mesmo evento são quase idênticos a ela (vazamento que infla o ``seco``).
-      Essas linhas continuam permitidas no treino.
+    - nas partições de AVALIAÇÃO (val, test_*) saem só as linhas de classe ``seco`` do mesmo
+      ``evento_id`` da referência delas: a referência é o frame seco mediano do (câmera,
+      período) e os secos vizinhos do mesmo evento são quase idênticos a ela (vazamento que
+      infla o ``seco``). As linhas de chuva (garoa/moderada/forte) desse evento ficam na
+      avaliação, para o evento não sumir da CV. A regra não depende de ``com_referencia`` e
+      o treino não muda.
     """
     dados = cfg["dados"]
     linhas = [r for r in linhas if r["classe"] in CLASSES_FIXA]
@@ -87,7 +89,9 @@ def particoes_fixa(linhas: list[dict], cfg: dict) -> tuple[dict[str, list[dict]]
     }
     excluidas = 0
     for nome in ("val", "test_ircnn", "test_camera", "test_prospectivo"):
-        mantidas = [r for r in parts[nome] if evento_da_ref.get(r.get("referencia")) != r["evento_id"]]
+        # só o seco do evento da referência é quase-duplicata dela; a chuva do evento fica
+        mantidas = [r for r in parts[nome]
+                    if not (r["classe"] == "seco" and evento_da_ref.get(r.get("referencia")) == r["evento_id"])]
         excluidas += len(parts[nome]) - len(mantidas)
         parts[nome] = mantidas
     cams_teste = {r["camera"] for r in parts["test_camera"]}
