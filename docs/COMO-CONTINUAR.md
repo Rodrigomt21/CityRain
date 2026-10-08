@@ -61,7 +61,7 @@ Avaliações extras (Grad-CAM, IC por bootstrap, híbrido, baseline físico) est
 ### Backend
 
 ```bash
-cd backend && python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+cd backend && python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env   # preencher DATABASE_URL etc.
 .venv/bin/python -m pytest -q tests
 ```
@@ -84,9 +84,9 @@ cd backend && TEST_DATABASE_URL=postgresql+asyncpg://cityrain:cityrain@localhost
 
 **Aviso sobre deploy no Railway:**
 
-O diretório `UPLOAD_DIR` (padrão `storage/`) armazena miniaturas de câmeras e outros artefatos. 
-Em um container ephemeral (Railway), esses arquivos são perdidos a cada deploy. 
-**Montar um volume persistente em `UPLOAD_DIR`** para que as imagens sobrevivam entre deploys. 
+O diretório `UPLOAD_DIR` (padrão `storage/`) armazena miniaturas de câmeras e outros artefatos servidos por `/api/v1/captures/{id}/imagem`.
+Em um container efêmero (Railway), esses arquivos são perdidos a cada deploy.
+**Montar um volume persistente em `UPLOAD_DIR`** para que as imagens sobrevivam entre deploys.
 Sem o volume, o dashboard mostrará quebras de imagem após redeploy.
 
 ### Frontend
