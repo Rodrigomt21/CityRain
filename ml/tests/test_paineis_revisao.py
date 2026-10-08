@@ -58,3 +58,11 @@ def test_le_exclusoes_marcadas(tmp_path):
     )
     assert pr.ler_exclusoes(csv_path) == {("a", "f1.jpg"), ("b", "f3.jpg")}
     assert pr.ler_exclusoes(tmp_path / "nao_existe.csv") == set()
+
+
+def test_manifest_5km_amostra_so_moderada_e_forte():
+    linhas = [{"pasta": "a", "arquivo": f"{c}{i}.jpg", "classe": c} for c in ("seco", "garoa", "moderada", "forte") for i in range(3)]
+    g = pr.amostrar_por_grupo(linhas, 10, 0, classes={"moderada", "forte"})
+    assert set(g) == {("a", "moderada"), ("a", "forte")}
+    assert pr.classes_do_manifest("manifest_coleta_fixa_5km.csv") == {"moderada", "forte"}
+    assert pr.classes_do_manifest("manifest_coleta_fixa.csv") is None

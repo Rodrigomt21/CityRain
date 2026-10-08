@@ -26,11 +26,20 @@ MARCAS_EXCLUIR = {"1", "sim", "s", "x"}
 COLUNAS_REVISAO = ["pasta", "arquivo", "camera", "classe", "manifest", "excluir", "motivo"]
 
 
-def amostrar_por_grupo(linhas: list[dict], n: int, seed: int) -> dict[tuple[str, str], list[dict]]:
-    """Até `n` linhas por (câmera, classe), sorteio determinístico."""
+CLASSES_5KM = {"moderada", "forte"}
+
+
+def classes_do_manifest(nome: str) -> set[str] | None:
+    """Classes a revisar num manifest: o de 5 km só rotula moderada/forte; os demais, todas (None)."""
+    return CLASSES_5KM if "_5km" in nome else None
+
+
+def amostrar_por_grupo(linhas: list[dict], n: int, seed: int,
+                       classes: set[str] | None = None) -> dict[tuple[str, str], list[dict]]:
+    """Até `n` linhas por (câmera, classe), sorteio determinístico (``classes`` restringe as classes)."""
     grupos: dict[tuple[str, str], list[dict]] = {}
     for r in linhas:
-        if r.get("classe"):
+        if r.get("classe") and (classes is None or r["classe"] in classes):
             grupos.setdefault((r["pasta"], r["classe"]), []).append(r)
     saida = {}
     for chave in sorted(grupos):
@@ -87,7 +96,7 @@ def main() -> None:
     for man in args.manifest:
         with open(man, newline="") as f:
             linhas = list(csv.DictReader(f))
-        for (cam, classe), rs in amostrar_por_grupo(linhas, args.n, args.seed).items():
+        for (cam, classe), rs in amostrar_por_grupo(linhas, args.n, args.seed, classes_do_manifest(man.name)).items():
             caminhos = [args.raiz_frames / r["pasta"] / r["arquivo"] for r in rs]
             montar_painel(caminhos).save(args.saida / f"painel_{man.stem}_{cam}_{classe}.jpg", quality=85)
             for r in rs:

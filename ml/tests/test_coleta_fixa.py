@@ -145,3 +145,34 @@ def test_carrega_campos_novos_da_fonte():
     f = _fonte(posicao_verificada=True, fonte_publica="https://exemplo.gov.br/cameras")
     assert f.posicao_verificada is True and f.fonte_publica.startswith("https://")
     assert _fonte().posicao_verificada is False
+
+
+def test_rodada_envia_com_token_e_so_grava_sem_token(tmp_path, monkeypatch, capsys):
+    fontes = col.carregar_fontes({"fontes": [
+        {"id": "com", "tipo": "camera", "lat": 0, "lon": 0},
+        {"id": "sem", "tipo": "camera", "lat": 0, "lon": 0},
+    ]})
+    monkeypatch.setitem(col.CAPTURAS, "camera", lambda f: JPEG + f.id.encode())
+    chamadas = []
+
+    def falso(jpg, url, token, **kw):
+        chamadas.append((jpg.name, url, token, kw))
+        return 201
+
+    monkeypatch.setattr(col, "enviar_frame", falso)
+    col.rodada(fontes, tmp_path, forcar=True, envio={"url": "http://api/ingest", "tokens": {"com": "tok"}})
+    saida = capsys.readouterr().out
+    assert len(chamadas) == 1 and chamadas[0][1:3] == ("http://api/ingest", "tok")
+    assert chamadas[0][3] == {"timeout": 10}                      # envio ao vivo não espera 30 s
+    assert "com:" in saida and "ingest 201" in saida
+    assert saida.count("ingest") == 1                             # a fonte sem token só gravou
+    assert len(list((tmp_path / "sem").glob("*.jpg"))) == 1
+
+
+def test_main_enviar_sem_backend_url_da_erro_claro(tmp_path, monkeypatch):
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("fontes:\n  - {id: x, tipo: camera, lat: 0, lon: 0}\n")
+    monkeypatch.setattr(sys, "argv", ["coletor", str(cfg), "--enviar", "--uma-rodada"])
+    with pytest.raises(SystemExit) as e:
+        col.main()
+    assert "backend_url" in str(e.value)

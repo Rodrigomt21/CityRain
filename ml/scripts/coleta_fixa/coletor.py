@@ -48,6 +48,7 @@ import yaml
 RAIZ = Path(__file__).resolve().parents[3]
 RENOVAR_HLS_S = 30 * 60
 TIMEOUT_S = 40
+TIMEOUT_ENVIO_S = 10  # envio ao vivo: backend lento não pode atrasar a próxima captura
 
 
 @dataclass
@@ -231,7 +232,7 @@ def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False, envio: dict
             f.proxima = agora + f.intervalo_s
             estado = caminho.name if caminho else "repetido (descartado)"
             if envio and caminho and f.id in envio["tokens"]:
-                status = enviar_frame(caminho, envio["url"], envio["tokens"][f.id])
+                status = enviar_frame(caminho, envio["url"], envio["tokens"][f.id], timeout=TIMEOUT_ENVIO_S)
                 estado += f" -> ingest {status or 'sem rede'}"
         except Exception as e:  # noqa: BLE001 — uma fonte fora do ar não para as outras
             f.falhas += 1
@@ -256,6 +257,8 @@ def main() -> None:
             f.intervalo_s = args.intervalo_s
     envio = None
     if args.enviar:
+        if not cfg.get("backend_url"):
+            sys.exit(f"[coletor] --enviar exige 'backend_url' em {args.config}")
         tokens = {f.id: t for f in fontes if (t := token_da_fonte(f.id, args.tokens))}
         for f in fontes:
             if f.id not in tokens:
