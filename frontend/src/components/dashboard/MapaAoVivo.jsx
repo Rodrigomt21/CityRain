@@ -24,6 +24,20 @@ function Seguir({ pontos }) {
 }
 
 /** Trajeto ao vivo: segmentos coloridos pela classe e posição atual pulsando. */
+// Um divIcon por cor: ícone novo a cada render recria o marcador e fecha o tooltip aberto.
+const _iconesCamera = new Map()
+function iconeCamera(cor) {
+  if (!_iconesCamera.has(cor)) {
+    _iconesCamera.set(cor, L.divIcon({
+      className: '',
+      html: `<div style="width:14px;height:14px;background:${cor};border:2px solid #0b1220;border-radius:2px"></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+    }))
+  }
+  return _iconesCamera.get(cor)
+}
+
 export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) {
   const pontos = useMemo(
     () => capturas.map(c => ({ ...c, pos: [c.latitude, c.longitude], cat: categoryFromLabel(c.weather_label) })),
@@ -68,12 +82,7 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
       )}
       {cameras.filter(c => c.latitude != null).map(c => {
         const r = resumoCamera(c, '')
-        const icone = L.divIcon({
-          className: '',
-          html: `<div style="width:14px;height:14px;background:${r.categoria.color};border:2px solid #0b1220;border-radius:2px"></div>`,
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
-        })
+        const icone = iconeCamera(r.categoria.color)
         return (
           <Marker key={`cam-${c.id}`} position={[c.latitude, c.longitude]} icon={icone}>
             <Tooltip>{r.nome} · {r.categoria.label} · {r.quando}</Tooltip>

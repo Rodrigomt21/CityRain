@@ -72,7 +72,7 @@ export default function CameraDetalhe() {
                     {r.quando}{r.confiancaPct != null && ` · confiança ${r.confiancaPct}%`}{r.aoVivo && ' · ao vivo'}
                   </span>
                 </div>
-                {cam.stream_url && (
+                {/^https?:\/\//.test(cam.stream_url ?? '') && (
                   <a href={cam.stream_url} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm"
                     style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>
                     abrir transmissão <ExternalLink size={14} />
