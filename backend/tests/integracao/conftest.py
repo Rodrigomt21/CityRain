@@ -86,6 +86,7 @@ app.dependency_overrides[get_db] = _get_db_teste
 async def db():
     async with _Sessao() as s:
         yield s
+        await s.rollback()
 
 
 @pytest.fixture
