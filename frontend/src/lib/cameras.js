@@ -51,3 +51,11 @@ export function separarMedidos(pontos) {
 export function horaMinuto(t) {
   return new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
+
+/** Rótulo de tempo do eixo/tooltip: HH:mm até 6 h, dia e hora na janela de 24 h. */
+export function rotuloTempo(t, horas) {
+  const d = new Date(t)
+  const hm = horaMinuto(t)
+  if (horas <= 6) return hm
+  return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${hm}`
+}

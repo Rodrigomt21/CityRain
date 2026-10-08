@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aoVivo, haQuanto, pontosSerie, resumoCamera, separarMedidos } from './cameras'
+import { aoVivo, haQuanto, pontosSerie, resumoCamera, rotuloTempo, separarMedidos } from './cameras'
 
 const AGORA = new Date('2026-10-09T18:00:00Z')
 const iso = (minAtras) => new Date(AGORA.getTime() - minAtras * 60e3).toISOString()
@@ -72,5 +72,14 @@ describe('separarMedidos', () => {
   })
   it('série vazia', () => {
     expect(separarMedidos([])).toEqual({ medidos: [], semMedida: 0 })
+  })
+})
+
+describe('rotuloTempo', () => {
+  const t = new Date(2026, 9, 9, 14, 30).getTime()
+  it('HH:mm em 3 e 6 h, dia e hora em 24 h', () => {
+    expect(rotuloTempo(t, 3)).toBe('14:30')
+    expect(rotuloTempo(t, 6)).toBe('14:30')
+    expect(rotuloTempo(t, 24)).toBe('09/10 14:30')
   })
 })

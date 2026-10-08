@@ -5,19 +5,19 @@ import { ResponsiveContainer, ScatterChart, Scatter, Cell, XAxis, YAxis, Cartesi
 import Topbar from '../components/layout/Topbar'
 import { useCameras } from '../hooks/useCameras'
 import { useSerieCamera } from '../hooks/useSerieCamera'
-import { resumoCamera, pontosSerie, separarMedidos, horaMinuto, ROTULOS_NIVEL } from '../lib/cameras'
+import { resumoCamera, pontosSerie, separarMedidos, rotuloTempo, ROTULOS_NIVEL } from '../lib/cameras'
 import { BASE_URL } from '../api/client'
 
 const JANELAS = [3, 6, 24]
 const TICK = { fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }
 
-function PontoTooltip({ active, payload }) {
+function PontoTooltip({ active, payload, horas }) {
   const p = active && payload?.[0]?.payload
   if (!p) return null
   return (
     <div className="font-mono text-xs px-2 py-1 rounded"
       style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)', color: 'var(--text-primary)' }}>
-      {horaMinuto(p.t)} · {p.rotulo}
+      {rotuloTempo(p.t, horas)} · {p.rotulo}
     </div>
   )
 }
@@ -27,7 +27,7 @@ export default function CameraDetalhe() {
   const [horas, setHoras] = useState(6)
   const [falhou, setFalhou] = useState(null)
   const { cameras, carregando: carregandoCams, error: erroCams } = useCameras()
-  const { serie, error, carregando } = useSerieCamera(id, horas)
+  const { serie, agora, error, carregando } = useSerieCamera(id, horas)
 
   const cam = cameras.find(c => String(c.id) === String(id))
   const r = useMemo(() => (cam ? resumoCamera(cam, BASE_URL) : null), [cam])
@@ -112,13 +112,13 @@ export default function CameraDetalhe() {
                 <ResponsiveContainer width="100%" height={220}>
                   <ScatterChart margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
                     <CartesianGrid stroke="var(--bg-border)" vertical={false} />
-                    <XAxis type="number" dataKey="t" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={horaMinuto}
+                    <XAxis type="number" dataKey="t" scale="time" domain={[agora - horas * 3600e3, agora]} tickFormatter={t => rotuloTempo(t, horas)}
                       tick={TICK} axisLine={false} tickLine={false} minTickGap={32} />
                     <YAxis type="number" dataKey="nivel" domain={[-0.5, 3.5]} ticks={[0, 1, 2, 3]} interval={0}
                       tickFormatter={v => ROTULOS_NIVEL[v] ?? ''} tick={TICK} axisLine={false} tickLine={false} width={64} />
-                    <Tooltip content={<PontoTooltip />} cursor={{ stroke: 'var(--bg-border)' }} />
+                    <Tooltip content={<PontoTooltip horas={horas} />} cursor={{ stroke: 'var(--bg-border)' }} />
                     <Scatter data={medidos} isAnimationActive={false}>
-                      {medidos.map(p => <Cell key={p.t} fill={p.cor} />)}
+                      {medidos.map((p, i) => <Cell key={i} fill={p.cor} />)}
                     </Scatter>
                   </ScatterChart>
                 </ResponsiveContainer>
