@@ -53,10 +53,23 @@ def subamostrar(linhas: list[dict], maximo: int) -> list[dict]:
 
 
 def particoes_fixa(linhas: list[dict], cfg: dict) -> tuple[dict[str, list[dict]], dict]:
+    """Monta train/val/test_* para o modelo fixo.
+
+    Regras que valem IGUAL para F1, F2 e F3 (para compará-los nas mesmas linhas):
+    - ``dados.exigir_referencia`` (padrão: ``com_referencia``) descarta linhas sem referência;
+    - nas partições de AVALIAÇÃO (val, test_*) saem as linhas do mesmo ``evento_id`` da
+      referência delas: a referência é o frame seco mediano do (câmera, período) e os
+      vizinhos do mesmo evento são quase idênticos a ela (vazamento que infla o ``seco``).
+      Essas linhas continuam permitidas no treino.
+    """
     dados = cfg["dados"]
     linhas = [r for r in linhas if r["classe"] in CLASSES_FIXA]
+    # mapa referência -> evento, montado ANTES de qualquer descarte (as linhas de
+    # referência podem ter a própria coluna `referencia` vazia)
+    evento_da_ref = {r["caminho"]: r["evento_id"] for r in linhas if r["particao"] == "referencia"}
+    exigir = dados.get("exigir_referencia", bool(dados.get("com_referencia")))
     descartadas = 0
-    if dados.get("com_referencia"):
+    if exigir:
         antes = len(linhas)
         linhas = [r for r in linhas if r.get("referencia")]
         descartadas = antes - len(linhas)
@@ -72,11 +85,35 @@ def particoes_fixa(linhas: list[dict], cfg: dict) -> tuple[dict[str, list[dict]]
         "test_camera": por("test_camera"),
         "test_prospectivo": por("test_prospectivo"),
     }
+    excluidas = 0
+    for nome in ("val", "test_ircnn", "test_camera", "test_prospectivo"):
+        mantidas = [r for r in parts[nome] if evento_da_ref.get(r.get("referencia")) != r["evento_id"]]
+        excluidas += len(parts[nome]) - len(mantidas)
+        parts[nome] = mantidas
     cams_teste = {r["camera"] for r in parts["test_camera"]}
     vazou = cams_teste & {r["camera"] for r in parts["train"] + parts["val"]}
     if vazou:
         raise ValueError(f"câmera de teste no treino/val: {sorted(vazou)}")
-    return parts, {"descartadas_sem_referencia": descartadas}
+    _checar_integridade(parts)
+    return parts, {"descartadas_sem_referencia": descartadas, "excluidas_mesmo_evento_da_referencia": excluidas}
+
+
+def _checar_integridade(parts: dict[str, list[dict]]) -> None:
+    """Falha cedo se um frame aparece duas vezes ou se um evento ao vivo cruza partições."""
+    vistos: dict[str, str] = {}
+    for nome, rs in parts.items():
+        for r in rs:
+            if r["caminho"] in vistos:
+                raise ValueError(f"caminho repetido ({vistos[r['caminho']]} e {nome}): {r['caminho']}")
+            vistos[r["caminho"]] = nome
+    eventos = {n: {r["evento_id"] for r in parts[n] if r.get("origem") != "irCNN"}
+               for n in ("train", "val", "test_prospectivo", "test_camera")}
+    nomes = list(eventos)
+    for i, a in enumerate(nomes):
+        for b in nomes[i + 1:]:
+            comum = eventos[a] & eventos[b]
+            if comum:
+                raise ValueError(f"evento ao vivo em {a} e {b}: {sorted(comum)}")
 
 
 def preparar_par(img: Image.Image, ref: Image.Image, altura: int, largura: int) -> np.ndarray:

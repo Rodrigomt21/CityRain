@@ -102,3 +102,81 @@ def test_preparar_par_concatena_imagem_primeiro():
     a, b = Image.new("RGB", (8, 8), (255, 255, 255)), Image.new("RGB", (8, 8), (0, 0, 0))
     x = preparar_par(a, b, 8, 8)
     assert x.shape == (6, 8, 8) and x[:3].mean() > x[3:].mean()
+
+
+# --- Achado 1: exclusão do evento da referência das partições de avaliação ---
+def _com_refs():
+    """Referência 'ml/ref_a.jpg' pertence ao evento a__9; câmera bc tem a sua própria."""
+    return [R("referencia", "seco", camera="a", ev="a__9", caminho="ml/ref_a.jpg", ref="ml/ref_a.jpg"),
+            R("referencia", "seco", camera="bc", ev="bc__9", caminho="ml/ref_bc.jpg", ref="ml/ref_bc.jpg")]
+
+
+def test_exclui_do_teste_o_evento_da_referencia_mas_mantem_no_treino():
+    linhas = _com_refs() + [
+        R("train", "seco", ev="a__9", ref="ml/ref_a.jpg"),
+        R("val", "seco", ev="a__9", ref="ml/ref_a.jpg"),           # mesmo evento da referência -> sai
+        R("val", "seco", ev="a__2", ref="ml/ref_a.jpg"),           # outro evento -> fica
+        R("test_camera", "seco", camera="bc", ev="bc__9", ref="ml/ref_bc.jpg"),  # sai
+        R("test_camera", "forte", camera="bc", ev="bc__1", ref="ml/ref_bc.jpg"),  # fica
+        R("test_prospectivo", "seco", camera="d", ev="d__1", ref="ml/ref_a.jpg"),  # referência de outro evento: fica
+    ]
+    parts, info = particoes_fixa(linhas, _cfg(com_ref=True))
+    assert [r["evento_id"] for r in parts["train"]] == ["a__9"]
+    assert [r["evento_id"] for r in parts["val"]] == ["a__2"]
+    assert [r["evento_id"] for r in parts["test_camera"]] == ["bc__1"]
+    assert len(parts["test_prospectivo"]) == 1
+    assert info["excluidas_mesmo_evento_da_referencia"] == 2
+
+
+def test_exclusao_do_evento_da_referencia_vale_tambem_sem_referencia_no_modelo():
+    """F1/F2 (sem canal de referência) excluem as MESMAS linhas que F3."""
+    linhas = _com_refs() + [
+        R("test_camera", "seco", camera="bc", ev="bc__9", ref="ml/ref_bc.jpg"),
+        R("test_camera", "forte", camera="bc", ev="bc__1", ref="ml/ref_bc.jpg"),
+    ]
+    p1, i1 = particoes_fixa(linhas, _cfg(com_ref=False))
+    p3, i3 = particoes_fixa(linhas, _cfg(com_ref=True))
+    assert [r["caminho"] for r in p1["test_camera"]] == [r["caminho"] for r in p3["test_camera"]]
+    assert i1["excluidas_mesmo_evento_da_referencia"] == i3["excluidas_mesmo_evento_da_referencia"] == 1
+
+
+# --- Achado 2: exigir_referencia ---
+def test_exigir_referencia_vale_para_modelo_sem_canal_de_referencia():
+    linhas = [R("train", "garoa"), R("train", "seco", ref="")]
+    cfg = _cfg(com_ref=False)
+    cfg["dados"]["exigir_referencia"] = True
+    parts, info = particoes_fixa(linhas, cfg)
+    assert len(parts["train"]) == 1 and info["descartadas_sem_referencia"] == 1
+
+
+def test_exigir_referencia_padrao_segue_com_referencia():
+    linhas = [R("train", "garoa"), R("train", "seco", ref="")]
+    assert len(particoes_fixa(linhas, _cfg(com_ref=False))[0]["train"]) == 2
+    assert len(particoes_fixa(linhas, _cfg(com_ref=True))[0]["train"]) == 1
+    cfg = _cfg(com_ref=True)
+    cfg["dados"]["exigir_referencia"] = False
+    assert len(particoes_fixa(linhas, cfg)[0]["train"]) == 2
+
+
+def test_exigir_referencia_nao_descarta_as_linhas_de_referencia_do_mapa():
+    """A referência pode ter coluna `referencia` vazia e ainda assim alimentar o mapa."""
+    linhas = [R("referencia", "seco", ev="a__9", caminho="ml/ref_a.jpg", ref=""),
+              R("test_camera", "seco", camera="bc", ev="a__9", ref="ml/ref_a.jpg"),
+              R("test_camera", "forte", camera="bc", ev="bc__1", ref="ml/ref_a.jpg")]
+    cfg = _cfg(com_ref=True)
+    parts, info = particoes_fixa(linhas, cfg)
+    assert [r["evento_id"] for r in parts["test_camera"]] == ["bc__1"]
+    assert info["excluidas_mesmo_evento_da_referencia"] == 1
+
+
+# --- Achado 11: checagens defensivas ---
+def test_caminho_repetido_entre_particoes_e_erro():
+    linhas = [R("train", "garoa", caminho="ml/x.jpg"), R("val", "seco", ev="a__2", caminho="ml/x.jpg")]
+    with pytest.raises(ValueError, match="ml/x.jpg"):
+        particoes_fixa(linhas, _cfg())
+
+
+def test_evento_ao_vivo_em_duas_particoes_e_erro():
+    linhas = [R("train", "garoa", ev="a__1"), R("val", "seco", ev="a__1")]
+    with pytest.raises(ValueError, match="a__1"):
+        particoes_fixa(linhas, _cfg())

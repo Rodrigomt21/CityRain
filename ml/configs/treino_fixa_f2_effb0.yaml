@@ -6,10 +6,12 @@ seed: 42
 dados:
   splits_csv: ml/data/splits/fixa_v1.csv
   com_referencia: false
+  # mesmas linhas para F1, F2 e F3: sem referência a linha sai de todos os modelos
+  exigir_referencia: true
   # Folds do irCNN iguais aos do v3 (declarados, nunca sorteados).
   ircnn_cv:
     fold: 0
-    max_por_evento: 150        # por (evento, classe)
+    max_por_evento: 200        # por (evento, classe)
     folds:
       - [ircnn__event_2, ircnn__event_7, ircnn__event_8]    # dia, noite, noite (garoa)
       - [ircnn__event_6, ircnn__event_9, ircnn__event_4]    # dia, noite (garoa), dia
