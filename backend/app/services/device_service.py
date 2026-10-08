@@ -40,6 +40,11 @@ class DeviceService:
         vehicle_plate: Optional[str] = None,
         hw_model: Optional[str] = None,
         metadata_: Optional[dict] = None,
+        tipo: str = "movel",
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        stream_url: Optional[str] = None,
+        descricao: Optional[str] = None,
     ) -> tuple[Device, str]:
         """
         Registra um novo dispositivo e retorna (device, plaintext_key).
@@ -53,6 +58,11 @@ class DeviceService:
             vehicle_plate=vehicle_plate,
             hw_model=hw_model,
             metadata_=metadata_,
+            tipo=tipo,
+            latitude=latitude,
+            longitude=longitude,
+            stream_url=stream_url,
+            descricao=descricao,
             api_key_hash=_hash_key(plaintext_key),
         )
         self.db.add(device)

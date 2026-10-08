@@ -101,9 +101,14 @@ def admin_headers():
     return {"Authorization": f"Bearer {ADMIN_KEY}"}
 
 
+# Contador de sessão: o banco não é zerado entre testes, então o sufixo não pode reiniciar
+# a cada teste (nomes de device são únicos).
+_contador_devices = {"n": 0}
+
+
 @pytest.fixture
 def criar_device(client, admin_headers):
-    contador = {"n": 0}
+    contador = _contador_devices
 
     async def _criar(nome: str, **campos):
         contador["n"] += 1
