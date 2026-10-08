@@ -36,6 +36,8 @@ class CaptureResponse(BaseModel):
     # None = intensidade não medida. Não renderizar como "seco" no dashboard.
     weather_label: Optional[str] = None
     confidence: Optional[float] = None
+    modelo: Optional[str] = None
+    modelo_versao: Optional[str] = None
     source_type: str
     device_id: Optional[int] = None
     # validation_alias mapeia metadata_ do ORM para "metadata" no JSON
