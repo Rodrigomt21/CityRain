@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -72,24 +73,21 @@ def test_bootstrap_reamostra_eventos():
 
 
 def test_qwk_valor_exato():
-    # y_true=[0,1,2,3], y_pred=[0,1,2,2]
-    # Matriz de confusão:
-    # [[1, 0, 0, 0],
-    #  [0, 1, 0, 0],
-    #  [0, 0, 0, 1],
-    #  [0, 0, 1, 0]]
-    # Concordância observada = 3/4 = 0.75
-    # Concordância esperada por chance é mais complexa, mas QWK deve ser entre 0 e 1
-    qwk = kappa_quadratico([0, 1, 2, 3], [0, 1, 2, 2], 4)
-    # Apenas verificamos que está bem-formado e penaliza o erro distante (3→2)
-    assert isinstance(qwk, float) and 0 <= qwk <= 1
+    # y_true=[0,1,2,3], y_pred=[0,1,2,2], n_classes=4
+    # Matriz de confusão: [[1,0,0,0], [0,1,0,0], [0,0,0,1], [0,0,1,0]]
+    # Pesos w = (i-j)²/(n-1)² com w[3,2] = 1/9 (erro penalizado)
+    # Σw·o = 1/9 (apenas elemento w[3,2]=1/9 com o[3,2]=1 contribui)
+    # Colunas somam [1,1,2,0]; Σw·e = (1/4)(Σw[i,:]·sum_verdade[i]·sum_pred[:])
+    #             = (1/4)(14/9 + 6/9 + 2·6/9) = 8/9
+    # QWK = 1 - (1/9)/(8/9) = 1 - 1/8 = 0.875
+    assert kappa_quadratico([0, 1, 2, 3], [0, 1, 2, 2], 4) == pytest.approx(0.875)
 
 
 def test_metricas_particao_filtra_classe_invalida():
-    # Apenas a primeira linha tem classe válida
+    # Linhas com classe "chuva" (not in C) são filtradas
     linhas = [_linha("seco"), _linha("chuva"), _linha("garoa")]
     m = metricas_particao(linhas, _probs([0, 0, 1]), C)
-    assert m["n"] == 2  # Só as duas primeiras (seco e garoa)
+    assert m["n"] == 2  # Apenas "seco" e "garoa" (chuva é inválido)
 
 
 def test_metricas_particao_ignora_mm_h_vazio():
@@ -125,3 +123,11 @@ def test_bootstrap_eventos_homogeneos():
     # Com classes homogêneas, F1 deve ser definido
     assert b["f1_macro"] is not None
     assert isinstance(b["f1_macro"]["media"], float)
+
+
+def test_metricas_particao_mm_h_constante():
+    # Todos os valores de mm_h iguais → Spearman retorna NaN (variância zero) → converte para None
+    linhas = [_linha("seco", mm="1"), _linha("forte", mm="1"), _linha("garoa", mm="1")]
+    m = metricas_particao(linhas, _probs([0, 3, 1]), C)
+    assert m["n"] == 3
+    assert m["spearman_score_mm_h"] is None

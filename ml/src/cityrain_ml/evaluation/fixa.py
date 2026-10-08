@@ -57,7 +57,7 @@ def metricas_particao(linhas: list[dict], probs: np.ndarray, classes: Sequence[s
         "qwk": None if np.isnan(qwk) else qwk,
         "acuracia_chuva_vs_seco": acuracia_chuva_vs_seco(y, pred, classes.index("seco")) if "seco" in classes else None,
         "recall_forte": recall_classe(m, classes.index("forte")) if "forte" in classes else None,
-        "spearman_score_mm_h": spear,
+        "spearman_score_mm_h": None if spear is None or np.isnan(spear) else spear,
         "por_periodo": _recorte(linhas, probs, classes, "periodo"),
         "por_camera": _recorte(linhas, probs, classes, "camera"),
     }
