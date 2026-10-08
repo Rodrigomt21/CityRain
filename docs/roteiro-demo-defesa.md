@@ -42,3 +42,67 @@ com as reais).
 
 As capturas de demonstração têm `metadata.demo` preenchido. Para relatórios, filtrar fora
 (`metadata->'demo' IS NULL`).
+
+## Câmera fixa (~3 min)
+
+> Objetivo: demonstrar o sistema em funcionamento com um colector de câmera fixa (CCTV, webcam ou câmera IP),
+> mostrando que o pipeline funciona para qualquer tipo de câmera, com rótulos gerados em tempo real.
+
+### Antes (no dia, 5 min)
+
+1. Confirmar que o modelo de câmera fixa está em produção no backend: verificar `/openapi.json` e procurar
+   por `/api/v1/cameras/` (não verificar `/health`; a verificação de deploy deve ser feita pelo painel do Railway).
+2. Registrar a câmera fixa no backend como dispositivo `fixa-<id>` com tipo `fixa`. O token de ingestão
+   deve estar em `ml/configs/coleta_fixa_tokens.json` ou como variável de ambiente `CITYRAIN_TOKEN_<id>`.
+3. Iniciar o coletor de câmera fixa no Mac com:
+   ```
+   caffeinate -i ml/.venv/bin/python ml/scripts/coleta_fixa/coletor.py ml/configs/coleta_fixa.yaml --enviar --intervalo-s 60
+   ```
+4. Abrir o dashboard com polling rápido:
+   ```
+   cd frontend && VITE_POLL_MS=5000 npm run dev
+   ```
+   Ou usar a versão em produção: https://cityrain.vercel.app.
+5. Navegar até a página `/cameras` (grade com todas as câmeras registradas).
+
+### Ao vivo
+
+1. Mostrar a grade de câmeras (`/cameras`): todos os `fixa-<id>` devem estar listados.
+2. Clicar em uma câmera para abrir a página de detalhe (`/cameras/<id>`), que mostra:
+   - Transmissão original da câmera em tempo real.
+   - Série temporal das últimas 3, 6 e 24 horas com a classificação de intensidade (`seco`, `garoa`,
+     `moderada`, `forte`).
+3. Se não houver chuva no momento, o sistema deve mostrar a classe `seco` correta, demonstrando que
+   o modelo está inferindo mesmo sem precipitação.
+
+### Replay de evento
+
+1. **Antes da defesa**, consultar o resumo do script de montagem de splits:
+   ```
+   ml/scripts/dataset/montar_splits_fixa.py
+   ```
+   e escolher um evento com classe **moderada** ou **forte** (consultar as listas `por_particao_classe` e
+   `por_camera` no resumo).
+2. Preparar os timestamps ISO com fuso horário (ex: `2026-10-01T18:00:00-03:00`) do evento selecionado.
+3. Durante a defesa, disparar o replay com:
+   ```
+   ml/.venv/bin/python ml/scripts/coleta_fixa/replay_evento.py --camera <id> --de <ISO com fuso> --ate <ISO com fuso> --intervalo 2
+   ```
+4. Acompanhar a série temporal no detalhe da câmera (`/cameras/<id>`): a classe de intensidade deve
+   subir conforme os frames do replay são processados e classificados pelo modelo.
+5. As capturas do replay ficam marcadas com `metadata.demo` no banco de dados e são ocultadas na página
+   Histórico; é seguro ensaiar várias vezes (cada envio modifica apenas o comentário JPEG).
+
+### Frase para a banca
+
+"Cada frame atravessou a API pública e foi classificado pelo modelo de câmera fixa, treinado só com
+chuva real medida por pluviômetro. O teste foi por evento e numa câmera que o modelo nunca viu."
+
+### Plano B (se a rede cair)
+
+1. Encerrar o coletor (`Ctrl+C`).
+2. Seguir as instruções em `docs/COMO-CONTINUAR.md` para iniciar o backend localmente.
+3. Reenviar o replay com o argumento:
+   ```
+   --api http://localhost:8000/api/v1/ingest
+   ```
