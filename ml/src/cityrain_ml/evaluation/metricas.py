@@ -121,3 +121,28 @@ def resumo_classificacao(y_true: Sequence[int], probs: np.ndarray, classes: Sequ
         "f1_por_classe": {c: float(f1[i]) for i, c in enumerate(classes) if m[i].sum() > 0},
         "matriz_confusao": {"classes": list(classes), "linhas_verdade": m.tolist()},
     }
+
+
+def kappa_quadratico(y_true: Sequence[int], y_pred: Sequence[int], n_classes: int) -> float:
+    """Kappa de Cohen com peso quadrático: erra garoa por forte custa mais que por moderada."""
+    y_true, y_pred = np.asarray(y_true, dtype=np.int64), np.asarray(y_pred, dtype=np.int64)
+    if y_true.size == 0 or np.unique(y_true).size < 2:
+        return float("nan")
+    o = matriz_confusao(y_true, y_pred, n_classes).astype(np.float64)
+    i, j = np.indices((n_classes, n_classes))
+    w = (i - j) ** 2 / (n_classes - 1) ** 2
+    e = np.outer(o.sum(1), o.sum(0)) / o.sum()
+    return float(1 - (w * o).sum() / (w * e).sum())
+
+
+def acuracia_chuva_vs_seco(y_true: Sequence[int], y_pred: Sequence[int], idx_seco: int = 0) -> float:
+    """Acerto da pergunta 'está chovendo?' ignorando a intensidade."""
+    t = np.asarray(y_true) != idx_seco
+    p = np.asarray(y_pred) != idx_seco
+    return float((t == p).mean()) if t.size else float("nan")
+
+
+def recall_classe(m: np.ndarray, k: int) -> float | None:
+    """Recall da classe k; None quando ela não aparece na verdade."""
+    total = m[k].sum()
+    return None if total == 0 else float(m[k, k] / total)
