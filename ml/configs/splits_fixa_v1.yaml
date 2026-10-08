@@ -1,0 +1,20 @@
+# Splits do modelo de câmera fixa (spec CF4). Só dado real; nada de sintético.
+saida: ml/data/splits/fixa_v1.csv
+resumo: ml/data/splits/fixa_v1_resumo.json
+
+manifest_lives: ml/data/manifests/manifest_coleta_fixa.csv
+# CF3.2: moderada/forte rotuladas por consenso a 5 km, só depois da revisão visual
+manifest_lives_5km: ml/data/manifests/manifest_coleta_fixa_5km.csv
+classes_5km: [moderada, forte]
+raiz_frames_lives: ml/data/raw/coleta_fixa
+
+manifest_ircnn: ml/data/manifests/manifest_ircnn.csv
+prefixo_ircnn: "ml/"   # caminhos do manifest do irCNN são relativos a ml/
+
+coleta_fixa_config: ml/configs/coleta_fixa.yaml
+exigir_posicao_verificada: true
+revisao_csv: ml/data/review/camera_fixa/revisao.csv
+
+camera_teste: bc_atlantica            # Teste B: nunca vista no treino
+congelamento_utc: "2026-10-13T00:00:00Z"   # Teste C: tudo daqui em diante é prospectivo
+max_por_evento_classe: 200
