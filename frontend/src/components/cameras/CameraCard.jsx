@@ -4,13 +4,14 @@ import { ImageOff } from 'lucide-react'
 
 /** Card de uma câmera fixa: miniatura, classe do modelo, confiança e há quanto tempo. */
 export default function CameraCard({ r }) {
-  const [semImagem, setSemImagem] = useState(false)
+  const [falhou, setFalhou] = useState(null)
+  const semImagem = falhou === r.imagemSrc
   return (
     <Link to={`/cameras/${r.id}`} className="rounded-xl overflow-hidden flex flex-col"
       style={{ background: 'var(--bg-surface)', border: '1px solid var(--bg-border)' }}>
       <div style={{ aspectRatio: '4 / 3', background: 'var(--bg-base)', position: 'relative' }}>
         {r.imagemSrc && !semImagem ? (
-          <img src={r.imagemSrc} alt={`Último frame de ${r.nome}`} onError={() => setSemImagem(true)}
+          <img src={r.imagemSrc} alt="" onError={() => setFalhou(r.imagemSrc)}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div className="flex flex-col items-center justify-center gap-1" style={{ height: '100%', color: 'var(--text-secondary)' }}>
