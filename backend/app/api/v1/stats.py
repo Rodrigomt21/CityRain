@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +31,7 @@ async def get_captures_geo(
     excluir_demo: bool = Query(
         default=False, description="Exclui capturas de demonstração (metadata.demo), ex.: no histórico."
     ),
+    tipo: Optional[Literal["movel", "fixa"]] = Query(default=None, description="Só câmeras fixas ou só móveis"),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -43,4 +44,6 @@ async def get_captures_geo(
     [{"cell": "88a8dc25cdfffff", "count": 14, "labels": {"forte": 10, "seco": 4}}]
     """
     service = CaptureService(db)
-    return await service.get_h3_heatmap(resolution, device_id, from_date, to_date, excluir_demo)
+    return await service.get_h3_heatmap(
+        resolution, device_id=device_id, from_date=from_date, to_date=to_date, excluir_demo=excluir_demo, tipo=tipo
+    )

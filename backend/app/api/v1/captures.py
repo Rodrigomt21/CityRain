@@ -24,11 +24,14 @@ async def list_captures(
         default=False, description="Exclui capturas de demonstração (metadata.demo), ex.: no histórico."
     ),
     device_id: Optional[int] = Query(default=None, description="Filtrar por ID do dispositivo"),
+    tipo: Optional[Literal["movel", "fixa"]] = Query(default=None, description="Só câmeras fixas ou só móveis"),
     db: AsyncSession = Depends(get_db),
 ):
     """Lista capturas com filtros opcionais, ordenadas da mais recente para a mais antiga."""
     service = CaptureService(db)
-    return await service.list_captures(skip, limit, weather_label, from_date, to_date, device_id, excluir_demo)
+    return await service.list_captures(
+        skip, limit, weather_label, from_date, to_date, device_id=device_id, excluir_demo=excluir_demo, tipo=tipo
+    )
 
 
 @router.get("/{capture_id}", response_model=CaptureWithDetails)
