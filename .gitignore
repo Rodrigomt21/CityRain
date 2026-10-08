@@ -135,3 +135,5 @@ ml/data/review/
 # Sessões do Claude Code: contém worktrees com cópias inteiras do repositório.
 # Um `git add -A` distraído mandaria tudo isso pra dentro do projeto.
 .claude/
+
+ml/configs/coleta_fixa_tokens.json

@@ -48,6 +48,7 @@ import yaml
 RAIZ = Path(__file__).resolve().parents[3]
 RENOVAR_HLS_S = 30 * 60
 TIMEOUT_S = 40
+TIMEOUT_ENVIO_S = 10  # envio ao vivo: backend lento não pode atrasar a próxima captura
 
 
 @dataclass
@@ -60,6 +61,8 @@ class Fonte:
     indice: int = 0
     intervalo_s: float = 60.0
     descricao: str = ""
+    posicao_verificada: bool = False  # lat/lon conferida no mapa pela imagem (CF1.1)
+    fonte_publica: str = ""           # página oficial que publica a câmera (CF1)
     # estado em execução
     proxima: float = 0.0
     ultimo_hash: str = ""
@@ -81,6 +84,8 @@ def carregar_fontes(cfg: dict) -> list[Fonte]:
             id=f["id"], tipo=f["tipo"], lat=float(f["lat"]), lon=float(f["lon"]),
             url=f.get("url", ""), indice=int(f.get("indice", 0)),
             intervalo_s=float(f.get("intervalo_s", padrao)), descricao=f.get("descricao", ""),
+            posicao_verificada=bool(f.get("posicao_verificada", False)),
+            fonte_publica=f.get("fonte_publica", ""),
         ))
     ids = [f.id for f in fontes]
     if len(ids) != len(set(ids)):
@@ -161,7 +166,61 @@ def gravar_frame(dados: bytes, fonte: Fonte, destino: Path, quando: datetime) ->
     return jpg
 
 
-def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False) -> None:
+# ------------------------------------------------------------------ envio ao backend
+def nome_device(fonte_id: str) -> str:
+    """Nome do dispositivo da câmera no backend (e da pasta de referências do modelo fixo)."""
+    return f"fixa-{fonte_id}"
+
+
+def token_da_fonte(fonte_id: str, arquivo_tokens: Path | None) -> str | None:
+    """Token do dispositivo: CITYRAIN_TOKEN_<ID> no ambiente, senão o JSON de tokens (gitignored)."""
+    env = os.environ.get(f"CITYRAIN_TOKEN_{fonte_id.upper()}")
+    if env:
+        return env
+    if arquivo_tokens and Path(arquivo_tokens).is_file():
+        return json.loads(Path(arquivo_tokens).read_text()).get(fonte_id)
+    return None
+
+
+def metadados_ingest(meta_frame: dict, demo: dict | None = None) -> dict:
+    """JSON do campo `metadata` do POST /api/v1/ingest a partir do .json do frame.
+
+    O backend ignora lat/lon de câmera fixa (usa o cadastro), mas elas vão junto para
+    o registro ficar completo se o dispositivo for cadastrado errado como móvel.
+    """
+    extra: dict = {"fonte": meta_frame["device_id"]}
+    if demo:
+        extra["demo"] = demo
+    return {
+        "captured_at": meta_frame["capturado_em_utc"],
+        "latitude": meta_frame["gps"]["latitude"],
+        "longitude": meta_frame["gps"]["longitude"],
+        "source_type": "camera_fixa",
+        "metadata": extra,
+    }
+
+
+def enviar_frame(jpg: Path, backend_url: str, token: str, sessao=None, demo: dict | None = None,
+                 timeout: float = 30) -> int:
+    """POST do par ao /ingest. Devolve o status HTTP, ou 0 se a rede falhou. Nunca apaga o frame."""
+    import requests
+
+    sessao = sessao or requests
+    meta = json.loads(jpg.with_suffix(".json").read_text())
+    try:
+        r = sessao.post(
+            backend_url,
+            files={"image": (jpg.name, jpg.read_bytes(), "image/jpeg")},
+            data={"metadata": json.dumps(metadados_ingest(meta, demo))},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=timeout,
+        )
+        return r.status_code
+    except requests.RequestException:
+        return 0
+
+
+def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False, envio: dict | None = None) -> None:
     agora = time.time()
     for f in fontes:
         if not forcar and agora < f.proxima:
@@ -172,6 +231,9 @@ def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False) -> None:
             f.falhas = 0
             f.proxima = agora + f.intervalo_s
             estado = caminho.name if caminho else "repetido (descartado)"
+            if envio and caminho and f.id in envio["tokens"]:
+                status = enviar_frame(caminho, envio["url"], envio["tokens"][f.id], timeout=TIMEOUT_ENVIO_S)
+                estado += f" -> ingest {status or 'sem rede'}"
         except Exception as e:  # noqa: BLE001 — uma fonte fora do ar não para as outras
             f.falhas += 1
             f.proxima = agora + min(f.intervalo_s * 2 ** f.falhas, 1800)  # backoff até 30 min
@@ -183,16 +245,31 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("config", type=Path)
     ap.add_argument("--uma-rodada", action="store_true", help="captura 1 frame de cada fonte e sai")
+    ap.add_argument("--enviar", action="store_true", help="envia cada frame novo ao POST /api/v1/ingest")
+    ap.add_argument("--intervalo-s", type=float, help="sobrescreve o intervalo de todas as fontes")
+    ap.add_argument("--tokens", type=Path, default=RAIZ / "ml/configs/coleta_fixa_tokens.json")
     args = ap.parse_args()
     cfg = yaml.safe_load(args.config.read_text())
     destino = RAIZ / cfg.get("destino", "ml/data/raw/coleta_fixa")
     fontes = carregar_fontes(cfg)
+    if args.intervalo_s:
+        for f in fontes:
+            f.intervalo_s = args.intervalo_s
+    envio = None
+    if args.enviar:
+        if not cfg.get("backend_url"):
+            sys.exit(f"[coletor] --enviar exige 'backend_url' em {args.config}")
+        tokens = {f.id: t for f in fontes if (t := token_da_fonte(f.id, args.tokens))}
+        for f in fontes:
+            if f.id not in tokens:
+                print(f"[coletor] {f.id}: sem token, só grava em disco", flush=True)
+        envio = {"url": cfg["backend_url"], "tokens": tokens}
     print(f"[coletor] {len(fontes)} fontes -> {destino.relative_to(RAIZ)}", flush=True)
     if args.uma_rodada:
-        rodada(fontes, destino, forcar=True)
+        rodada(fontes, destino, forcar=True, envio=envio)
         return
     while True:
-        rodada(fontes, destino)
+        rodada(fontes, destino, envio=envio)
         time.sleep(1)
 
 

@@ -77,3 +77,102 @@ def test_janelas_com_chuva_une_margem_e_respeita_raio_e_dvr():
     dvr0 = datetime(2026, 10, 4, 16, 50, tzinfo=timezone.utc)
     j = janelas_com_chuva(f, L, 5.0, timedelta(minutes=15), dvr0)
     assert j == [(dvr0, datetime(2026, 10, 4, 17, 55, tzinfo=timezone.utc))]  # corta no início do DVR
+
+
+class _Resp:
+    def __init__(self, status):
+        self.status_code = status
+
+
+class _SessaoFalsa:
+    def __init__(self, status=201, erro=None):
+        self.status, self.erro, self.chamadas = status, erro, []
+
+    def post(self, url, files=None, data=None, headers=None, timeout=None):
+        self.chamadas.append({"url": url, "files": files, "data": data, "headers": headers})
+        if self.erro:
+            raise self.erro
+        return _Resp(self.status)
+
+
+def test_nome_device_segue_convencao():
+    assert col.nome_device("sp_centro_geolan") == "fixa-sp_centro_geolan"
+
+
+def test_token_da_variavel_tem_precedencia(tmp_path, monkeypatch):
+    arq = tmp_path / "tokens.json"
+    arq.write_text(json.dumps({"cam1": "do-arquivo"}))
+    assert col.token_da_fonte("cam1", arq) == "do-arquivo"
+    monkeypatch.setenv("CITYRAIN_TOKEN_CAM1", "da-env")
+    assert col.token_da_fonte("cam1", arq) == "da-env"
+    assert col.token_da_fonte("outra", arq) is None
+    assert col.token_da_fonte("cam1", tmp_path / "nao_existe.json") == "da-env"
+
+
+def test_metadados_do_ingest(tmp_path):
+    quando = datetime(2026, 10, 9, 18, 0, tzinfo=timezone.utc)
+    jpg = col.gravar_frame(JPEG, _fonte(), tmp_path, quando)
+    meta = col.metadados_ingest(json.loads(jpg.with_suffix(".json").read_text()))
+    assert meta["captured_at"] == quando.isoformat()
+    assert (meta["latitude"], meta["longitude"]) == (-23.5, -46.6)
+    assert meta["source_type"] == "camera_fixa"
+    assert meta["metadata"]["fonte"] == "cam1"
+    assert "demo" not in meta["metadata"]
+    com_demo = col.metadados_ingest(json.loads(jpg.with_suffix(".json").read_text()), demo={"origem": "x"})
+    assert com_demo["metadata"]["demo"] == {"origem": "x"}
+
+
+def test_enviar_frame_faz_post_multipart(tmp_path):
+    jpg = col.gravar_frame(JPEG, _fonte(), tmp_path, datetime.now(timezone.utc))
+    s = _SessaoFalsa(201)
+    assert col.enviar_frame(jpg, "http://api/api/v1/ingest", "tok", sessao=s) == 201
+    ch = s.chamadas[0]
+    assert ch["headers"] == {"Authorization": "Bearer tok"}
+    assert ch["files"]["image"][2] == "image/jpeg"
+    assert json.loads(ch["data"]["metadata"])["source_type"] == "camera_fixa"
+
+
+def test_enviar_frame_com_rede_fora_devolve_zero(tmp_path):
+    import requests
+
+    jpg = col.gravar_frame(JPEG, _fonte(), tmp_path, datetime.now(timezone.utc))
+    s = _SessaoFalsa(erro=requests.ConnectionError("sem rede"))
+    assert col.enviar_frame(jpg, "http://api", "tok", sessao=s) == 0
+    assert jpg.exists()
+
+
+def test_carrega_campos_novos_da_fonte():
+    f = _fonte(posicao_verificada=True, fonte_publica="https://exemplo.gov.br/cameras")
+    assert f.posicao_verificada is True and f.fonte_publica.startswith("https://")
+    assert _fonte().posicao_verificada is False
+
+
+def test_rodada_envia_com_token_e_so_grava_sem_token(tmp_path, monkeypatch, capsys):
+    fontes = col.carregar_fontes({"fontes": [
+        {"id": "com", "tipo": "camera", "lat": 0, "lon": 0},
+        {"id": "sem", "tipo": "camera", "lat": 0, "lon": 0},
+    ]})
+    monkeypatch.setitem(col.CAPTURAS, "camera", lambda f: JPEG + f.id.encode())
+    chamadas = []
+
+    def falso(jpg, url, token, **kw):
+        chamadas.append((jpg.name, url, token, kw))
+        return 201
+
+    monkeypatch.setattr(col, "enviar_frame", falso)
+    col.rodada(fontes, tmp_path, forcar=True, envio={"url": "http://api/ingest", "tokens": {"com": "tok"}})
+    saida = capsys.readouterr().out
+    assert len(chamadas) == 1 and chamadas[0][1:3] == ("http://api/ingest", "tok")
+    assert chamadas[0][3] == {"timeout": 10}                      # envio ao vivo não espera 30 s
+    assert "com:" in saida and "ingest 201" in saida
+    assert saida.count("ingest") == 1                             # a fonte sem token só gravou
+    assert len(list((tmp_path / "sem").glob("*.jpg"))) == 1
+
+
+def test_main_enviar_sem_backend_url_da_erro_claro(tmp_path, monkeypatch):
+    cfg = tmp_path / "c.yaml"
+    cfg.write_text("fontes:\n  - {id: x, tipo: camera, lat: 0, lon: 0}\n")
+    monkeypatch.setattr(sys, "argv", ["coletor", str(cfg), "--enviar", "--uma-rodada"])
+    with pytest.raises(SystemExit) as e:
+        col.main()
+    assert "backend_url" in str(e.value)
