@@ -1,3 +1,6 @@
+# Envio ao vivo (coletor.py --enviar): um dispositivo por câmera, nome fixa-<id>,
+# token em CITYRAIN_TOKEN_<ID> ou em ml/configs/coleta_fixa_tokens.json (gitignored).
+backend_url: https://api-production-046f.up.railway.app/api/v1/ingest
 # Fontes do coletor de câmeras fixas (ml/scripts/coleta_fixa/coletor.py).
 # Lives verificadas no ar em 04/10/2026 via yt-dlp. Lat/lon são APROXIMADOS pelo
 # local declarado no título (marco/bairro) — conferir na própria imagem antes de
@@ -13,16 +16,16 @@ intervalo_s: 600
 
 fontes:
   # --- capital (estações já cadastradas) ---
-  - {id: sp_centro_geolan, tipo: youtube, url: "https://www.youtube.com/watch?v=dJN7snkYg-I", lat: -23.5465, lon: -46.6340, descricao: "Geolan — Centro de SP"}
+  - {id: sp_centro_geolan, tipo: youtube, url: "https://www.youtube.com/watch?v=dJN7snkYg-I", lat: -23.5465, lon: -46.6340, descricao: "Geolan — Centro de SP", posicao_verificada: false, fonte_publica: ""}
   # --- Baixada Santista / litoral SP (CEMADEN tem rede densa lá) ---
-  - {id: santos_gonzaga, tipo: youtube, url: "https://www.youtube.com/watch?v=mCnJ9gR5Dn0", lat: -23.9680, lon: -46.3340, descricao: "Olhar 013 — Gonzaga/Canal 2, Santos"}
-  - {id: praiagrande_boqueirao, tipo: youtube, url: "https://www.youtube.com/watch?v=8eHa1bfLSTI", lat: -24.0060, lon: -46.4120, descricao: "Praia Grande — Boqueirão/Guilhermina"}
+  - {id: santos_gonzaga, tipo: youtube, url: "https://www.youtube.com/watch?v=mCnJ9gR5Dn0", lat: -23.9680, lon: -46.3340, descricao: "Olhar 013 — Gonzaga/Canal 2, Santos", posicao_verificada: false, fonte_publica: ""}
+  - {id: praiagrande_boqueirao, tipo: youtube, url: "https://www.youtube.com/watch?v=8eHa1bfLSTI", lat: -24.0060, lon: -46.4120, descricao: "Praia Grande — Boqueirão/Guilhermina", posicao_verificada: false, fonte_publica: ""}
   # sem pluviômetro CEMADEN a <= 5 km (o mais perto está a 7 km): desligada
   - {id: praiagrande_tupi, ativa: false, tipo: youtube, url: "https://www.youtube.com/watch?v=J_ne7psSqBk", lat: -24.0340, lon: -46.5050, descricao: "Praia Grande — Tupi"}
-  - {id: guaruja_enseada, tipo: youtube, url: "https://www.youtube.com/watch?v=v5Y6WsD577M", lat: -23.9890, lon: -46.2240, descricao: "Guarujá — Enseada, posto 11"}
-  - {id: ubatuba_tenorio, tipo: youtube, url: "https://www.youtube.com/watch?v=CJGzm3qjFUk", lat: -23.4590, lon: -45.0570, descricao: "UBACAM — Tenório, Ubatuba"}
+  - {id: guaruja_enseada, tipo: youtube, url: "https://www.youtube.com/watch?v=v5Y6WsD577M", lat: -23.9890, lon: -46.2240, descricao: "Guarujá — Enseada, posto 11", posicao_verificada: false, fonte_publica: ""}
+  - {id: ubatuba_tenorio, tipo: youtube, url: "https://www.youtube.com/watch?v=CJGzm3qjFUk", lat: -23.4590, lon: -45.0570, descricao: "UBACAM — Tenório, Ubatuba", posicao_verificada: false, fonte_publica: ""}
   # --- outros estados (chuva forte de verão frequente) ---
-  - {id: bc_atlantica, tipo: youtube, url: "https://www.youtube.com/watch?v=5Xl6pSgiy3A", lat: -26.9930, lon: -48.6330, descricao: "CLIMA BC — Av. Atlântica, Balneário Camboriú"}
+  - {id: bc_atlantica, tipo: youtube, url: "https://www.youtube.com/watch?v=5Xl6pSgiy3A", lat: -26.9930, lon: -48.6330, descricao: "CLIMA BC — Av. Atlântica, Balneário Camboriú", posicao_verificada: false, fonte_publica: ""}
   # Rio não tem pluviômetro CEMADEN a <= 5 km (o mais perto está a 7 km); o Alerta Rio tem, mas não está integrado
   - {id: rio_copacabana_p6, ativa: false, tipo: youtube, url: "https://www.youtube.com/watch?v=Bz9Hkrk1NcY", lat: -22.9850, lon: -43.1890, descricao: "Homes in Rio — Copacabana, posto 6"}
 
