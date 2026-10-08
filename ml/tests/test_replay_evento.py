@@ -74,3 +74,97 @@ def test_prepara_frame_com_horario_atual_e_jpeg_marcado(tmp_path):
     assert meta["capturado_em_utc"] == agora.isoformat()
     assert meta["capturado_originalmente"] == "2026-10-01T10:00:00+00:00"
     assert novo.read_bytes() != (tmp_path / "orig/frame_a.jpg").read_bytes()
+
+
+def test_periodo_local_fronteiras_dia_06h00_e_18h30_locais():
+    utc = timezone.utc
+    assert rp.periodo_local(datetime(2026, 10, 1, 8, 59, tzinfo=utc)) == "noite"   # 05:59 local
+    assert rp.periodo_local(datetime(2026, 10, 1, 9, 0, tzinfo=utc)) == "dia"      # 06:00 local
+    assert rp.periodo_local(datetime(2026, 10, 1, 21, 29, tzinfo=utc)) == "dia"    # 18:29 local
+    assert rp.periodo_local(datetime(2026, 10, 1, 21, 30, tzinfo=utc)) == "noite"  # 18:30 local
+
+
+def test_instante_sem_fuso_assume_menos_tres():
+    t, assumido = rp.parse_instante("2026-10-01T18:00:00", "--de")
+    assert assumido and t.utcoffset().total_seconds() == -3 * 3600
+    t, assumido = rp.parse_instante("2026-10-01T18:00:00Z", "--de")
+    assert not assumido and t.hour == 18
+
+
+def test_instante_malformado_levanta_valueerror_claro():
+    import pytest
+    with pytest.raises(ValueError, match="--ate"):
+        rp.parse_instante("ontem", "--ate")
+
+
+def _frames(tmp_path, n=3):
+    out = []
+    for i in range(n):
+        _par(tmp_path, f"f{i}", f"2026-10-01T10:0{i}:00+00:00")
+        out.append(tmp_path / f"f{i}.jpg")
+    return out
+
+
+def test_envio_resume_ok_duplicado_erro_e_sem_rede(tmp_path):
+    frames = _frames(tmp_path, 4)
+    status = iter([200, 409, 500, 0])
+    r = rp.enviar_todos(frames, "u", "t", "cam1", 0, enviar=lambda *a, **k: next(status), dormir=lambda s: None)
+    assert (r["ok"], r["duplicados"], r["erros"], r["sem_rede"]) == (1, 1, 1, 1)
+    assert r["abortado"] is None
+
+
+def test_envio_aborta_no_primeiro_4xx_exceto_409(tmp_path):
+    frames = _frames(tmp_path, 3)
+    chamadas = []
+
+    def falso(*a, **k):
+        chamadas.append(1)
+        return 401
+
+    r = rp.enviar_todos(frames, "u", "t", "cam1", 0, enviar=falso, dormir=lambda s: None)
+    assert len(chamadas) == 1
+    assert r["abortado"] == 401
+
+
+def test_envio_nao_dorme_depois_do_ultimo_frame(tmp_path):
+    frames = _frames(tmp_path, 3)
+    pausas = []
+    rp.enviar_todos(frames, "u", "t", "cam1", 2.0, enviar=lambda *a, **k: 200, dormir=pausas.append)
+    assert pausas == [2.0, 2.0]
+
+
+def test_periodos_dos_frames_le_o_horario_original(tmp_path):
+    _par(tmp_path, "dia", "2026-10-01T15:00:00+00:00")     # 12:00 local
+    _par(tmp_path, "noite", "2026-10-01T23:00:00+00:00")   # 20:00 local
+    assert rp.periodos_dos_frames([tmp_path / "dia.jpg", tmp_path / "noite.jpg"]) == {"dia", "noite"}
+
+
+def test_main_sem_frames_sai_com_codigo_diferente_de_zero(tmp_path, monkeypatch):
+    import pytest
+    man = tmp_path / "m.csv"
+    man.write_text("arquivo,pasta,ts_utc\n")
+    tok = tmp_path / "t.json"
+    tok.write_text('{"cam1": "x"}')
+    monkeypatch.setattr(sys, "argv", ["r", "--camera", "cam1", "--manifest", str(man),
+                                      "--raiz-frames", str(tmp_path), "--tokens", str(tok), "--api", "http://x"])
+    with pytest.raises(SystemExit) as e:
+        rp.main()
+    assert e.value.code not in (0, None)
+    assert "manifest" in str(e.value.code)
+
+
+def test_main_aborta_se_periodo_diferente_do_atual_sem_forcar(tmp_path, monkeypatch):
+    import pytest
+    raiz = tmp_path / "frames"
+    _par(raiz / "cam1", "f0", "2026-10-01T23:00:00+00:00")   # noite
+    man = tmp_path / "m.csv"
+    man.write_text("arquivo,pasta,ts_utc\nf0.jpg,cam1,2026-10-01T23:00:00Z\n")
+    tok = tmp_path / "t.json"
+    tok.write_text('{"cam1": "x"}')
+    monkeypatch.setattr(rp, "periodo_agora", lambda: "dia")
+    monkeypatch.setattr(rp, "enviar_frame", lambda *a, **k: pytest.fail("não deveria enviar"))
+    monkeypatch.setattr(sys, "argv", ["r", "--camera", "cam1", "--manifest", str(man), "--raiz-frames", str(raiz),
+                                      "--tokens", str(tok), "--api", "http://x"])
+    with pytest.raises(SystemExit) as e:
+        rp.main()
+    assert "--forcar-periodo" in str(e.value.code)
