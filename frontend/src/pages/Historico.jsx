@@ -51,6 +51,12 @@ function Enquadrar({ poligonos }) {
   return null
 }
 
+const TIPOS = [
+  { label: 'Todas', valor: null },
+  { label: 'Fixas', valor: 'fixa' },
+  { label: 'Móveis', valor: 'movel' },
+]
+
 const corDe = key => (CATEGORIES[key] ?? UNMEASURED).color
 const nomeDe = key => (CATEGORIES[key] ?? UNMEASURED).label
 
@@ -76,8 +82,9 @@ export default function Historico() {
   const [periodo, setPeriodo] = useState(PERIODOS[3])
   const [resolucao, setResolucao] = useState(8)
   const [incluirDemo, setIncluirDemo] = useState(false)
+  const [tipo, setTipo] = useState(null)
   const [alturaSerie, setAlturaSerie] = useState(alturaSalva)
-  const { celulas, capturas, loading, error } = useHistorico(periodo, resolucao, incluirDemo)
+  const { celulas, capturas, loading, error } = useHistorico(periodo, resolucao, incluirDemo, tipo)
 
   // Arrastar a alça para cima aumenta o gráfico (e encolhe o mapa), para baixo diminui.
   function arrastar(e) {
@@ -130,6 +137,13 @@ export default function Historico() {
                 style={{ cursor: 'pointer', color: p.key === periodo.key ? 'var(--bg-base)' : 'var(--text-secondary)',
                   background: p.key === periodo.key ? 'var(--accent-brand)' : 'transparent', border: '1px solid var(--bg-border)' }}>
                 {p.label}
+              </button>
+            ))}
+            {TIPOS.map(t => (
+              <button key={t.label} onClick={() => setTipo(t.valor)} className="font-mono text-xs px-3 py-1.5 rounded"
+                style={{ cursor: 'pointer', color: t.valor === tipo ? 'var(--bg-base)' : 'var(--text-secondary)',
+                  background: t.valor === tipo ? 'var(--accent-brand)' : 'transparent', border: '1px solid var(--bg-border)' }}>
+                {t.label}
               </button>
             ))}
             <select value={resolucao} onChange={e => setResolucao(Number(e.target.value))} className="font-mono text-xs px-2 py-1.5 rounded"

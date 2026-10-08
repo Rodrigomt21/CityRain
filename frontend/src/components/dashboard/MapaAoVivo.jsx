@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { categoryFromLabel } from '../../lib/categories'
+import { resumoCamera } from '../../lib/cameras'
 
 const CENTRO_SP = [-23.56, -46.62]
 
@@ -22,7 +24,7 @@ function Seguir({ pontos }) {
 }
 
 /** Trajeto ao vivo: segmentos coloridos pela classe e posição atual pulsando. */
-export default function MapaAoVivo({ capturas, ultimaConhecida }) {
+export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) {
   const pontos = useMemo(
     () => capturas.map(c => ({ ...c, pos: [c.latitude, c.longitude], cat: categoryFromLabel(c.weather_label) })),
     [capturas],
@@ -64,6 +66,20 @@ export default function MapaAoVivo({ capturas, ultimaConhecida }) {
           <Tooltip permanent direction="top">Última posição conhecida</Tooltip>
         </CircleMarker>
       )}
+      {cameras.filter(c => c.latitude != null).map(c => {
+        const r = resumoCamera(c, '')
+        const icone = L.divIcon({
+          className: '',
+          html: `<div style="width:14px;height:14px;background:${r.categoria.color};border:2px solid #0b1220;border-radius:2px"></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        })
+        return (
+          <Marker key={`cam-${c.id}`} position={[c.latitude, c.longitude]} icon={icone}>
+            <Tooltip>{r.nome} · {r.categoria.label} · {r.quando}</Tooltip>
+          </Marker>
+        )
+      })}
       <Seguir pontos={pontos} />
     </MapContainer>
   )
