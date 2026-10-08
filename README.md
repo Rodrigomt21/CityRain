@@ -12,6 +12,8 @@
 **Título formal:** CityRain — Sistema Embarcado de Monitoramento Climático Urbano por Visão Computacional
 **Trabalho de Conclusão de Curso** — Ciência da Computação, Centro Universitário do Instituto Mauá de Tecnologia (IMT)
 
+> **Estado atual (out/2026) e como continuar:** [`docs/COMO-CONTINUAR.md`](docs/COMO-CONTINUAR.md) — o que já está decidido, onde estão os dados fora do Git e como rodar cada parte.
+
 ---
 
 ## Visão Geral
