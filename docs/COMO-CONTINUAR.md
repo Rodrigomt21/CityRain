@@ -66,6 +66,15 @@ cp .env.example .env   # preencher DATABASE_URL etc.
 .venv/bin/python -m pytest -q tests
 ```
 
+Rodar a API local (Postgres local; `ADMIN_KEY` é o Bearer de admin):
+
+```bash
+cd backend
+export DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/cityrain ADMIN_KEY=demo
+.venv/bin/alembic upgrade head
+.venv/bin/python -m uvicorn app.main:app --port 8000
+```
+
 Use Python 3.11 (SQLAlchemy 2.0.37 quebra no 3.14). Deploy no Railway a partir da `main`.
 
 ### Frontend
