@@ -28,6 +28,15 @@ fontes:
   - {id: ubatuba_tenorio, tipo: youtube, url: "https://www.youtube.com/watch?v=CJGzm3qjFUk", lat: -23.4653, lon: -45.0580, descricao: "UBACAM — Praia do Tenório (canto direito), Ubatuba", posicao_verificada: true, fonte_publica: "https://ubacam.com.br"}
   # --- outros estados (chuva forte de verão frequente) ---
   - {id: bc_atlantica, tipo: youtube, url: "https://www.youtube.com/watch?v=5Xl6pSgiy3A", lat: -26.9930, lon: -48.6330, descricao: "CLIMA BC — Av. Atlântica, Centro, Balneário Camboriú", posicao_verificada: true, fonte_publica: "https://www.youtube.com/watch?v=5Xl6pSgiy3A"}
+  # --- 09/10/2026: lives novas para ter mais eventos de chuva em câmeras diferentes antes do
+  # congelamento. Posição verificada = endereço/link da própria live, geocodificado no OSM; pluviômetros
+  # CEMADEN do catálogo 311_24.json (09/10). Maresias e Baguari sem endereço exato: coletam, mas ficam
+  # fora dos splits até alguém confirmar o local.
+  - {id: poa_centro_historico, tipo: youtube, url: "https://www.youtube.com/@portoalegreskyline/live", lat: -30.0309, lon: -51.2317, descricao: "Porto Alegre Skyline — esquina Caldas Júnior com Andradas, Centro Histórico (live reinicia todo dia: URL do canal)", posicao_verificada: true, fonte_publica: "https://www.youtube.com/watch?v=CbIw8XGrXuU"}
+  - {id: rs_ponte_bananal, tipo: youtube, url: "https://www.youtube.com/watch?v=R1OSBfhaGOA", lat: -29.4011, lon: -51.2552, descricao: "Saturno Tecnologia — Ponte do Bananal sobre o Rio Caí, divisa Vale Real/Feliz (RS)", posicao_verificada: true, fonte_publica: "https://www.youtube.com/watch?v=R1OSBfhaGOA"}
+  - {id: sv_itarare, tipo: youtube, url: "https://www.youtube.com/watch?v=ukoSyGLdoTQ", lat: -23.9647, lon: -46.3626, descricao: "Surfistafotografo/CVLLP — rampa de voo livre do Morro do Itararé, São Vicente (link de mapa da descrição)", posicao_verificada: true, fonte_publica: "https://goo.gl/maps/5vWmBWkGMgrWEU3k9"}
+  - {id: saosebastiao_maresias, tipo: youtube, url: "https://www.youtube.com/watch?v=aFvuSy05ki8", lat: -23.7870, lon: -45.5616, descricao: "Surfistafotografo — Maresias, torre dos bombeiros em frente ao condomínio Ondas, entrada 15 (aprox.)", posicao_verificada: false, fonte_publica: ""}
+  - {id: ubatuba_baguari, tipo: youtube, url: "https://www.youtube.com/watch?v=fYSeYdJ5do8", lat: -23.4697, lon: -45.0672, descricao: "UBACAM — Praia Grande (Baguari), Ubatuba (aprox.)", posicao_verificada: false, fonte_publica: "https://ubacam.com.br"}
   # Rio não tem pluviômetro CEMADEN a <= 5 km (o mais perto está a 7 km); o Alerta Rio tem, mas não está integrado
   - {id: rio_copacabana_p6, ativa: false, tipo: youtube, url: "https://www.youtube.com/watch?v=Bz9Hkrk1NcY", lat: -22.9850, lon: -43.1890, descricao: "Homes in Rio — Copacabana, posto 6"}
 

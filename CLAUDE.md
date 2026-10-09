@@ -20,11 +20,11 @@ alertou risco de reprovação por falta de dados; o modelo do carro (v3) segue e
 
 | Quando | O quê | Como |
 |---|---|---|
-| até 12/10 | coletor ao vivo das 6 câmeras | `GUIA-COLETA` §4 |
-| 11/10 e 12/10 à noite | colheita do DVR (chuva e seco) + manifests | `GUIA-COLETA` §5–6; `--desde` = fim da colheita anterior (ver tabela "Colheitas" da PASSAGEM) |
-| até 12/10 | revisão visual dos painéis + `ml/data/review/camera_fixa/REVISAO.md` | `GUIA-COLETA` §6 |
+| até 13/10 cedo | coletor ao vivo das 11 câmeras | `GUIA-COLETA` §4 |
+| 11/10 e **13/10 cedo** | colheita do DVR (chuva e seco) + manifests (a de 13/10 fecha o treino: o CEMADEN só completa o dia 12 no dia seguinte) | `GUIA-COLETA` §5–6; `--desde` = fim da colheita anterior (ver tabela "Colheitas" da PASSAGEM) |
+| até 13/10 13h | revisão visual dos painéis + `ml/data/review/camera_fixa/REVISAO.md` | `GUIA-COLETA` §6 |
 | **12/10 21h (Brasília)** | **congelamento**: depois disso tudo é teste prospectivo | não mudar `congelamento_utc` |
-| 13–16/10 | `python ml/scripts/treino/rodar_experimentos_fixa.py tudo`, mandar a tabela no grupo, depois `final` | `GUIA-TREINO` §3–4 (sem GPU: `ml/notebooks/treino_fixa_colab.ipynb`) |
+| 13/10 tarde–16/10 | `python ml/scripts/treino/rodar_experimentos_fixa.py tudo`, mandar a tabela no grupo, depois `final` | `GUIA-TREINO` §3–4 (sem GPU: `ml/notebooks/treino_fixa_colab.ipynb`) |
 | 18/10 | teste prospectivo, sem retreinar | `GUIA-TREINO` §5 |
 | 19/10 | demo | `docs/roteiro-demo-defesa.md`, seção "Câmera fixa" |
 
@@ -44,6 +44,8 @@ depois do pacote: pegar a pasta `ml/data/raw/coleta_fixa` com quem colheu.
 - Nunca commitar `ml/.env`, `ml/configs/coleta_fixa_tokens.json`, imagens ou `ml/runs/`.
 - Treino longo: Mac na tomada (o script usa `caffeinate`); se cair, rodar o mesmo comando de novo.
 - Mudanças vão por branch + PR; o Rodrigo faz o merge.
+
+**Backlog com nomes e datas:** `backlog_camera_fixa_ate_20out.xlsx` (enviado no grupo pelo Rodrigo).
 
 **Pendências conhecidas em 09/10:** posição de Santos/Praia Grande; revisão visual não feita;
 backend (Moreno): volume no Railway, ADMIN_KEY nova, UPDATEs de posição (PASSAGEM); CEMADEN
