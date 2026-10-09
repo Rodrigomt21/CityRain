@@ -51,7 +51,7 @@ de splits não tem como saber se alguém olhou, então isso depende da equipe.
 1. Gerar os painéis da última colheita (comando no fim do `GUIA-COLETA-EQUIPE.md`) e abrir `ml/data/review/camera_fixa/`.
 2. No `revisao.csv`, marcar `excluir=1` + `motivo` **só** em imagem defeituosa: câmera tampada,
    congelada, tela de offline, menu na tela. **Nunca mudar a classe** (quem rotula é o pluviômetro).
-3. Ao terminar, criar `ml/data/review/camera_fixa/REVISADO.txt` com nome, data e quantas imagens foram marcadas.
+3. Ao terminar, criar `ml/data/review/camera_fixa/REVISAO.md` com nome, data, grupos câmera/classe inspecionados e quantas imagens foram marcadas (mesmo registro do `GUIA-COLETA-EQUIPE.md`, seção 6).
 
 ## 3. 13/10 em diante: rodar tudo (~5 h em Mac M-series)
 

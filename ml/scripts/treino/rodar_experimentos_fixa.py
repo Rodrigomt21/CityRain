@@ -128,8 +128,8 @@ def checar(estrito: bool = True) -> bool:
             linhas = list(csv.DictReader(f))
         marcadas = sum(1 for r in linhas if (r.get("excluir") or "").strip())
         print(f"  revisao.csv: {len(linhas)} linhas, {marcadas} com excluir preenchido")
-        if not (RAIZ / "ml/data/review/camera_fixa/REVISADO.txt").is_file():
-            print("  [aviso] revisão visual dos painéis não registrada (criar ml/data/review/camera_fixa/REVISADO.txt "
+        if not (RAIZ / "ml/data/review/camera_fixa/REVISAO.md").is_file():
+            print("  [aviso] revisão visual dos painéis não registrada (criar ml/data/review/camera_fixa/REVISAO.md "
                   "com nome e data depois de revisar). Moderada/forte a 5 km só valem revisados (CF3.2).")
     cams = yaml.safe_load((RAIZ / cfg["coleta_fixa_config"]).read_text())
     for fonte in cams.get("fontes", []):
