@@ -12,7 +12,7 @@
 **Título formal:** CityRain — Sistema Embarcado de Monitoramento Climático Urbano por Visão Computacional
 **Trabalho de Conclusão de Curso** — Ciência da Computação, Centro Universitário do Instituto Mauá de Tecnologia (IMT)
 
-> **Estado atual (out/2026) e como continuar:** [`docs/COMO-CONTINUAR.md`](docs/COMO-CONTINUAR.md) — o que já está decidido, onde estão os dados fora do Git e como rodar cada parte.
+> **Estado atual (09–20/10/2026):** seção "ESTADO ATUAL" do [`CLAUDE.md`](CLAUDE.md) e [`docs/PASSAGEM-camera-fixa.md`](docs/PASSAGEM-camera-fixa.md). Contexto geral: [`docs/COMO-CONTINUAR.md`](docs/COMO-CONTINUAR.md) — o que já está decidido, onde estão os dados fora do Git e como rodar cada parte.
 
 ---
 

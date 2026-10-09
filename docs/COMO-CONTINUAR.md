@@ -1,5 +1,10 @@
 # Como continuar o CityRain
 
+> **De 09/10 a 20/10 o foco é o modelo da câmera fixa.** O roteiro atual está na seção
+> "ESTADO ATUAL" do `CLAUDE.md`, em `docs/PASSAGEM-camera-fixa.md` e nos guias
+> `docs/GUIA-COLETA-EQUIPE.md` e `docs/GUIA-TREINO-EQUIPE.md`. Este arquivo continua válido
+> para o modelo do carro e a infraestrutura.
+
 > Estado em 07/10/2026. Leia isto antes do resto: o `README.md` e partes do `CLAUDE.md` ainda
 > descrevem o projeto como estava no pré-projeto (framework e arquitetura "abertos"). Isso já foi
 > decidido — ver abaixo.

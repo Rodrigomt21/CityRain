@@ -1,5 +1,54 @@
 # CLAUDE.md — CityRain
 
+## ⚠️ ESTADO ATUAL (09/10 a 20/10/2026) — ler primeiro
+
+Se alguém perguntar "o que falta?", "onde paramos?" ou "o que eu faço?", a resposta está aqui e
+nos documentos abaixo. **Não** usar o `docs/COMO-CONTINUAR.md` como roteiro: ele é de 07/10, de
+antes da câmera fixa, e descreve o modelo do carro.
+
+**Objetivo até 20/10:** treinar e colocar em produção o **modelo da câmera fixa** (4 classes, só
+dado real: lives do YouTube rotuladas por pluviômetro CEMADEN + irCNN). Motivo: o orientador
+alertou risco de reprovação por falta de dados; o modelo do carro (v3) segue em produção como está.
+
+**Documentos, nesta ordem:**
+1. `docs/PASSAGEM-camera-fixa.md` — quem faz o quê, histórico das colheitas, tarefas do backend.
+2. `docs/GUIA-COLETA-EQUIPE.md` — coletor ao vivo, colheita do DVR, CEMADEN, revisão visual.
+3. `docs/GUIA-TREINO-EQUIPE.md` — ambiente, pacote de dados, treino em 1 comando, modelo final.
+4. `docs/specs/spec-camera-fixa.md` — regras (splits CF4, critério de escolha CF5).
+
+**Calendário:**
+
+| Quando | O quê | Como |
+|---|---|---|
+| até 12/10 | coletor ao vivo das 6 câmeras | `GUIA-COLETA` §4 |
+| 11/10 e 12/10 à noite | colheita do DVR (chuva e seco) + manifests | `GUIA-COLETA` §5–6; `--desde` = fim da colheita anterior (ver tabela "Colheitas" da PASSAGEM) |
+| até 12/10 | revisão visual dos painéis + `ml/data/review/camera_fixa/REVISAO.md` | `GUIA-COLETA` §6 |
+| **12/10 21h (Brasília)** | **congelamento**: depois disso tudo é teste prospectivo | não mudar `congelamento_utc` |
+| 13–16/10 | `python ml/scripts/treino/rodar_experimentos_fixa.py tudo`, mandar a tabela no grupo, depois `final` | `GUIA-TREINO` §3–4 (sem GPU: `ml/notebooks/treino_fixa_colab.ipynb`) |
+| 18/10 | teste prospectivo, sem retreinar | `GUIA-TREINO` §5 |
+| 19/10 | demo | `docs/roteiro-demo-defesa.md`, seção "Câmera fixa" |
+
+**Para diagnosticar a máquina:** `python ml/scripts/treino/rodar_experimentos_fixa.py checar` diz o
+que falta (pacotes, dados, splits, revisão, referências secas).
+
+**Dados fora do Git:** pacote `cityrain_dados_treino_fixa_<data>.zip` + `.sha256` na pasta do
+Drive compartilhada pelo Rodrigo no grupo, descompactado na raiz `CityRain/`. Colheitas feitas
+depois do pacote: pegar a pasta `ml/data/raw/coleta_fixa` com quem colheu.
+
+**Regras que não se negociam:**
+- 4 classes (`seco`, `garoa`, `moderada`, `forte`) e prazo de 20/10 são fixos.
+- Classe vem do pluviômetro; na revisão visual só se exclui imagem defeituosa, nunca se muda classe.
+- Não mudar limiares, folds, câmera de teste (`bc_atlantica`) nem congelamento depois de ver resultado.
+- Sintético não entra no modelo da câmera fixa. Teste é sempre dado real.
+- Santos e Praia Grande só entram com `posicao_verificada: true` depois de achar o endereço real.
+- Nunca commitar `ml/.env`, `ml/configs/coleta_fixa_tokens.json`, imagens ou `ml/runs/`.
+- Treino longo: Mac na tomada (o script usa `caffeinate`); se cair, rodar o mesmo comando de novo.
+- Mudanças vão por branch + PR; o Rodrigo faz o merge.
+
+**Pendências conhecidas em 09/10:** posição de Santos/Praia Grande; revisão visual não feita;
+backend (Moreno): volume no Railway, ADMIN_KEY nova, UPDATEs de posição (PASSAGEM); CEMADEN
+limita acessos (HTTP 401) — parar e anotar, não trocar de conta.
+
 ## Sobre o Projeto
 
 CityRain é um sistema embarcado de monitoramento climático urbano por visão computacional de borda. O sistema utiliza redes neurais convolucionais otimizadas para **classificar a intensidade da precipitação pluviométrica em quatro categorias** (`seco`, `garoa`, `moderada`, `forte`) a partir de imagens capturadas por câmeras, com latência de inferência em tempo real.
@@ -25,8 +74,8 @@ mostra ao vivo e o histórico.
 PyTorch/torchvision + ONNX Runtime · Jetson Nano (Python 3.6).
 **Structure**: `backend/`, `frontend/`, `ml/` (código, configs, scripts da Jetson) e `docs/`.
 
-Mapa detalhado: [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md). Estado e pendências:
-[docs/COMO-CONTINUAR.md](docs/COMO-CONTINUAR.md).
+Mapa detalhado: [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md). Estado e pendências: seção "ESTADO ATUAL" no topo deste arquivo
+(o [docs/COMO-CONTINUAR.md](docs/COMO-CONTINUAR.md) é de 07/10, só para o modelo do carro).
 
 ## Equipe
 
