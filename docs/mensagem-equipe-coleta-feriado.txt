@@ -1,0 +1,11 @@
+Pessoal, vou viajar de 09 a 12/10. Deixei o passo a passo em docs/GUIA-COLETA-EQUIPE.md para vocês conseguirem tocar a coleta sem depender de mim.
+
+Precisamos combinar quem cuida de: (1) coletor/DVR, (2) leituras CEMADEN, (3) revisão dos painéis e (4) reunir os arquivos para compartilhar. Uma pessoa pode assumir mais de uma parte.
+
+Comecem pelo histórico mais antigo em 09/10: o DVR é limitado e algumas lives reiniciaram. Depois façam nova rodada em 11/10. Ainda NÃO temos cinco dias completos. O CEMADEN limitou o acesso, mas dá para salvar imagens sem rotular e completar as leituras depois.
+
+No meu Mac ficou coleta local das seis câmeras a cada 10 minutos; ela depende do computador ligado. Se ele ficar indisponível, alguém precisa assumir em outra máquina. O guia explica instalação, teste, coleta contínua, recuperação do passado, revisão e como empacotar os dados.
+
+Os documentos/manifests novos e as imagens locais precisam ser compartilhados: não presumam que o clone do Git já contém tudo. Os 18.577 pares são o fechamento da última rodada; imagens contínuas posteriores ainda precisam entrar nos manifests.
+
+Por favor, registrem o que conseguiram baixar e as lacunas, sem marcar dados ausentes como seco. Não enviem .env nem tokens junto do pacote. O treino fica para a etapa seguinte, conforme docs/PASSAGEM-camera-fixa.md.
