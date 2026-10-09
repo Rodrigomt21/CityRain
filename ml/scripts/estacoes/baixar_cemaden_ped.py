@@ -105,6 +105,26 @@ ESTACOES_COLETA_FIXA: dict[str, tuple[str, float, float]] = {
     "420200802A": ("Barra (Balneário Camboriú)", -27.00700, -48.59600),
     "420820303A": ("Praia Brava (Itajaí)", -26.95600, -48.64400),
     "420320405A": ("Rio Pequeno (Camboriú)", -27.03100, -48.64100),
+    # 09/10/2026 — lives novas (catálogo 311_24.json de 09/10, <= 5 km, só pluviométricas)
+    # poa_centro_historico
+    "431490201A": ("G2-Centro (Porto Alegre)", -30.02870, -51.22830),
+    "431490205A": ("G2-Cidade Baixa (Porto Alegre)", -30.03924, -51.22763),
+    "431490220A": ("G2-Partenon (Porto Alegre)", -30.05051, -51.19549),
+    "431490215A": ("G2-Navegantes (Porto Alegre)", -30.00220, -51.20230),
+    # rs_ponte_bananal
+    "432254102A": ("G2-432254102A (Vale Real)", -29.40460, -51.26480),
+    "432254103A": ("G2-432254103A (Vale Real)", -29.38430, -51.23030),
+    "430810203A": ("G2-430810203A (Feliz)", -29.44350, -51.26510),
+    "430810202A": ("G2-430810202A (Feliz)", -29.44130, -51.23640),
+    # sv_itarare (as demais a <= 5 km já estão acima)
+    "354850015A": ("Bom retiro (Santos)", -23.93700, -46.37700),
+    # saosebastiao_maresias
+    "355070416A": ("Maresias (São Sebastião)", -23.79300, -45.56600),
+    "355070412A": ("Pauba (São Sebastião)", -23.79700, -45.54100),
+    "355070419A": ("Boicucanga2 (São Sebastião)", -23.76700, -45.59600),
+    "355070413A": ("Toque Toque Pequeno (São Sebastião)", -23.81400, -45.53100),
+    # ubatuba_baguari (as demais a <= 5 km já estão acima)
+    "355540623A": ("Perequê-Mirim (Ubatuba)", -23.48500, -45.10500),
 }
 ESTACOES.update(ESTACOES_COLETA_FIXA)
 
