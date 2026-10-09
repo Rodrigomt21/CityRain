@@ -1,6 +1,6 @@
 {
   "config_sha256": "90525e20237addca39a9a9c8c6b6945202dd2aa9e7c72ff2fbd309c8929ad392",
-  "timestamp_execucao_utc": "2026-10-09T16:49:35.633959+00:00",
+  "timestamp_execucao_utc": "2026-10-09T19:14:22.692752+00:00",
   "parametros": {
     "raio_max_km": 2.0,
     "janela_min": 15,
@@ -14,27 +14,27 @@
     "consenso_metropolitano_min_estacoes": 5,
     "consenso_metropolitano_janela_min": 60
   },
-  "total_frames": 18648,
+  "total_frames": 18803,
   "total_jpg_sem_json": 0,
-  "rotulados": 6903,
+  "rotulados": 6953,
   "por_classe": {
-    "seco": 1063,
-    "garoa": 5771,
-    "moderada": 69,
+    "seco": 1065,
+    "garoa": 5824,
+    "moderada": 64,
     "forte": 0
   },
   "por_motivo": {
-    "poucas_estacoes_consenso": 7152,
-    "seco_incerto": 3977,
-    "sem_consenso_regional": 586,
-    "zona_morta": 30
+    "poucas_estacoes_consenso": 7232,
+    "seco_incerto": 3987,
+    "sem_consenso_regional": 596,
+    "zona_morta": 35
   },
   "por_origem_idade_posicao": {
-    "ultimo_fix_em": 6903
+    "ultimo_fix_em": 6953
   },
   "por_metodo_rotulo": {
-    "consenso_regional": 824,
-    "estacao_proxima": 6079
+    "consenso_regional": 866,
+    "estacao_proxima": 6087
   },
   "por_evento": {
     "bc_atlantica__2026-09-30": {
@@ -77,12 +77,16 @@
       "garoa": 10
     },
     "bc_atlantica__2026-10-08": {
-      "total": 2,
-      "poucas_estacoes_consenso": 2
+      "total": 139,
+      "poucas_estacoes_consenso": 77,
+      "seco": 2,
+      "seco_incerto": 10,
+      "sem_consenso_regional": 10,
+      "garoa": 40
     },
     "bc_atlantica__2026-10-09": {
-      "total": 3,
-      "poucas_estacoes_consenso": 3
+      "total": 14,
+      "poucas_estacoes_consenso": 14
     },
     "guaruja_enseada__2026-10-02": {
       "total": 1182,
@@ -117,12 +121,13 @@
     },
     "guaruja_enseada__2026-10-07": {
       "total": 15,
-      "poucas_estacoes_consenso": 13,
-      "moderada": 2
+      "garoa": 13,
+      "zona_morta": 2
     },
     "guaruja_enseada__2026-10-08": {
       "total": 140,
-      "moderada": 13,
+      "zona_morta": 3,
+      "moderada": 10,
       "garoa": 70,
       "seco_incerto": 39,
       "poucas_estacoes_consenso": 17,
@@ -288,8 +293,8 @@
       "garoa": 48
     },
     "ubatuba_tenorio__2026-10-08": {
-      "total": 2,
-      "poucas_estacoes_consenso": 2
+      "total": 9,
+      "poucas_estacoes_consenso": 9
     },
     "ubatuba_tenorio__2026-10-09": {
       "total": 3,
@@ -302,6 +307,9 @@
     },
     "bc_atlantica__2026-10-05": {
       "noite": 10
+    },
+    "bc_atlantica__2026-10-08": {
+      "dia": 2
     },
     "guaruja_enseada__2026-10-04": {
       "dia": 35,
@@ -341,6 +349,9 @@
     "bc_atlantica__2026-10-07": {
       "garoa": 10
     },
+    "bc_atlantica__2026-10-08": {
+      "garoa": 30
+    },
     "ubatuba_tenorio__2026-10-03": {
       "garoa": 40
     },
@@ -358,61 +369,61 @@
     }
   },
   "estacoes_usadas": {
-    "(consenso regional)": 824,
+    "(consenso regional)": 866,
     "AC Central de SP": 3382,
     "Centro": 542,
-    "Enseada (Guarujá)": 1771,
+    "Enseada (Guarujá)": 1779,
     "Luz": 384
   },
   "sensibilidade_raio": {
     "2.0 km": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     },
     "3.0 km": {
-      "seco": 1122,
-      "garoa": 6566,
-      "moderada": 154,
+      "seco": 1124,
+      "garoa": 6619,
+      "moderada": 149,
       "forte": 0
     },
     "5.0 km": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     }
   },
   "sensibilidade_idade_posicao": {
     "12 s": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     },
     "30 s": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     },
     "60 s": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     },
     "90 s": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     },
     "120 s": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     }
   }

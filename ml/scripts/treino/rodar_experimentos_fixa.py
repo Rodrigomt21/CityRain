@@ -24,6 +24,7 @@ import argparse
 import csv
 import importlib
 import json
+import os
 import platform
 import shutil
 import statistics
@@ -168,7 +169,16 @@ def checar(estrito: bool = True) -> bool:
 # ---------------------------------------------------------------- etapas
 
 def splits() -> None:
+    # Splits idênticos aos anteriores mantêm a data do arquivo: os folds já treinados continuam
+    # valendo (_run_pronto compara com essa data) e `tudo` pode ser rodado de novo depois de cair.
+    csv_splits = _splits_csv()
+    antes = (csv_splits.read_bytes(), csv_splits.stat()) if csv_splits.is_file() else None
     _rodar([RAIZ / "ml/scripts/dataset/montar_splits_fixa.py", "--config", SPLITS_CFG])
+    if antes and csv_splits.read_bytes() == antes[0]:
+        os.utime(csv_splits, ns=(antes[1].st_atime_ns, antes[1].st_mtime_ns))
+        print("[splits] iguais aos anteriores: folds já treinados continuam valendo")
+    elif antes:
+        print("[splits] mudaram: folds anteriores serão treinados de novo")
     r = json.loads((RAIZ / _cfg_splits()["resumo"]).read_text())
     if r.get("referencias_faltando"):
         sys.exit(f"[FALHA] câmeras sem referência seca: {r['referencias_faltando']}")
