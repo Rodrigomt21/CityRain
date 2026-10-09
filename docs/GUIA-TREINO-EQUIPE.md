@@ -2,6 +2,9 @@
 
 **Quando:** splits em **13/10**, treinos de 13 a 16/10, teste prospectivo em 18/10. Prazo: 20/10.
 **Quem:** quem tiver Mac M-series ou PC com GPU NVIDIA. Em CPU pura cada fold leva horas.
+**Sem GPU?** Use o Colab (GPU T4 grátis): abra `ml/notebooks/treino_fixa_colab.ipynb` em
+https://colab.research.google.com (aba GitHub, repositório `Rodrigomt21/CityRain`) e siga as células.
+Os runs ficam no seu Drive, então uma sessão que cair continua de onde parou.
 
 O treino inteiro roda com um script: `ml/scripts/treino/rodar_experimentos_fixa.py`. Ele confere o
 ambiente e monta os splits, roda F0 e a validação cruzada de F1, F2 e F3, e aplica o critério de

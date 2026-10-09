@@ -1,6 +1,6 @@
 {
   "config_sha256": "778afcb4bb94f9284c1c05476ad7fa4af3df10adfceb424321469dd939300d7a",
-  "timestamp_execucao_utc": "2026-10-09T16:49:45.975935+00:00",
+  "timestamp_execucao_utc": "2026-10-09T19:14:33.269350+00:00",
   "parametros": {
     "raio_max_km": 5.0,
     "janela_min": 15,
@@ -14,25 +14,25 @@
     "consenso_metropolitano_min_estacoes": 5,
     "consenso_metropolitano_janela_min": 60
   },
-  "total_frames": 18648,
+  "total_frames": 18803,
   "total_jpg_sem_json": 0,
-  "rotulados": 10797,
+  "rotulados": 10902,
   "por_classe": {
-    "seco": 1406,
-    "garoa": 8818,
-    "moderada": 558,
+    "seco": 1421,
+    "garoa": 8913,
+    "moderada": 553,
     "forte": 15
   },
   "por_motivo": {
-    "poucas_estacoes_consenso": 1293,
-    "seco_incerto": 5804,
-    "zona_morta": 754
+    "poucas_estacoes_consenso": 1306,
+    "seco_incerto": 5826,
+    "zona_morta": 769
   },
   "por_origem_idade_posicao": {
-    "ultimo_fix_em": 10797
+    "ultimo_fix_em": 10902
   },
   "por_metodo_rotulo": {
-    "estacao_proxima": 10797
+    "estacao_proxima": 10902
   },
   "por_evento": {
     "bc_atlantica__2026-09-30": {
@@ -78,12 +78,16 @@
       "zona_morta": 23
     },
     "bc_atlantica__2026-10-08": {
-      "total": 2,
-      "poucas_estacoes_consenso": 2
+      "total": 139,
+      "seco": 7,
+      "seco_incerto": 35,
+      "zona_morta": 10,
+      "garoa": 82,
+      "poucas_estacoes_consenso": 5
     },
     "bc_atlantica__2026-10-09": {
-      "total": 3,
-      "poucas_estacoes_consenso": 3
+      "total": 14,
+      "poucas_estacoes_consenso": 14
     },
     "guaruja_enseada__2026-10-02": {
       "total": 1182,
@@ -118,12 +122,13 @@
     },
     "guaruja_enseada__2026-10-07": {
       "total": 15,
-      "seco_incerto": 13,
-      "moderada": 2
+      "garoa": 13,
+      "zona_morta": 2
     },
     "guaruja_enseada__2026-10-08": {
       "total": 140,
-      "moderada": 13,
+      "zona_morta": 3,
+      "moderada": 10,
       "garoa": 70,
       "seco_incerto": 39,
       "poucas_estacoes_consenso": 17,
@@ -333,9 +338,8 @@
       "forte": 5
     },
     "ubatuba_tenorio__2026-10-08": {
-      "total": 2,
-      "seco": 1,
-      "poucas_estacoes_consenso": 1
+      "total": 9,
+      "seco": 9
     },
     "ubatuba_tenorio__2026-10-09": {
       "total": 3,
@@ -348,6 +352,9 @@
     },
     "bc_atlantica__2026-10-05": {
       "noite": 64
+    },
+    "bc_atlantica__2026-10-08": {
+      "dia": 7
     },
     "guaruja_enseada__2026-10-04": {
       "dia": 35,
@@ -393,76 +400,76 @@
       "noite": 18
     },
     "ubatuba_tenorio__2026-10-08": {
-      "noite": 1
+      "noite": 9
     }
   },
   "ganho_zona_morta_mediana": {},
   "estacoes_usadas": {
     "AC Central de SP": 3382,
     "AC Santana": 12,
-    "Barra (Balneário Camboriú)": 1648,
+    "Barra (Balneário Camboriú)": 1735,
     "Centro": 542,
-    "Centro (Ubatuba)": 120,
-    "Centro 2 (Ubatuba)": 626,
-    "Enseada (Guarujá)": 1771,
+    "Centro (Ubatuba)": 122,
+    "Centro 2 (Ubatuba)": 632,
+    "Enseada (Guarujá)": 1779,
     "Luz": 384,
     "Parque Prainha (São Vicente)": 739,
     "Perequê-Açu (Ubatuba)": 170,
     "Portinho (Praia Grande)": 605,
-    "Praia Brava (Itajaí)": 85,
+    "Praia Brava (Itajaí)": 87,
     "Rio Pequeno (Camboriú)": 59,
     "Saboó (Santos)": 320,
     "Vila Mathias (Santos)": 334
   },
   "sensibilidade_raio": {
     "2.0 km": {
-      "seco": 1063,
-      "garoa": 5771,
-      "moderada": 69,
+      "seco": 1065,
+      "garoa": 5824,
+      "moderada": 64,
       "forte": 0
     },
     "3.0 km": {
-      "seco": 1122,
-      "garoa": 6566,
-      "moderada": 154,
+      "seco": 1124,
+      "garoa": 6619,
+      "moderada": 149,
       "forte": 0
     },
     "5.0 km": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     }
   },
   "sensibilidade_idade_posicao": {
     "12 s": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     },
     "30 s": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     },
     "60 s": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     },
     "90 s": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     },
     "120 s": {
-      "seco": 1406,
-      "garoa": 8818,
-      "moderada": 558,
+      "seco": 1421,
+      "garoa": 8913,
+      "moderada": 553,
       "forte": 15
     }
   }

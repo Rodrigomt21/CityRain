@@ -116,6 +116,7 @@ Roteiro em `docs/roteiro-demo-defesa.md`, seção "Câmera fixa". O replay deve 
 | Data | Feito por | Janela | Observação |
 |---|---|---|---|
 | 08/10 | Rodrigo/Claude | DVR desde 05/10 (chuva) e DVR inteiro (seco) | posições corrigidas antes de rotular |
+| 09/10 | Rodrigo/Claude | CEMADEN 07–08/10; DVR chuva e seco desde 08/10 20:00Z; seco de Ubatuba | 477 frames novos (SP 91, PG 231, BC 148, Ubatuba 7); leituras só até 08/10 23:50Z → **próxima colheita com `--desde 2026-10-09T00:10:00Z`** e CEMADEN de 09/10 em diante |
 
 ## Continuação local — 08/10, 23h
 
