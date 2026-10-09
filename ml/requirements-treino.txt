@@ -1,0 +1,12 @@
+# Dependências para treinar, avaliar e exportar os modelos (além do que o CI usa).
+# Instalar: python -m pip install -r ml/requirements-treino.txt
+# Versões testadas em 09/10/2026: torch 2.14.1, torchvision 0.29.1, onnx 1.23.1, onnxruntime 1.30.0.
+# Com GPU NVIDIA, instalar antes o torch/torchvision do índice CUDA indicado em https://pytorch.org.
+-r requirements-ci.txt
+torch>=2.3
+torchvision>=0.18
+onnx>=1.16
+onnxscript>=0.1
+onnxruntime>=1.18
+onnxconverter-common>=1.14
+yt-dlp

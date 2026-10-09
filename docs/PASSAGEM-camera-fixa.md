@@ -62,6 +62,11 @@ manifests (`ml/data/manifests/manifest_coleta_fixa*`) e anotar a colheita no fim
 
 ## ML — treino do modelo fixo (13 a 16/10)
 
+> **Atalho (09/10):** os passos abaixo viraram um comando só,
+> `python ml/scripts/treino/rodar_experimentos_fixa.py tudo` e depois `... final`. Passo a passo para a
+> equipe, com pacote de dados e ambiente: [GUIA-TREINO-EQUIPE.md](GUIA-TREINO-EQUIPE.md). A lista abaixo
+> fica como referência do que o script faz.
+
 Pré-requisito: dados (`ml/data/raw/coleta_fixa`, `ml/data/processed/ircnn`) na máquina — zip do Rodrigo.
 
 1. **13/10 — splits** (tudo de 13/10 em diante vira teste prospectivo):
@@ -111,3 +116,16 @@ Roteiro em `docs/roteiro-demo-defesa.md`, seção "Câmera fixa". O replay deve 
 | Data | Feito por | Janela | Observação |
 |---|---|---|---|
 | 08/10 | Rodrigo/Claude | DVR desde 05/10 (chuva) e DVR inteiro (seco) | posições corrigidas antes de rotular |
+
+## Continuação local — 08/10, 23h
+
+Coleta e manifests atualizados: 166 frames novos, acervo de 18.577 pares. Painéis de revisão gerados; revisão humana pendente. CEMADEN parcialmente atualizado, com limite de acesso ao completar 08/10. Detalhes e próximos passos em [coleta-2026-10-08-continuacao.md](coleta-2026-10-08-continuacao.md). Nenhum coletor contínuo ou agendamento ficou ativo.
+
+**Atualização posterior (08/10, 23:22):** Rodrigo pediu e foi ativada coleta contínua local das seis câmeras, a cada 10 minutos, sem envio ao backend. Ver log e detalhes no relatório acima.
+
+## 09/10 — pronto para a equipe treinar
+
+- `ml/requirements-treino.txt` (torch, torchvision, onnx, onnxruntime) e `ml/scripts/treino/rodar_experimentos_fixa.py` (checar → splits → F0 → CV F1/F2/F3 → escolha CF5 → final + ONNX, retomável).
+- Ubatuba não tinha `seco` de referência: com `exigir_referencia`, todas as linhas dela (inclusive as únicas `forte` de treino) saíam dos modelos. Colhido seco no DVR (`--modo-seco --fonte ubatuba_tenorio`, 59 frames) e manifests regenerados: `referencias_faltando` vazio.
+- Pacote de dados para a equipe: `cityrain_dados_treino_fixa_20261009.zip` + `.sha256` (coleta_fixa, irCNN processado, estações, painéis de revisão).
+- Coletor contínuo do Mac do Rodrigo parou em 09/10 02:33 UTC (Mac dormiu). A colheita de 11/10 pelo DVR cobre o intervalo.
