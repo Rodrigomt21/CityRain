@@ -27,6 +27,7 @@
 | **CV v3: + irCNN por (evento, classe)** | **0,462** | 0,055 / 0,516 / **0,817** | **0,64** | 0,992 | 0,685 | 0,958 | 0,605 |
 | CV v4: v3 em 480×640 | 0,449 | 0,036 / 0,527 / 0,783 | 0,55 | 0,988 | 0,594 | 0,932 | 0,542 |
 | CV v5: v3 + lives (câmera fixa real) | 0,419 | 0,045 / 0,440 / 0,771 | 0,59 | 0,988 | 0,660 | 0,734 | 0,367 |
+| CV v6: v3 **sem sintético** (`treino_intensidade_cv_v6_sem_sint_mnv3.yaml`) | 0,419 | 0,058 / 0,431 / 0,767 | 0,45 | 1,000 | 0,554 | 0,968 | 0,339 |
 | Baseline físico (régua + reg. logística) | 0,402 | 0,044 / 0,435 / 0,728 | 0,46 | 0,895 | **0,875** | 0,783 | **0,669** |
 
 \* v1 testado no irCNN inteiro (não é CV); as demais são agregadas dos 4 folds.
@@ -44,12 +45,15 @@ YouTube > 13/09 0,978; pico > início 0,694. A estimativa de desempenho no irCNN
 | **v3** | **0,462 [0,401; 0,507]** | **0,817 [0,724; 0,876]** | **0,638 [0,421; 0,751]** |
 | v4 | 0,449 [0,361; 0,505] | 0,783 [0,600; 0,869] | 0,554 [0,367; 0,682] |
 | v5 | 0,419 [0,350; 0,466] | 0,771 [0,653; 0,842] | 0,596 [0,405; 0,700] |
+| v6 (sem sintético) | 0,419 [0,336; 0,476] | 0,767 [0,662; 0,839] | 0,445 [0,228; 0,599] |
 
 Diferenças **pareadas** (mesmos eventos sorteados), F1 macro: v3−v2 +0,032 [+0,002; +0,069];
 v3−v5 +0,044 [+0,016; +0,074] → v3 **significativamente melhor** que v2 e v5. v3−v1 +0,003
 [−0,035; +0,047] e v3−v4 +0,016 [−0,033; +0,076] → **empate estatístico** no irCNN; a
 vantagem da v3 sobre a v1 está na ordenação do YouTube (pico > início 0,61 × 0,32). O efeito
 grande e inequívoco é **irCNN no treino** (0,07 → ~0,46). (`ml/resultados/intervalos_confianca.json`)
+
+**Sintético × sem sintético (v3 × v6, pareado, 2.000 reamostras):** v3−v6 F1 macro +0,045 [+0,014; +0,082]; Spearman +0,172 [−0,027; +0,364]. Retirar o sintético **piora** o F1 macro de forma significativa (IC não inclui 0) e, nas métricas ordinais, derruba 23/09 > 13/09 (0,685 → 0,554) e pico > início no YouTube (0,605 → 0,339); garoa 13/09 e YouTube > 13/09 não mudam (1,000 e 0,968). Veredito: **v6 é pior que a v3** — o sintético (moderada/forte de para-brisa) ajuda e **não deve sair** do modelo do carro. Nota: no val de v6 o domínio "próprio" fica em 0,167 (o val tem moderada/forte sintéticas, que o modelo sem sintético nunca viu), então o critério de escolha de época ficou dominado pelo irCNN; a comparação com a v3 mantém-se válida (mesmos folds, mesmo critério). (`ml/runs/treino_cv_v6.log`)
 
 ### Leituras
 
@@ -94,6 +98,41 @@ grande e inequívoco é **irCNN no treino** (0,07 → ~0,46). (`ml/resultados/in
 
 O gate original descarta a maior parte da chuva real; o ajuste fino decorou "04/08 de dia =
 seco". Falta seco diverso (dia e noite) — pendência de coleta, não de modelo.
+
+### 4.1 Limiar do gate e gate v2 por sessão (13/10/2026)
+
+**Limiar (gate original, produção = 0,5).** Os pesos `bestModel` só existem na Jetson, que
+estava indisponível; a curva completa 0,02–0,5 não foi feita. Os pontos que já existiam
+(`ml/runs/gate_v2/gate_v2.json`, "antes"): limiar 0,5 → recall 13/09 0,10, 23/09 0,36, falso
+alarme 06/08 0,17; limiar 0,2 → 0,18 / 0,41 / 0,17. AUC chuva × seco noite = 0,53 (quase
+acaso). Baixar o limiar quase não ajuda e o falso alarme noturno não muda: o gate original não
+separa chuva de seco nas nossas sessões, então a troca de limiar sozinha não resolve.
+
+**Gate v2 (`ml/scripts/treino/treinar_gate_v2.py cv`).** Validação leave-one-session-out em
+6 folds (1 sessão seca × 1 de chuva fora do treino: seco 04/08, 06/08; chuva 01/09, 13/09,
+23/09), 3 épocas, MobileNetV2 384², brilho aleatório forte nas duas classes. Dado externo
+RaindropsOnWindshield (Zenodo): `1o/2o/8o` (máscaras vazias, vidro limpo, 450 imagens) como
+seco e `D2`/`v2` (gotas, 400 imagens) como chuva; `D1` descartada (gota em 2,6% fixos).
+Resultado em limiar 0,5 (recall chuva / falso alarme seco, ambos em sessão não vista):
+
+| Seco fora | Chuva fora | ImageNet + externo | Ajuste v1 + externo | ImageNet sem externo |
+|---|---|---|---|---|
+| 04/08 | 01/09 | 1,00 / 1,00 | 0,99 / 0,92 | 1,00 / 1,00 |
+| 04/08 | 13/09 | 0,81 / 1,00 | 0,97 / 0,82 | 0,97 / 1,00 |
+| 04/08 | 23/09 | 0,77 / 1,00 | 0,77 / **0,22** | 0,90 / 1,00 |
+| 06/08 | 01/09 | 0,67 / 0,95 | 0,90 / 0,97 | 0,70 / 0,95 |
+| 06/08 | 13/09 | 1,00 / 0,95 | 1,00 / 1,00 | 1,00 / 0,94 |
+| 06/08 | 23/09 | 0,94 / 0,83 | 0,96 / 0,98 | 0,96 / 0,67 |
+
+**Não bate o original** (falso alarme 0,17 no seco noite em 0,5): na maioria dos folds o
+falso alarme fica em 0,8–1,0, e quando 04/08 sai do treino o AUC chega a 0,04–0,09 (inverte:
+o modelo aprendeu "vidro da nossa câmera = chuva"). Com só 2 sessões secas, tirar uma deixa
+uma única sessão seca da nossa câmera no treino. O dado externo não corrige isso (o único
+fold bom, 04/08 × 23/09 com 0,22, é um fold, não um padrão; com ajuste v1 já como ponto de
+partida). Conclusão: nenhum gate v2 é exportado; o gate original continua em produção. O
+gargalo é seco da câmera do carro (dia e noite, várias sessões), não treino. Observação:
+`framesSemNada` (27/05) **não é seco**: tem chuva forte à noite, sem rótulo de pluviômetro.
+Resultados: `ml/resultados/gate_v2_cv_*.json`.
 
 ## 5. Borda (Jetson Nano 4 GB, onnxruntime 1.10, 60 frames reais)
 
