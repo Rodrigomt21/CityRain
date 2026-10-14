@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aoVivo, haQuanto, pontosSerie, resumoCamera, rotuloTempo, separarMedidos } from './cameras'
+import { aoVivo, estadoCirculo, haQuanto, pontosSerie, resumoCamera, rotuloTempo, separarMedidos } from './cameras'
 
 const AGORA = new Date('2026-10-09T18:00:00Z')
 const iso = (minAtras) => new Date(AGORA.getTime() - minAtras * 60e3).toISOString()
@@ -81,5 +81,41 @@ describe('rotuloTempo', () => {
     expect(rotuloTempo(t, 3)).toBe('14:30')
     expect(rotuloTempo(t, 6)).toBe('14:30')
     expect(rotuloTempo(t, 24)).toBe('09/10 14:30')
+  })
+})
+
+describe('estadoCirculo', () => {
+  it('captura recente usa a cor da classe, linha cheia', () => {
+    const r = estadoCirculo({ captured_at: iso(1), weather_label: 'forte' }, AGORA)
+    expect(r.categoria.label).toBe('Forte')
+    expect(r.cor).toBe(r.categoria.color)
+    expect(r.tracejado).toBe(false)
+  })
+  it('mais de 2 min vira cinza tracejado', () => {
+    const r = estadoCirculo({ captured_at: iso(3), weather_label: 'garoa' }, AGORA)
+    expect(r.cor).toBe('#64748b')
+    expect(r.tracejado).toBe(true)
+  })
+  it('rótulo nulo é cinza tracejado, nunca seco', () => {
+    const r = estadoCirculo({ captured_at: iso(0.5), weather_label: null }, AGORA)
+    expect(r.categoria.label).toBe('Não medido')
+    expect(r.tracejado).toBe(true)
+  })
+  it('sem captura é cinza tracejado', () => {
+    const r = estadoCirculo(null, AGORA)
+    expect(r.tracejado).toBe(true)
+    expect(r.categoria.label).toBe('Não medido')
+  })
+  it('raio encolhe com a intensidade: chuva forte é localizada', () => {
+    const raio = (l) => estadoCirculo({ captured_at: iso(1), weather_label: l }, AGORA).raioM
+    expect(raio('seco')).toBe(1000)
+    expect(raio('garoa')).toBe(1000)
+    expect(raio('moderado')).toBe(600)
+    expect(raio('forte')).toBe(300)
+  })
+  it('sem classe ou velha não afirma área (raio nulo)', () => {
+    expect(estadoCirculo({ captured_at: iso(3), weather_label: 'garoa' }, AGORA).raioM).toBeNull()
+    expect(estadoCirculo({ captured_at: iso(1), weather_label: null }, AGORA).raioM).toBeNull()
+    expect(estadoCirculo(null, AGORA).raioM).toBeNull()
   })
 })

@@ -9,6 +9,7 @@ from app.core.security import verificar_api_key
 from app.models.device import Device
 from app.schemas.capture import CaptureResponse
 from app.services.media_service import MediaService
+from app.services.retencao_service import limpar_imagens_fixa_throttled
 
 router = APIRouter()
 
@@ -84,4 +85,6 @@ async def ingest_capture(
     capture, created = await service.ingest(image=image, meta=meta, device=device)
     if not created:
         response.status_code = 200
+    if device is not None and getattr(device, "tipo", "movel") == "fixa":
+        await limpar_imagens_fixa_throttled(db)
     return capture

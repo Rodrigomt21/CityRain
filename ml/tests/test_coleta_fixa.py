@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -176,3 +177,55 @@ def test_main_enviar_sem_backend_url_da_erro_claro(tmp_path, monkeypatch):
     with pytest.raises(SystemExit) as e:
         col.main()
     assert "backend_url" in str(e.value)
+
+
+# ------------------------------------------------------------------ cache da URL do HLS e paralelismo
+URL_EXP = "https://manifest.googlevideo.com/api/manifest/hls_playlist/expire/2000/ei/x/id/abc.1/itag/95/"
+
+
+def test_expira_em_le_os_dois_formatos():
+    assert col.expira_em(URL_EXP) == 2000.0
+    assert col.expira_em("https://h/p.m3u8?a=1&expire=123&b=2") == 123.0
+    assert col.expira_em("https://h/p.m3u8") is None
+
+
+def test_hls_valido_respeita_idade_e_expire():
+    assert not col.hls_valido("", 0, 100)
+    assert col.hls_valido(URL_EXP, 0, 100, margem_s=300)
+    assert not col.hls_valido(URL_EXP, 0, 1800, margem_s=300)          # faltam 200 s < margem
+    assert not col.hls_valido("https://h/p.m3u8", 0, 4000, max_idade_s=3600)  # sem expire: vale a idade
+    assert col.hls_valido("https://h/p.m3u8", 0, 3000, max_idade_s=3600)
+
+
+def test_youtube_reusa_url_e_renova_se_ffmpeg_falhar(monkeypatch):
+    f = _fonte(tipo="youtube")
+    f.hls, f.hls_em = "https://h/p.m3u8", time.time()
+    chamadas = []
+
+    def falso(cmd, **kw):
+        chamadas.append(cmd[0])
+        if cmd[0] == "ffmpeg":
+            Path(cmd[-1]).write_bytes(JPEG)
+        return type("R", (), {"returncode": 0, "stdout": "https://h/novo.m3u8\n", "stderr": ""})()
+
+    monkeypatch.setattr(col.subprocess, "run", falso)
+    assert col._jpeg_youtube(f) == JPEG
+    assert chamadas == ["ffmpeg"]  # cache quente: nada de yt-dlp
+    f.hls_em = time.time() - 2 * col.RENOVAR_HLS_S
+    col._jpeg_youtube(f)
+    assert chamadas == ["ffmpeg", "yt-dlp", "ffmpeg"] and f.hls == "https://h/novo.m3u8"
+
+
+def test_rodada_captura_em_paralelo(tmp_path, monkeypatch):
+    fontes = col.carregar_fontes({"fontes": [
+        {"id": f"c{i}", "tipo": "camera", "lat": 0, "lon": 0} for i in range(4)]})
+
+    def lenta(f):
+        time.sleep(0.3)
+        return JPEG + f.id.encode()
+
+    monkeypatch.setitem(col.CAPTURAS, "camera", lenta)
+    t0 = time.time()
+    col.rodada(fontes, tmp_path, forcar=True)
+    assert time.time() - t0 < 0.9  # sequencial levaria 1,2 s
+    assert all(len(list((tmp_path / f.id).glob("*.jpg"))) == 1 and not f.ocupada for f in fontes)

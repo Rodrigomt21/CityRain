@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MapContainer, TileLayer, Polygon, Tooltip, useMap } from 'react-leaflet'
 import { cellToBoundary } from 'h3-js'
 import 'leaflet/dist/leaflet.css'
+import { Skeleton } from '../components/Skeleton'
 import Topbar from '../components/layout/Topbar'
 import SerieTemporal from '../components/dashboard/SerieTemporal'
 import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../lib/categories'
@@ -165,8 +166,8 @@ export default function Historico() {
           <aside className="rounded-xl p-4" style={{ width: 340, flexShrink: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', overflowY: 'auto' }}>
             <p className="text-xs font-mono" style={{ color: 'var(--text-secondary)', letterSpacing: 1, margin: 0 }}>CAPTURAS NO PERÍODO</p>
             <p className="font-mono font-bold" style={{ fontSize: 34, color: 'var(--text-primary)', margin: '4px 0 12px' }}>
-              {loading ? '…' : total}
-              <span className="text-xs" style={{ color: 'var(--text-secondary)', fontWeight: 400 }}> em {celulas.length} células</span>
+              {loading ? <Skeleton style={{ display: 'inline-block', width: 90, height: 30, verticalAlign: 'middle' }} /> : total}
+              {!loading && <span className="text-xs" style={{ color: 'var(--text-secondary)', fontWeight: 400 }}> em {celulas.length} células</span>}
             </p>
             {error && <p className="text-xs" style={{ color: '#ef4444' }}>API indisponível: {error.message}</p>}
             {ORDEM.map(k => (
@@ -180,7 +181,12 @@ export default function Historico() {
               </div>
             ))}
             <p className="text-xs font-mono" style={{ color: 'var(--text-secondary)', letterSpacing: 1, margin: '18px 0 6px' }}>ÚLTIMAS CAPTURAS</p>
-            {capturas.slice(0, 25).map(c => {
+            {loading && (
+              <div role="status" aria-label="Carregando capturas">
+                {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} style={{ height: 14, margin: '10px 0' }} />)}
+              </div>
+            )}
+            {!loading && capturas.slice(0, 25).map(c => {
               const cat = categoryFromLabel(c.weather_label)
               return (
                 <div key={c.id} className="text-xs" style={{ display: 'flex', gap: 8, padding: '5px 0', borderTop: '1px solid var(--bg-border)' }}>

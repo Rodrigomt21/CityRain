@@ -11,7 +11,9 @@ rotula pela estação mais próxima sem mudança nenhuma.
 Tipos de fonte (``fontes:`` no YAML):
 
 - ``youtube``  — live 24 h (praia, avenida, prédio). Resolve o HLS com yt-dlp e
-  extrai 1 frame com ffmpeg. A URL do HLS expira; é renovada a cada 30 min.
+  extrai 1 frame com ffmpeg. A URL do HLS fica em cache por fonte e só é
+  renovada se o ffmpeg falhar, passar de 1 h ou chegar perto do ``expire=``. As fontes são
+  capturadas em paralelo (uma thread cada).
 - ``snapshot`` — URL que devolve um JPEG (ex.: app "IP Webcam" num celular
   velho na janela: ``http://<ip-do-celular>:8080/shot.jpg``; câmera IP).
 - ``camera``   — webcam/USB local pelo índice do OpenCV (notebook, Jetson).
@@ -34,11 +36,14 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import urllib.request
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,7 +51,8 @@ from pathlib import Path
 import yaml
 
 RAIZ = Path(__file__).resolve().parents[3]
-RENOVAR_HLS_S = 30 * 60
+RENOVAR_HLS_S = 60 * 60   # idade máxima da URL do HLS em cache (a do YouTube dura ~6 h)
+MARGEM_EXPIRA_S = 10 * 60  # renova a URL quando faltar menos que isso para o `expire=`
 TIMEOUT_S = 40
 TIMEOUT_ENVIO_S = 10  # envio ao vivo: backend lento não pode atrasar a próxima captura
 
@@ -69,6 +75,7 @@ class Fonte:
     hls: str = ""
     hls_em: float = 0.0
     falhas: int = 0
+    ocupada: bool = False  # captura em andamento numa thread (modo contínuo)
     extras: dict = field(default_factory=dict)
 
 
@@ -94,9 +101,27 @@ def carregar_fontes(cfg: dict) -> list[Fonte]:
 
 
 # ------------------------------------------------------------------ captura
+_PRINT = threading.Lock()
+
+
+def expira_em(url: str) -> float | None:
+    """Epoch em que a URL do manifesto expira (`/expire/<n>/` ou `expire=<n>`), ou None."""
+    m = re.search(r"/expire/(\d+)(?:/|$)|[?&]expire=(\d+)", url)
+    return float(m.group(1) or m.group(2)) if m else None
+
+
+def hls_valido(url: str, resolvida_em: float, agora: float, max_idade_s: float = RENOVAR_HLS_S,
+               margem_s: float = MARGEM_EXPIRA_S) -> bool:
+    """A URL em cache ainda serve? Vazia, velha demais ou perto do `expire=` => renovar."""
+    if not url or agora - resolvida_em > max_idade_s:
+        return False
+    exp = expira_em(url)
+    return exp is None or agora < exp - margem_s
+
+
 def _jpeg_youtube(fonte: Fonte) -> bytes:
     agora = time.time()
-    if not fonte.hls or agora - fonte.hls_em > RENOVAR_HLS_S:
+    if not hls_valido(fonte.hls, fonte.hls_em, agora):
         r = subprocess.run(["yt-dlp", "-g", "-f", "b[height<=720]/bv*[height<=720]/b/bv*", fonte.url],
                            capture_output=True, text=True, timeout=TIMEOUT_S)
         if r.returncode != 0 or not r.stdout.strip():
@@ -220,11 +245,9 @@ def enviar_frame(jpg: Path, backend_url: str, token: str, sessao=None, demo: dic
         return 0
 
 
-def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False, envio: dict | None = None) -> None:
-    agora = time.time()
-    for f in fontes:
-        if not forcar and agora < f.proxima:
-            continue
+def _capturar_fonte(f: Fonte, destino: Path, envio: dict | None, agora: float) -> None:
+    """Captura, grava e (opcional) envia 1 frame de 1 fonte; agenda `proxima` e imprime o log."""
+    try:
         quando = datetime.now(timezone.utc)
         try:
             caminho = gravar_frame(CAPTURAS[f.tipo](f), f, destino, quando)
@@ -238,7 +261,33 @@ def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False, envio: dict
             f.falhas += 1
             f.proxima = agora + min(f.intervalo_s * 2 ** f.falhas, 1800)  # backoff até 30 min
             estado = f"FALHA {f.falhas}: {e}"
-        print(f"[{quando:%Y-%m-%d %H:%M:%S}Z] {f.id}: {estado}", flush=True)
+        with _PRINT:
+            print(f"[{quando:%Y-%m-%d %H:%M:%S}Z] {f.id}: {estado}", flush=True)
+    finally:
+        f.ocupada = False
+
+
+def rodada(fontes: list[Fonte], destino: Path, forcar: bool = False, envio: dict | None = None,
+           pool: ThreadPoolExecutor | None = None, esperar: bool = True) -> list[Future]:
+    """Captura as fontes vencidas em paralelo (uma thread por fonte).
+
+    Sem ``pool`` cria um só para a chamada. Com ``esperar=False`` (modo contínuo) devolve logo
+    e a fonte fica ``ocupada`` até terminar, então uma fonte lenta não atrasa as outras.
+    """
+    agora = time.time()
+    devidas = [f for f in fontes if not f.ocupada and (forcar or agora >= f.proxima)]
+    proprio = pool is None
+    pool = pool or ThreadPoolExecutor(max_workers=max(1, len(devidas)))
+    futuros = []
+    for f in devidas:
+        f.ocupada = True
+        futuros.append(pool.submit(_capturar_fonte, f, destino, envio, agora))
+    if esperar:
+        for fu in futuros:
+            fu.result()
+    if proprio:
+        pool.shutdown(wait=esperar)
+    return futuros
 
 
 def main() -> None:
@@ -268,9 +317,10 @@ def main() -> None:
     if args.uma_rodada:
         rodada(fontes, destino, forcar=True, envio=envio)
         return
-    while True:
-        rodada(fontes, destino, envio=envio)
-        time.sleep(1)
+    with ThreadPoolExecutor(max_workers=max(1, len(fontes))) as pool:
+        while True:
+            rodada(fontes, destino, envio=envio, pool=pool, esperar=False)
+            time.sleep(0.5)
 
 
 if __name__ == "__main__":

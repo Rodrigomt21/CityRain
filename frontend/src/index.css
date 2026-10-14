@@ -61,6 +61,13 @@
 .animate-sensor-pulse { animation: sensor-pulse 1.8s ease-out infinite; }
 .animate-fade-in-row  { animation: fade-in-row 0.4s ease-out forwards; }
 
+/* Placeholders de carregamento: pulso suave, parado para quem pede menos movimento */
+@keyframes skeleton-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.skeleton { background: var(--bg-border); border-radius: 6px; animation: skeleton-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .skeleton, .animate-rain-fall, .animate-sensor-pulse, .pulso-ao-vivo { animation: none; }
+}
+
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg-surface); }
 ::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 2px; }
