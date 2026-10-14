@@ -1,0 +1,3 @@
+# Estações CEMADEN que NÃO devem ser usadas (triagem, planejamento e prévia de rótulos as ignoram).
+# Formato: <codestacao> <motivo>. Decisão final de excluir da rotulagem oficial é do Rodrigo.
+355030896A Jardim João XXIII (Taboão da Serra/SP): marca 0,2 mm a cada ~6 h como relógio, todo dia (defeito/goteira) — visto em 13/10/2026

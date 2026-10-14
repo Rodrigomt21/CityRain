@@ -1,0 +1,29 @@
+# Copie para ml/configs/coleta_fixa_novas_<seu_nome>.yaml (ex.: coleta_fixa_novas_paulo.yaml) e edite.
+# Mesmo formato do ml/configs/coleta_fixa.yaml da equipe. Este arquivo NÃO tem segredo: pode ir para o Git.
+#
+# IMPORTANTE: lat/lon vão gravados em CADA foto (JSON) no momento da captura, e a rotulagem usa essa posição.
+# Confirme o endereço ANTES de coletar (GUIA.md, passo 3). Corrigir depois exige reescrever os JSONs.
+
+# Pasta das SUAS fotos (fora do Git). Tem de começar com ml/data/raw/novas_<seu_nome>/
+destino: ml/data/raw/novas_SEUNOME/frames
+# 1 foto por câmera a cada 10 min no ao vivo
+intervalo_s: 600
+
+fontes:
+  # id: só letras minúsculas, números e _ ; padrão <cidade>_<lugar>. Não pode repetir id da equipe.
+  # tipo: youtube (o kit só trata lives do YouTube)
+  # url: link da live (https://www.youtube.com/watch?v=XXXXXXXXXXX). Se a live reinicia todo dia, use o link do canal
+  #      terminado em /live (ex.: https://www.youtube.com/@canal/live) e saiba que ela não terá passado (DVR).
+  # lat/lon: posição REAL da câmera (graus decimais, 4 casas bastam)
+  # descricao: quem publica + endereço/ponto de referência
+  # posicao_verificada: true SÓ com endereço real conferido (descrição da live, site, link de mapa) -> fonte_publica
+  # fonte_publica: link onde está a prova da posição (descrição da live, mapa, site do dono)
+  - id: exemplo_cidade_lugar
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=XXXXXXXXXXX"
+    lat: -23.0000
+    lon: -46.0000
+    descricao: "Canal X — Rua Tal, 123, Bairro, Cidade/UF (endereço da descrição da live)"
+    posicao_verificada: false
+    fonte_publica: ""
+    ativa: false   # troque para true (ou apague a linha) depois que a triagem aprovar
