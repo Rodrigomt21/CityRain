@@ -10,7 +10,7 @@ cada **10 s**. Precisa estar de pé (backend + front + coletor) para a demo de 1
 
 ## Decisões
 
-- Círculo Leaflet (`Circle`, raio em metros), **1500 m**, no `MapaAoVivo.jsx`. Não é célula H3.
+- Círculo Leaflet (`Circle`, raio em metros) no `MapaAoVivo.jsx`, raio pela classe (14/10): seco e garoa 1000 m, moderada 600 m, forte 300 m; sem classe ou velha = só o ponto. Chuva forte é localizada; tudo abaixo dos 2 km da rotulagem. Não é célula H3.
 - Cor = classe (`lib/categories.js`). **Cinza tracejado** quando a última captura tem mais de
   **2 min** ou `weather_label` nulo ("não medido" nunca vira seco).
 - Tooltip: nome, classe, confiança, horário. Fixa mostra miniatura (`imagem_url`). **Jetson nunca

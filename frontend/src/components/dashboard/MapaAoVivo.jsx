@@ -7,7 +7,6 @@ import { resumoCamera, estadoCirculo } from '../../lib/cameras'
 
 const CENTRO_SP = [-23.56, -46.62]
 
-const RAIO_M = 1500
 
 // Acompanha o carro: na primeira carga enquadra câmeras e trajeto; depois segue a posição atual.
 function Seguir({ pontos, posCameras }) {
@@ -37,7 +36,7 @@ function TooltipCirculo({ nome, estado, captura, imagemSrc }) {
     <Tooltip sticky>
       {imagemSrc && <img src={imagemSrc} alt="" style={{ display: 'block', width: 160, borderRadius: 4, marginBottom: 4 }} />}
       <b>{nome}</b><br />
-      {categoria.label}{conf}<br />
+      {categoria.label}{conf}{estado.raioM && ` · raio ~${estado.raioM} m`}<br />
       {captura?.captured_at ? new Date(captura.captured_at).toLocaleTimeString('pt-BR') : 'sem captura ainda'}
     </Tooltip>
   )
@@ -74,13 +73,16 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
       {camerasComPos.map(c => {
         const r = resumoCamera(c, BASE_URL, agora)
         const estado = estadoCirculo(c.ultima_captura, agora)
-        // Círculo em metros mostra a área; o ponto em pixels mantém a câmera visível com o mapa afastado
+        // Círculo em metros = área onde achamos que a classe vale (só com classe recente);
+        // o ponto em pixels mantém a câmera visível com o mapa afastado
         return (
           <Fragment key={`cam-${c.id}`}>
-            <Circle center={[c.latitude, c.longitude]} radius={RAIO_M}
-              pathOptions={{ color: estado.cor, weight: 2, dashArray: estado.tracejado ? '6 6' : null, fillColor: estado.cor, fillOpacity: 0.25 }}>
-              <TooltipCirculo nome={r.nome} estado={estado} captura={c.ultima_captura} imagemSrc={r.imagemSrc} />
-            </Circle>
+            {estado.raioM && (
+              <Circle center={[c.latitude, c.longitude]} radius={estado.raioM}
+                pathOptions={{ color: estado.cor, weight: 2, fillColor: estado.cor, fillOpacity: 0.25 }}>
+                <TooltipCirculo nome={r.nome} estado={estado} captura={c.ultima_captura} imagemSrc={r.imagemSrc} />
+              </Circle>
+            )}
             <CircleMarker center={[c.latitude, c.longitude]} radius={6}
               pathOptions={{ color: '#0b1220', weight: 2, fillColor: estado.cor, fillOpacity: 1 }}>
               <TooltipCirculo nome={r.nome} estado={estado} captura={c.ultima_captura} imagemSrc={r.imagemSrc} />
@@ -88,9 +90,9 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
           </Fragment>
         )
       })}
-      {carro && (
-        <Circle center={carro.pos} radius={RAIO_M}
-          pathOptions={{ color: estadoCarro.cor, weight: 2, dashArray: estadoCarro.tracejado ? '6 6' : null, fillColor: estadoCarro.cor, fillOpacity: 0.25 }}>
+      {carro && estadoCarro.raioM && (
+        <Circle center={carro.pos} radius={estadoCarro.raioM}
+          pathOptions={{ color: estadoCarro.cor, weight: 2, fillColor: estadoCarro.cor, fillOpacity: 0.25 }}>
           <TooltipCirculo nome="Jetson (carro)" estado={estadoCarro} captura={carro.captura} imagemSrc={null} />
         </Circle>
       )}

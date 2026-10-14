@@ -20,12 +20,22 @@ export function aoVivo(iso, agora = new Date()) {
 
 export const MINUTOS_CIRCULO_FRESCO = 2
 
-/** Cor do círculo do mapa: classe da última captura; cinza tracejado se velha (> 2 min) ou sem rótulo. */
+// Heurística de quanto em volta da câmera achamos que a classe vale: chuva fraca é espalhada,
+// forte é núcleo convectivo localizado (já vimos 17,5 × 1,2 mm/h em estações a < 2 km).
+// Fica abaixo dos 2 km usados para casar frame e estação na rotulagem.
+export const RAIO_POR_CLASSE_M = { dry: 1000, drizzle: 1000, moderate: 600, heavy: 300 }
+
+/** Círculo do mapa: cor e raio pela classe da última captura; velha (> 2 min) ou sem rótulo = cinza, sem área. */
 export function estadoCirculo(captura, agora = new Date()) {
   const categoria = captura ? categoryFromLabel(captura.weather_label) : UNMEASURED
   const min = captura?.captured_at ? (agora.getTime() - new Date(captura.captured_at).getTime()) / 60e3 : Infinity
   const tracejado = categoria === UNMEASURED || !(min <= MINUTOS_CIRCULO_FRESCO)
-  return { cor: tracejado ? UNMEASURED.color : categoria.color, tracejado, categoria }
+  return {
+    cor: tracejado ? UNMEASURED.color : categoria.color,
+    tracejado,
+    categoria,
+    raioM: tracejado ? null : RAIO_POR_CLASSE_M[categoria.key] ?? null,
+  }
 }
 
 export function resumoCamera(cam, baseUrl, agora = new Date()) {
