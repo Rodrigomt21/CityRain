@@ -22,7 +22,7 @@ export default function Dashboard() {
               Monitoramento ao vivo
             </h1>
             <p className="text-[13px]" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-              Intensidade de chuva estimada por câmera embarcada · trajeto dos últimos {JANELA_MIN} min ·
+              Intensidade de chuva estimada pelas câmeras do carro e fixas · trajeto dos últimos {JANELA_MIN} min ·
               atualiza a cada {Math.round(pollMs / 1000)} s
               {atualizadoEm && ` · última consulta ${atualizadoEm.toLocaleTimeString('pt-BR')}`}
               {error && <span style={{ color: '#ef4444' }}> · API indisponível: {error.message}</span>}
