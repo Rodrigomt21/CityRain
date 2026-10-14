@@ -127,12 +127,51 @@ Resultado em limiar 0,5 (recall chuva / falso alarme seco, ambos em sessão não
 **Não bate o original** (falso alarme 0,17 no seco noite em 0,5): na maioria dos folds o
 falso alarme fica em 0,8–1,0, e quando 04/08 sai do treino o AUC chega a 0,04–0,09 (inverte:
 o modelo aprendeu "vidro da nossa câmera = chuva"). Com só 2 sessões secas, tirar uma deixa
-uma única sessão seca da nossa câmera no treino. O dado externo não corrige isso (o único
-fold bom, 04/08 × 23/09 com 0,22, é um fold, não um padrão; com ajuste v1 já como ponto de
-partida). Conclusão: nenhum gate v2 é exportado; o gate original continua em produção. O
-gargalo é seco da câmera do carro (dia e noite, várias sessões), não treino. Observação:
-`framesSemNada` (27/05) **não é seco**: tem chuva forte à noite, sem rótulo de pluviômetro.
-Resultados: `ml/resultados/gate_v2_cv_*.json`.
+uma única sessão seca da nossa câmera no treino; o Zenodo sozinho não corrige isso.
+
+**Gate v3: com seco visual de maio como dado só de treino (14/10).** A pasta
+`classificador/imagens_brutas` (20/05, mesma câmera, sem GPS) tem ~9,3 mil frames
+pré-rotulados `sem_chuva` pelo modelo. Seleção (`ml/scripts/treino/selecionar_gate_maio_seco.py`):
+só 20260520 com confiança ≥ 0,8, descarta `motivo` que cita molhado/gota/reflexo, stride 2;
+sobram 723 candidatos (498 dia, 225 noite por brilho), usados 250 dia + 250 noite por fold.
+20260523 fica fora (pista molhada, gotas). Orientação conferida: já vem em pé, igual às
+sessões normalizadas, sem rotação. **Regra de rótulo:** no gate o rótulo é **visual** (vidro
+sem gota + pista seca), porque o gate detecta gota; rótulo de intensidade continua só de
+pluviômetro. Painéis para conferência: `ml/data/review/gate_maio_seco/painel_*.jpg`
+(os 6 painéis amostrados parecem secos; falta o aceite visual do Rodrigo). Maio nunca entra
+em teste. Mesmo CV, partindo do ajuste v1 + Zenodo + maio (limiar 0,5; recall / falso alarme):
+
+| Seco fora | Chuva fora | AUC | v3 recall / FA | Original recall / FA |
+|---|---|---|---|---|
+| 04/08 dia | 01/09 | 0,97 | 0,90 / **0,04** | n/d |
+| 04/08 dia | 13/09 | 0,98 | 0,96 / **0,11** | 0,10 / n/d |
+| 04/08 dia | 23/09 | 0,98 | 0,90 / **0,04** | 0,36 / n/d |
+| 06/08 noite | 01/09 | 0,70 | 0,83 / 0,24 | n/d / 0,17 |
+| 06/08 noite | 13/09 | 0,78 | 1,00 / 0,25 | 0,10 / 0,17 |
+| 06/08 noite | 23/09 | 0,79 | 0,95 / 0,23 | 0,36 / 0,17 |
+
+Recall sobe de 0,10 / 0,36 para ≥ 0,90 (exceto 01/09 noite, 0,83) em sessão não vista; falso
+alarme no seco de dia cai para 0,04–0,11. Na noite o falso alarme é 0,23–0,25, um pouco acima
+do original (0,17), com só 103 frames de teste e 225 candidatos de maio à noite no treino.
+Partindo do ImageNet (3 folds de 04/08, parciais) o falso alarme ficou em 0,46–0,94: partir do
+ajuste v1 importa. Falso alarme é barato (o backend classifica a intensidade depois), então o
+trade-off recall × alarme noturno é aceitável; limiar mais alto na noite não foi medido.
+Resultados: `ml/resultados/gate_v2_cv_*.json` (`*_maio.json` = com maio).
+
+**Gate v3 exportado:** `ml/runs/gate_v3/gate_v3.onnx` (treino em todas as sessões + Zenodo +
+maio, 3 épocas; entrada `input` 1x3x384x384, saída `output` 2 logits, opset 11, índice 1 =
+com_gota; fica fora do Git). Os números acima são do CV, o modelo final não tem teste próprio.
+Aceite pendente: confirmar visualmente os painéis de maio e testar o onnx numa sessão nova.
+
+*Passos para a Jetson (NÃO executados; Moreno/Rodrigo, com a placa ligada):*
+1. No Mac: `scp ml/runs/gate_v3/gate_v3.onnx jetson:/home/jetson/modelo_chuva/gate_v3.onnx`.
+2. Na Jetson: `cp ~/modelo_chuva/bestModel.onnx ~/modelo_chuva/bestModel.orig.onnx` (backup).
+3. Em `~/cityrain_config.json` (o mesmo do `ml/scripts/captura/`), trocar `modelo_chuva_path`
+   para `/home/jetson/modelo_chuva/gate_v3.onnx`; manter `limiar_chuva: 0.5`.
+4. Reiniciar o serviço que captura: `sudo systemctl restart citycam` (serviços em
+   `implantar_jetson.sh`: citycam, gps, uploader, sessao, botao-desliga, wifi-watchdog).
+5. Conferir no log: `[gate] modelo carregado (onnxruntime, limiar=0.5)` e ~100 ms/frame em CUDA.
+6. Rollback: voltar `modelo_chuva_path` para `bestModel.onnx` e reiniciar `citycam`.
 
 ## 5. Borda (Jetson Nano 4 GB, onnxruntime 1.10, 60 frames reais)
 

@@ -58,6 +58,18 @@ def lista_sessoes() -> dict[str, list[str]]:
     return s
 
 
+def maio_seco(n_dia: int = 250, n_noite: int = 250) -> list[str]:
+    """Seco visual de maio (só treino): ml/data/review/gate_maio_seco/candidatos.json."""
+    c = json.load(open(RAIZ / "ml/data/review/gate_maio_seco/candidatos.json"))
+    rng = random.Random(3)
+    base = RAIZ.parent / "classificador" / "imagens_brutas"
+    out = []
+    for per, n in (("dia", n_dia), ("noite", n_noite)):
+        ks = sorted(k for k, v in c.items() if v["periodo"] == per)
+        out += [str((base / k).resolve()) for k in rng.sample(ks, min(n, len(ks)))]
+    return out
+
+
 def externo(n_seco_por_pasta: int = 150) -> dict[str, list[str]]:
     rng = random.Random(0)
     seco, chuva = [], []
@@ -132,13 +144,14 @@ def treinar(init, X, y, epocas, lr, disp, seed):
     return m
 
 
-def conjunto(sess, nomes, ext, usar_ext, teto):
+def conjunto(sess, nomes, ext, usar_ext, teto, maio=()):
     rng = random.Random(1)
     cam, y = [], []
     for nm in nomes:
         c = sess[nm]
         c = rng.sample(c, min(teto, len(c)))
         cam += c; y += [0 if nm in SECAS else 1] * len(c)
+    cam += list(maio); y += [0] * len(maio)
     if usar_ext:
         cam += ext["ext_seco"]; y += [0] * len(ext["ext_seco"])
         cam += ext["ext_chuva"]; y += [1] * len(ext["ext_chuva"])
@@ -150,6 +163,7 @@ def main() -> None:
     ap.add_argument("modo", choices=("cv", "final"))
     ap.add_argument("--init", required=True)
     ap.add_argument("--sem-externo", action="store_true")
+    ap.add_argument("--maio", action="store_true", help="seco visual de maio, só treino")
     ap.add_argument("--epocas", type=int, default=3)
     ap.add_argument("--lr", type=float, default=None)
     ap.add_argument("--teto", type=int, default=300, help="máx. frames por sessão no treino")
@@ -159,15 +173,16 @@ def main() -> None:
     lr = a.lr or (2e-4 if a.init == "imagenet" else 1e-4)
     disp = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     sess, ext = lista_sessoes(), externo()
+    maio = maio_seco() if a.maio else []
     usar_ext = not a.sem_externo
     # cache de imagens
-    todos = sorted({c for v in list(sess.values()) + list(ext.values()) for c in v})
+    todos = sorted({c for v in list(sess.values()) + list(ext.values()) + [maio] for c in v})
     print(f"[gate2] carregando {len(todos)} imagens", flush=True)
     cache = dict(zip(todos, carregar(todos)))
     get = lambda cs: np.stack([cache[c] for c in cs])
 
     if a.modo == "final":
-        cam, y = conjunto(sess, SECAS + CHUVAS, ext, usar_ext, a.teto)
+        cam, y = conjunto(sess, SECAS + CHUVAS, ext, usar_ext, a.teto, maio)
         m = treinar(a.init, get(cam), y, a.epocas, lr, disp, a.seed)
         m.cpu().eval()
         a.saida.parent.mkdir(parents=True, exist_ok=True)
@@ -180,7 +195,7 @@ def main() -> None:
     folds = []
     for ds in SECAS:
         for dc in CHUVAS:
-            cam, y = conjunto(sess, [s for s in SECAS + CHUVAS if s not in (ds, dc)], ext, usar_ext, a.teto)
+            cam, y = conjunto(sess, [s for s in SECAS + CHUVAS if s not in (ds, dc)], ext, usar_ext, a.teto, maio)
             print(f"[gate2] fold seco={ds} chuva={dc} | treino seco {int((y == 0).sum())} chuva {int((y == 1).sum())}", flush=True)
             m = treinar(a.init, get(cam), y, a.epocas, lr, disp, a.seed)
             ps = prever(m, get(sess[ds]), disp)
@@ -193,7 +208,7 @@ def main() -> None:
             folds.append(r)
             del m
     a.saida.parent.mkdir(parents=True, exist_ok=True)
-    a.saida.write_text(json.dumps({"init": a.init, "externo": usar_ext, "epocas": a.epocas, "lr": lr, "folds": folds}, indent=1))
+    a.saida.write_text(json.dumps({"init": a.init, "externo": usar_ext, "maio": a.maio, "epocas": a.epocas, "lr": lr, "folds": folds}, indent=1))
 
 
 if __name__ == "__main__":
