@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { apiGet } from '../api/client'
 
 // VITE_POLL_MS encurta a atualização (ex.: 5000 no modo demonstração da defesa)
-const POLL_MS = Number(import.meta.env.VITE_POLL_MS) || 30_000
+const POLL_MS = Number(import.meta.env.VITE_POLL_MS) || 10_000
 export const JANELA_MIN = 30
 
 /**

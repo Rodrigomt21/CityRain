@@ -10,11 +10,11 @@ const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
 }))
 
 // Números verificáveis no sistema, não promessas: 4 classes do modelo, CNN como
-// método, 30 s de polling do painel ao vivo e H3 como unidade de agregação.
+// método, 10 s de polling do painel ao vivo e H3 como unidade de agregação.
 const STATS = [
   { value: '4',    label: 'Níveis de Intensidade' },
   { value: 'CNN',  label: 'Classificação por Imagem' },
-  { value: '30s',  label: 'Atualização do Painel' },
+  { value: '10s',  label: 'Atualização do Painel' },
   { value: 'H3',   label: 'Agregação Espacial' },
 ]
 

@@ -1,43 +1,49 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Tooltip, useMap } from 'react-leaflet'
-import L from 'leaflet'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
+import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, Tooltip, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { categoryFromLabel } from '../../lib/categories'
-import { resumoCamera } from '../../lib/cameras'
+import { BASE_URL } from '../../api/client'
+import { resumoCamera, estadoCirculo } from '../../lib/cameras'
 
 const CENTRO_SP = [-23.56, -46.62]
 
-// Acompanha o carro: na primeira carga enquadra o trajeto; depois segue a posição atual.
-function Seguir({ pontos }) {
+const RAIO_M = 1500
+
+// Acompanha o carro: na primeira carga enquadra câmeras e trajeto; depois segue a posição atual.
+function Seguir({ pontos, posCameras }) {
   const map = useMap()
   const enquadrado = useRef(false)
+  const enquadrouCameras = useRef(false)
   useEffect(() => {
-    if (!pontos.length) return
-    if (!enquadrado.current) {
-      map.fitBounds(pontos.map(p => p.pos), { padding: [60, 60], maxZoom: 16 })
+    const todos = [...pontos.map(p => p.pos), ...posCameras]
+    if (!todos.length) return
+    // as câmeras chegam por outra requisição: enquadra de novo uma única vez quando aparecem
+    const camerasNovas = posCameras.length > 0 && !enquadrouCameras.current
+    if (!enquadrado.current || camerasNovas) {
+      map.fitBounds(todos, { padding: [60, 60], maxZoom: 16 })
       enquadrado.current = true
-    } else {
+      if (posCameras.length) enquadrouCameras.current = true
+    } else if (pontos.length) {
       map.panTo(pontos[pontos.length - 1].pos, { animate: true })
     }
-  }, [map, pontos])
+  }, [map, pontos, posCameras])
   return null
 }
 
-/** Trajeto ao vivo: segmentos coloridos pela classe e posição atual pulsando. */
-// Um divIcon por cor: ícone novo a cada render recria o marcador e fecha o tooltip aberto.
-const _iconesCamera = new Map()
-function iconeCamera(cor) {
-  if (!_iconesCamera.has(cor)) {
-    _iconesCamera.set(cor, L.divIcon({
-      className: '',
-      html: `<div style="width:14px;height:14px;background:${cor};border:2px solid #0b1220;border-radius:2px"></div>`,
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
-    }))
-  }
-  return _iconesCamera.get(cor)
+function TooltipCirculo({ nome, estado, captura, imagemSrc }) {
+  const { categoria } = estado
+  const conf = captura?.confidence != null ? ` · ${Math.round(captura.confidence * 100)}%` : ''
+  return (
+    <Tooltip sticky>
+      {imagemSrc && <img src={imagemSrc} alt="" style={{ display: 'block', width: 160, borderRadius: 4, marginBottom: 4 }} />}
+      <b>{nome}</b><br />
+      {categoria.label}{conf}<br />
+      {captura?.captured_at ? new Date(captura.captured_at).toLocaleTimeString('pt-BR') : 'sem captura ainda'}
+    </Tooltip>
+  )
 }
 
+/** Trajeto ao vivo: segmentos coloridos pela classe e posição atual pulsando. */
 export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) {
   const pontos = useMemo(
     () => capturas.map(c => ({ ...c, pos: [c.latitude, c.longitude], cat: categoryFromLabel(c.weather_label) })),
@@ -45,6 +51,17 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
   )
   const atual = pontos[pontos.length - 1]
   const segmentos = pontos.slice(1).map((p, i) => ({ de: pontos[i].pos, para: p.pos, cor: p.cat.color, id: p.id }))
+  const agora = new Date()
+  const camerasComPos = cameras.filter(c => c.latitude != null && c.longitude != null)
+  const posCameras = useMemo(
+    () => cameras.filter(c => c.latitude != null && c.longitude != null).map(c => [c.latitude, c.longitude]),
+    [cameras],
+  )
+  // Jetson: último ponto do trajeto ou, sem trajeto recente, a última posição conhecida
+  const carro = atual
+    ? { pos: atual.pos, captura: atual }
+    : ultimaConhecida ? { pos: [ultimaConhecida.latitude, ultimaConhecida.longitude], captura: ultimaConhecida } : null
+  const estadoCarro = carro && estadoCirculo(carro.captura, agora)
   const centro = atual?.pos ?? (ultimaConhecida ? [ultimaConhecida.latitude, ultimaConhecida.longitude] : CENTRO_SP)
 
   return (
@@ -54,6 +71,29 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      {camerasComPos.map(c => {
+        const r = resumoCamera(c, BASE_URL, agora)
+        const estado = estadoCirculo(c.ultima_captura, agora)
+        // Círculo em metros mostra a área; o ponto em pixels mantém a câmera visível com o mapa afastado
+        return (
+          <Fragment key={`cam-${c.id}`}>
+            <Circle center={[c.latitude, c.longitude]} radius={RAIO_M}
+              pathOptions={{ color: estado.cor, weight: 2, dashArray: estado.tracejado ? '6 6' : null, fillColor: estado.cor, fillOpacity: 0.25 }}>
+              <TooltipCirculo nome={r.nome} estado={estado} captura={c.ultima_captura} imagemSrc={r.imagemSrc} />
+            </Circle>
+            <CircleMarker center={[c.latitude, c.longitude]} radius={6}
+              pathOptions={{ color: '#0b1220', weight: 2, fillColor: estado.cor, fillOpacity: 1 }}>
+              <TooltipCirculo nome={r.nome} estado={estado} captura={c.ultima_captura} imagemSrc={r.imagemSrc} />
+            </CircleMarker>
+          </Fragment>
+        )
+      })}
+      {carro && (
+        <Circle center={carro.pos} radius={RAIO_M}
+          pathOptions={{ color: estadoCarro.cor, weight: 2, dashArray: estadoCarro.tracejado ? '6 6' : null, fillColor: estadoCarro.cor, fillOpacity: 0.25 }}>
+          <TooltipCirculo nome="Jetson (carro)" estado={estadoCarro} captura={carro.captura} imagemSrc={null} />
+        </Circle>
+      )}
       {segmentos.map(s => (
         <Polyline key={s.id} positions={[s.de, s.para]} pathOptions={{ color: s.cor, weight: 6, opacity: 0.85 }} />
       ))}
@@ -80,16 +120,7 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
           <Tooltip permanent direction="top">Última posição conhecida</Tooltip>
         </CircleMarker>
       )}
-      {cameras.filter(c => c.latitude != null).map(c => {
-        const r = resumoCamera(c, '')
-        const icone = iconeCamera(r.categoria.color)
-        return (
-          <Marker key={`cam-${c.id}`} position={[c.latitude, c.longitude]} icon={icone}>
-            <Tooltip>{r.nome} · {r.categoria.label} · {r.quando}</Tooltip>
-          </Marker>
-        )
-      })}
-      <Seguir pontos={pontos} />
+      <Seguir pontos={pontos} posCameras={posCameras} />
     </MapContainer>
   )
 }
