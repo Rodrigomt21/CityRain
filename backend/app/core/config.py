@@ -35,6 +35,9 @@ class Settings(BaseSettings):
         "http://localhost:8501",
     ]
     max_upload_size_mb: int = 50
+    # Imagens de câmera fixa (1 frame/10 s por câmera) só ficam em disco por este tempo;
+    # as linhas de captures ficam (histórico). Mídia de dispositivo móvel nunca é apagada.
+    retencao_imagem_fixa_min: int = 60
     api_key: str = ""
     admin_key: str = ""
     host: str = "0.0.0.0"

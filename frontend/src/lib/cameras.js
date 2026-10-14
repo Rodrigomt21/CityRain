@@ -18,6 +18,16 @@ export function aoVivo(iso, agora = new Date()) {
   return (agora.getTime() - new Date(iso).getTime()) / 60e3 <= MINUTOS_AO_VIVO
 }
 
+export const MINUTOS_CIRCULO_FRESCO = 2
+
+/** Cor do círculo do mapa: classe da última captura; cinza tracejado se velha (> 2 min) ou sem rótulo. */
+export function estadoCirculo(captura, agora = new Date()) {
+  const categoria = captura ? categoryFromLabel(captura.weather_label) : UNMEASURED
+  const min = captura?.captured_at ? (agora.getTime() - new Date(captura.captured_at).getTime()) / 60e3 : Infinity
+  const tracejado = categoria === UNMEASURED || !(min <= MINUTOS_CIRCULO_FRESCO)
+  return { cor: tracejado ? UNMEASURED.color : categoria.color, tracejado, categoria }
+}
+
 export function resumoCamera(cam, baseUrl, agora = new Date()) {
   const u = cam.ultima_captura
   return {

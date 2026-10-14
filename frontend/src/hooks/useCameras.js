@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiGet } from '../api/client'
 
-const POLL_MS = Number(import.meta.env.VITE_POLL_MS) || 30_000
+const POLL_MS = Number(import.meta.env.VITE_POLL_MS) || 10_000
 
 /** Câmeras fixas com a última captura classificada (GET /api/v1/cameras/). */
 export function useCameras({ excluirDemo = false } = {}) {
