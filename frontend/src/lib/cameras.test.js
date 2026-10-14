@@ -106,4 +106,16 @@ describe('estadoCirculo', () => {
     expect(r.tracejado).toBe(true)
     expect(r.categoria.label).toBe('Não medido')
   })
+  it('raio encolhe com a intensidade: chuva forte é localizada', () => {
+    const raio = (l) => estadoCirculo({ captured_at: iso(1), weather_label: l }, AGORA).raioM
+    expect(raio('seco')).toBe(1000)
+    expect(raio('garoa')).toBe(1000)
+    expect(raio('moderado')).toBe(600)
+    expect(raio('forte')).toBe(300)
+  })
+  it('sem classe ou velha não afirma área (raio nulo)', () => {
+    expect(estadoCirculo({ captured_at: iso(3), weather_label: 'garoa' }, AGORA).raioM).toBeNull()
+    expect(estadoCirculo({ captured_at: iso(1), weather_label: null }, AGORA).raioM).toBeNull()
+    expect(estadoCirculo(null, AGORA).raioM).toBeNull()
+  })
 })
