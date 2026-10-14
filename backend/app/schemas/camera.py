@@ -14,6 +14,16 @@ class UltimaCaptura(BaseModel):
     weather_label: Optional[str] = None  # None = não medido, nunca renderizar como seco
     confidence: Optional[float] = None
     modelo: Optional[str] = None
+    # Captura de demonstração (replay da defesa, metadata.demo): o dashboard avisa que não é chuva real
+    demo: bool = False
+
+    @classmethod
+    def da_captura(cls, cap) -> "UltimaCaptura":
+        """Monta a partir do model Capture, derivando `demo` de metadata_."""
+        return cls(
+            id=cap.id, captured_at=cap.captured_at, weather_label=cap.weather_label,
+            confidence=cap.confidence, modelo=cap.modelo, demo=bool((cap.metadata_ or {}).get("demo")),
+        )
 
 
 class CameraResumo(BaseModel):
