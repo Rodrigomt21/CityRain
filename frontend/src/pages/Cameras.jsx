@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import Topbar from '../components/layout/Topbar'
 import CameraCard from '../components/cameras/CameraCard'
+import { CameraCardSkeleton } from '../components/Skeleton'
 import { useCameras } from '../hooks/useCameras'
 import { resumoCamera } from '../lib/cameras'
 import { BASE_URL } from '../api/client'
@@ -18,11 +19,15 @@ export default function Cameras() {
           Transmissões públicas classificadas pelo modelo de câmera fixa · atualiza a cada {Math.round(pollMs / 1000)} s
         </p>
         {error && <p className="font-mono text-xs" style={{ color: 'var(--cat-heavy)' }}>Não consegui falar com a API ({error.message}). Tento de novo no próximo ciclo.</p>}
-        {carregando && <p className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>Carregando…</p>}
         {!carregando && !error && resumos.length === 0 && (
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Nenhuma câmera fixa cadastrada.</p>
         )}
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+          {carregando && (
+            <div role="status" aria-label="Carregando câmeras" style={{ display: 'contents' }}>
+              {Array.from({ length: 6 }, (_, i) => <CameraCardSkeleton key={i} />)}
+            </div>
+          )}
           {resumos.map(r => <CameraCard key={r.id} r={r} />)}
         </div>
       </main>

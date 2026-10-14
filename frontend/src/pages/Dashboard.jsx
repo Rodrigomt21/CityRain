@@ -9,7 +9,7 @@ import { useLiveCaptures, JANELA_MIN } from '../hooks/useLiveCaptures'
 // (A versão anterior, com mapa esquemático e simulação quando não havia dado,
 // não mostrava onde o dispositivo estava nem o trajeto.)
 export default function Dashboard() {
-  const { recentes, ultima, atualizadoEm, error, pollMs } = useLiveCaptures()
+  const { recentes, ultima, atualizadoEm, error, pollMs, carregando } = useLiveCaptures()
   const { cameras } = useCameras()
 
   return (
@@ -21,7 +21,7 @@ export default function Dashboard() {
             <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
               Monitoramento ao vivo
             </h1>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+            <p className="text-[13px]" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
               Intensidade de chuva estimada por câmera embarcada · trajeto dos últimos {JANELA_MIN} min ·
               atualiza a cada {Math.round(pollMs / 1000)} s
               {atualizadoEm && ` · última consulta ${atualizadoEm.toLocaleTimeString('pt-BR')}`}
@@ -43,7 +43,14 @@ export default function Dashboard() {
             <PainelAgora capturas={recentes} ultima={ultima} janelaMin={JANELA_MIN} />
           </div>
           <div className="rounded-xl" style={{ flex: 1, minWidth: 0, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
-            <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} cameras={cameras} />
+            {carregando ? (
+              <div role="status" aria-label="Carregando mapa" className="skeleton"
+                style={{ height: '100%', borderRadius: 0, display: 'grid', placeItems: 'center' }}>
+                <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>Carregando mapa…</span>
+              </div>
+            ) : (
+              <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} cameras={cameras} />
+            )}
           </div>
         </div>
       </main>

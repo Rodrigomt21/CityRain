@@ -1,4 +1,4 @@
-import { CloudRain, Map, Hexagon, Activity, Cpu, Car } from 'lucide-react'
+import { CloudRain, Map, Hexagon, Activity, Cpu, Video } from 'lucide-react'
 
 // Cada item descreve algo que existe hoje no sistema. Prometer tela que não
 // existe (alerta automático, tabela paginada) é o que estava errado aqui antes.
@@ -34,18 +34,18 @@ const FEATURES = [
     borderColor: 'var(--cat-heavy)',
   },
   {
-    icon: Car,
-    title: 'Frota de Dispositivos',
-    description: 'Quais dispositivos estão registrados, em que veículo e quando cada um reportou pela última vez.',
-    borderColor: 'var(--cat-dry)',
+    icon: Video,
+    title: 'Câmeras Fixas',
+    description: 'Transmissões públicas ao vivo, classificadas por um modelo próprio para câmera parada. Cada câmera ganha um círculo no mapa, e a página de dispositivos mostra quem reportou por último.',
+    borderColor: 'var(--cat-drizzle)',
   },
 ]
 
 const STEPS = [
   {
     n: '01',
-    title: 'A câmera captura',
-    desc: 'O carro percorre São Paulo e o ABC registrando frames com GPS e horário. A Jetson separa chuva de tempo seco ali mesmo.',
+    title: 'As câmeras capturam',
+    desc: 'Duas fontes: o carro, com câmera e Jetson, percorre São Paulo e o ABC registrando frames com GPS e horário; e câmeras públicas fixas transmitem pontos da cidade ao vivo.',
   },
   {
     n: '02',
@@ -117,7 +117,7 @@ export default function Features() {
                 <h3 className="font-mono font-semibold text-sm mb-2" style={{ color: 'var(--text-primary)' }}>
                   {title}
                 </h3>
-                <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                <p className="font-sans text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   {description}
                 </p>
               </div>
@@ -174,7 +174,7 @@ export default function Features() {
                   <h3 className="font-mono font-semibold text-sm mb-2" style={{ color: 'var(--text-primary)' }}>
                     {title}
                   </h3>
-                  <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="font-sans text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                     {desc}
                   </p>
                 </div>
@@ -232,7 +232,7 @@ export default function Features() {
                 >
                   {range}
                 </span>
-                <p className="font-sans text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                <p className="font-sans text-[13px] leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                   {desc}
                 </p>
               </div>
