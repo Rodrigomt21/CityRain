@@ -90,7 +90,8 @@ export default function Hero() {
           style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.6 }}
         >
           Monitoramento de chuva urbana por visão computacional. Uma câmera embarcada
-          classifica a intensidade da precipitação enquanto o veículo percorre a cidade.
+          em veículo e câmeras públicas fixas classificam a intensidade da chuva em tempo real,
+          enquanto o carro percorre a cidade e as câmeras vigiam pontos fixos.
         </p>
 
         {/* CTA */}

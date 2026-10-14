@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Skeleton } from '../Skeleton'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../../lib/categories'
 
@@ -70,9 +71,11 @@ export default function SerieTemporal({ capturas, loading, altura = 150 }) {
       </div>
 
       {loading ? (
-        <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: 0, height: altura, display: 'grid', placeItems: 'center' }}>
-          Carregando…
-        </p>
+        <div role="status" aria-label="Carregando gráfico" style={{ height: altura, display: 'flex', alignItems: 'flex-end', gap: 6, padding: '8px 8px 0' }}>
+          {[40, 65, 30, 80, 55, 45, 70, 35, 60, 50, 75, 42].map((h, i) => (
+            <Skeleton key={i} style={{ flex: 1, height: `${h}%` }} />
+          ))}
+        </div>
       ) : dados.length === 0 ? (
         <p className="text-xs" style={{ color: 'var(--text-secondary)', margin: 0, height: altura, display: 'grid', placeItems: 'center' }}>
           Sem capturas no período selecionado.
@@ -81,9 +84,9 @@ export default function SerieTemporal({ capturas, loading, altura = 150 }) {
         <ResponsiveContainer width="100%" height={altura}>
           <BarChart data={dados} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
             <CartesianGrid stroke="var(--bg-border)" vertical={false} />
-            <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+            <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
               axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
-            <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+            <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
               axisLine={false} tickLine={false} />
             <Tooltip
               cursor={{ fill: '#ffffff0d' }}

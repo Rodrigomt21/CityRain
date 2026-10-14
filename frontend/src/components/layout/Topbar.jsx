@@ -2,6 +2,7 @@ import { useResumoPublico } from '../../hooks/useResumoPublico'
 import { useEffect, useState } from 'react'
 import { Droplets, ChevronLeft } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { statusSistema } from '../../lib/status'
 
 function formatDateTime(date) {
   const d = date.toLocaleDateString('pt-BR')
@@ -9,22 +10,16 @@ function formatDateTime(date) {
   return `${d}, ${t}`
 }
 
-// Selo de status ligado à API de verdade (antes era sempre "SISTEMA ATIVO", mesmo fora do ar)
-const STATUS = {
-  ok: { texto: 'SISTEMA ATIVO', cor: '#22c55e' },
-  banco: { texto: 'BANCO INDISPONÍVEL', cor: '#fb923c' },
-  fora: { texto: 'API FORA DO AR', cor: '#ef4444' },
-  carregando: { texto: 'VERIFICANDO…', cor: '#94a3b8' },
-}
-
 export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
-  const { saude } = useResumoPublico()
+  const { saude, ultima, ultimaCamera } = useResumoPublico(30_000)
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
+
+  const status = statusSistema({ saude, ultimas: [ultima, ultimaCamera], agora: now })
 
   return (
     <header
@@ -54,10 +49,10 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
       </div>
 
       <div className="flex items-center gap-2 font-mono text-xs">
-        <span className="flex items-center gap-1.5" style={{ color: STATUS[saude ?? 'carregando'].cor }}
-          title="Estado real da API e do banco (GET /health/db, a cada 60 s)">
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS[saude ?? 'carregando'].cor }} />
-          {STATUS[saude ?? 'carregando'].texto}
+        <span className="flex items-center gap-1.5" role="status" style={{ color: status.cor }}
+          title="Idade da captura mais recente (carro ou câmera fixa). Verde: até 2 min. Âmbar: dado atrasado. Cinza: API fora do ar.">
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: status.cor }} />
+          {status.texto}
         </span>
         <span style={{ color: 'var(--text-secondary)' }}>{formatDateTime(now)}</span>
       </div>

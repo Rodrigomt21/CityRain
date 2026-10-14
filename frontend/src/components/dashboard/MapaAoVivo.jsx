@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, Tooltip, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { categoryFromLabel } from '../../lib/categories'
+import { CATEGORIES, UNMEASURED, categoryFromLabel } from '../../lib/categories'
 import { BASE_URL } from '../../api/client'
-import { resumoCamera, estadoCirculo } from '../../lib/cameras'
+import { resumoCamera, estadoCirculo, RAIO_POR_CLASSE_M, MINUTOS_CIRCULO_FRESCO } from '../../lib/cameras'
 
 const CENTRO_SP = [-23.56, -46.62]
 
@@ -42,6 +42,40 @@ function TooltipCirculo({ nome, estado, captura, imagemSrc }) {
   )
 }
 
+const ORDEM_LEGENDA = ['heavy', 'moderate', 'drizzle', 'dry']
+
+function fmtRaio(m) {
+  return `~${m >= 1000 ? `${m / 1000} km` : `${m} m`}`
+}
+
+/** Legenda no canto inferior esquerdo: não captura cliques, então não atrapalha arrastar o mapa. */
+function Legenda() {
+  return (
+    <div role="group" aria-label="Legenda do mapa" className="font-mono"
+      style={{
+        position: 'absolute', left: 10, bottom: 22, zIndex: 1000, pointerEvents: 'none',
+        background: 'rgba(11, 18, 32, 0.88)', border: '1px solid var(--bg-border)', borderRadius: 8,
+        padding: '8px 10px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-primary)', maxWidth: 230,
+      }}>
+      <div style={{ color: 'var(--text-secondary)', letterSpacing: 1, marginBottom: 4 }}>CLASSE · RAIO NO MAPA</div>
+      {ORDEM_LEGENDA.map(k => (
+        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: CATEGORIES[k].color, flexShrink: 0 }} />
+          <span>{CATEGORIES[k].label} · {fmtRaio(RAIO_POR_CLASSE_M[k])}</span>
+        </div>
+      ))}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, paddingTop: 4, borderTop: '1px solid var(--bg-border)' }}>
+        <span style={{ width: 10, height: 10, borderRadius: '50%', background: UNMEASURED.color, flexShrink: 0 }} />
+        <span>Cinza · sem dado há mais de {MINUTOS_CIRCULO_FRESCO} min</span>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+        <span style={{ width: 10, height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #67e8f9, #fb923c)', flexShrink: 0 }} />
+        <span style={{ color: 'var(--text-secondary)' }}>Linha · trajeto do carro, cor pela classe</span>
+      </div>
+    </div>
+  )
+}
+
 /** Trajeto ao vivo: segmentos coloridos pela classe e posição atual pulsando. */
 export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) {
   const pontos = useMemo(
@@ -64,6 +98,7 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
   const centro = atual?.pos ?? (ultimaConhecida ? [ultimaConhecida.latitude, ultimaConhecida.longitude] : CENTRO_SP)
 
   return (
+    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
     <MapContainer center={centro} zoom={14} style={{ height: '100%', width: '100%', background: '#0b1220' }}>
       <TileLayer
         className="mapa-escuro"
@@ -124,5 +159,7 @@ export default function MapaAoVivo({ capturas, ultimaConhecida, cameras = [] }) 
       )}
       <Seguir pontos={pontos} posCameras={posCameras} />
     </MapContainer>
+    <Legenda />
+    </div>
   )
 }

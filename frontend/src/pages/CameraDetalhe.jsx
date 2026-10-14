@@ -9,7 +9,7 @@ import { resumoCamera, pontosSerie, separarMedidos, rotuloTempo, ROTULOS_NIVEL }
 import { BASE_URL } from '../api/client'
 
 const JANELAS = [3, 6, 24]
-const TICK = { fill: 'var(--text-secondary)', fontSize: 10, fontFamily: 'JetBrains Mono' }
+const TICK = { fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'JetBrains Mono' }
 
 function PontoTooltip({ active, payload, horas }) {
   const p = active && payload?.[0]?.payload
