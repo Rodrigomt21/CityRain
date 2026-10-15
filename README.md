@@ -9,6 +9,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Jetson](https://img.shields.io/badge/NVIDIA-Jetson%20Nano-76B900?logo=nvidia&logoColor=white)
+![License](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
 
 | | |
 |---|---|
@@ -177,3 +178,7 @@ Dados (imagens, splits e runs) ficam fora do Git. Veja [`docs/GUIA-TREINO-EQUIPE
   advisor = {Lima, Gabriel de Souza}
 }
 ```
+
+## Licença
+
+Código sob a licença [MIT](LICENSE). Datasets de terceiros (irCNN, BDD100K e outros) seguem as licenças originais e não são redistribuídos neste repositório.
