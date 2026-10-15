@@ -29,33 +29,41 @@
 
 - **O modelo vê só a imagem.** Pluviômetros públicos (CEMADEN, INMET, CGE-SP) são usados apenas para **rotular o treino** e **avaliar** o modelo. Em produção não há consulta a estação.
 - **Dois tipos de câmera, dois modelos**, cada um treinado e avaliado no próprio domínio:
-  - **Carro (Jetson Nano):** um *gate* na placa decide chuva × seco e descarta o seco. O frame com chuva vai ao backend, que estima a intensidade.
-  - **Câmeras fixas** (transmissões públicas ao vivo): o coletor envia um frame por câmera a cada ~10 s, e o backend classifica com um modelo próprio de 4 classes.
+  - **Carro:** a Jetson Nano roda um *gate* que decide chuva × seco e descarta o seco ali mesmo. O frame com chuva vai ao backend, que estima a intensidade.
+  - **Câmeras públicas fixas:** não há hardware nosso. Um coletor lê as transmissões ao vivo e envia um frame por câmera a cada ~10 s, e o backend classifica com um modelo próprio de 4 classes, treinado só com imagens dessas câmeras rotuladas por pluviômetro.
 - **Mapa ao vivo:** cada câmera aparece com um círculo na cor da última classe. O raio encolhe com a intensidade, porque chuva forte é localizada. Sem dado recente (mais de 2 min), a câmera fica cinza e o círculo não aparece. O histórico é agregado em células hexagonais **H3**.
 
 ## Arquitetura
 
+Dois caminhos independentes até o mesmo banco. Só o carro tem processamento de borda; as câmeras públicas são lidas por um coletor e classificadas no servidor.
+
 ```mermaid
 flowchart LR
-    subgraph Borda
-        J["Jetson Nano no carro<br/>câmera + GPS<br/>gate chuva/seco"]
-        C["Coletor de câmeras fixas<br/>lives públicas, ~10 s"]
+    subgraph Carro["Caminho 1 · câmera do carro (borda)"]
+        CAM["Câmera no para-brisa<br/>+ GPS"] --> GATE["Jetson Nano<br/>gate chuva × seco"]
     end
-    subgraph Backend["Backend (Railway)"]
-        API["FastAPI<br/>POST /api/v1/ingest"]
-        M["ONNX Runtime<br/>modelo do carro | modelo fixo"]
-        DB[("PostgreSQL<br/>+ índice H3")]
+    subgraph Publicas["Caminho 2 · câmeras públicas fixas"]
+        LIVE["Transmissões ao vivo<br/>(11 câmeras)"] --> COL["Coletor<br/>1 frame/câmera a cada ~10 s"]
     end
-    F["Dashboard React<br/>(Vercel)"]
-    E["Pluviômetros públicos<br/>CEMADEN · INMET · CGE-SP"]
-
-    J -- "frame com chuva" --> API
-    C -- "frame" --> API
-    API --> M --> DB
-    DB --> F
-    E -. "só treino e avaliação (offline)" .-> T["ml/: rotulagem, treino, CV"]
-    T -. "exporta .onnx" .-> M
+    subgraph Backend["Backend · FastAPI (Railway)"]
+        ING["POST /api/v1/ingest"] --> R{"tipo do<br/>dispositivo"}
+        R -- móvel --> MM["Modelo do carro<br/>garoa · moderada · forte"]
+        R -- fixa --> MF["Modelo fixo<br/>seco · garoa · moderada · forte"]
+        MM --> DB[("PostgreSQL<br/>+ índice H3")]
+        MF --> DB
+    end
+    GATE -- "só frames com chuva" --> ING
+    COL --> ING
+    DB --> UI["Dashboard React<br/>(Vercel)"]
 ```
+
+**Treino (offline, em `ml/`), um conjunto de dados por modelo. Nenhuma estação é consultada em produção.** A v3 em produção ainda usa dado sintético no treino; a próxima versão sai sem sintético.
+
+| Modelo | Treino | Rótulo | Teste principal |
+|---|---|---|---|
+| Gate (Jetson) | sessões do carro + seco de maio | visual: vidro com ou sem gota | sessão do carro nunca vista |
+| Intensidade do carro | sessões do carro + irCNN (+ BDD100K, em teste) | pluviômetro (CEMADEN); radar MRMS no BDD100K | sessão do carro nunca vista + irCNN por evento |
+| Intensidade fixa | lives públicas + irCNN | pluviômetro (CEMADEN) a ≤ 5 km | câmera nunca vista + teste prospectivo |
 
 ## Resultados
 
