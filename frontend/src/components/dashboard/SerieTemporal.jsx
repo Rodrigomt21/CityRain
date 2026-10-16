@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Skeleton } from '../Skeleton'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../../lib/categories'
+import { inicioDoBalde } from '../../lib/serie'
 
 // Mesma ordem da legenda do Histórico: do mais leve ao mais severo, e "não medido" por último.
 const ORDEM = [...SEVERITY_ORDER.slice().reverse(), 'unmeasured']
@@ -36,7 +37,7 @@ export default function SerieTemporal({ capturas, loading, altura = 150 }) {
     const baldes = new Map()
     for (const c of capturas) {
       const t = new Date(c.captured_at).getTime()
-      const chave = Math.floor(t / ms) * ms
+      const chave = inicioDoBalde(t, ms)
       if (!baldes.has(chave)) {
         baldes.set(chave, { t: chave, rotulo: fmt(new Date(chave)), ...Object.fromEntries(ORDEM.map(k => [k, 0])) })
       }
