@@ -9,7 +9,7 @@ leitura do relógio é descartado. Só dia (elevação do sol > 0) e recorte cen
 Sem GPS na imagem o local é o da cidade/evento: a regra vira por ÁREA (janela de ``raio_km``):
 classe da mediana da janela e ambíguo se < 80% das células têm essa classe ou se ±2 min discordam.
 
-Uso (de dentro de ml/): .venv/bin/python scripts/dataset_youtube/dashcam_radar.py
+Uso (de dentro de ml/): .venv/bin/python scripts/dataset_youtube/dashcam_radar.py [id ...]
 Saída: data/processed/youtube/dashcam_eua/<id>/*.jpg e data/manifests/dashcam_eua_mrms.csv
 """
 import math, re, subprocess, sys, tempfile
@@ -46,6 +46,23 @@ VIDEOS = {
     "aQCu0Xv3ufY": dict(ocr=[(0, .94, 1, .05)],
                         re=r"(?P<t>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}).*?N(?P<lat>\d{2})°(?P<latm>\d{2}\.\d+)\s+W(?P<lon>\d{2,3})°(?P<lonm>\d{2}\.\d+)",
                         fmt="%Y/%m/%d %H:%M:%S", desvio_h=-5),
+    # Busca de 16/10 (triagem por OCR de 2.280 vídeos): desvio = fuso local do dia, conferido no radar
+    # (Raleigh: EDT dá 1-5 mm/h no minuto do vídeo; EST e UTC dão 0).
+    "HKct9y8jOPs": dict(ocr=[(0, .95, .3, .05), (.5, .95, .5, .05)],   # Raleigh (NC) 30/08/2024, VIOFO A229
+                        re=r"N:(?P<lat>\d{2}[.:]\d{4}).*?W:(?P<lon>\d{2,3}[.:]\d{4}).*?(?P<t>\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2})",
+                        fmt="%d-%m-%Y %H:%M:%S", desvio_h=-4),
+    "kUhyK5VuwPM": dict(ocr=[(0, .94, 1, .06)],                        # Los Angeles 17/02/2017, VIOFO A119S
+                        re=r"W(?P<lon>\d{2,3}[.-]\s?\d{4,})\s+N(?P<lat>\d{2}\.\s?\d{4,}).*?(?P<t>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\s?\d{2})",
+                        fmt="%Y/%m/%d %H:%M:%S", desvio_h=-8),
+    "fiy0MzVfTm8": dict(ocr=[(0, .94, 1, .06)],                        # Huntington (WV) 15/05/2024, Rove R2-4K
+                        re=r"(?P<t>\d{2}/\d{2}/\d{4}\W{0,2}\d{2}:\s?\d{2}:\d{2}).*?N(?P<lat>\d{2}\.\d{4,})\s+W(?P<lon>\d{2,3}\.\d{4,})",
+                        fmt="%m/%d/%Y %H:%M:%S", desvio_h=-4),
+    "Mw8gayYgtsU": dict(ocr=[(0, .94, .5, .06)],                       # Cincinnati 27/09/2024 (Helene), Vantrue N5
+                        re=r"(?P<t>\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2})\s+N\s?(?P<lat>\d{2}\.\d{4,})\s+W\s?(?P<lon>\d{2,3}\.\d{4,})",
+                        fmt="%m/%d/%Y %H:%M:%S", desvio_h=-4),
+    "dlMqd2hPPgQ": dict(ocr=[(0, .94, .5, .06), (.5, .94, .5, .06)],   # Frankfort (KS) 13/06/2026, VIOFO
+                        re=r"N:(?P<lat>\d{2}[.:]\d{4}).*?W:(?P<lon>\d{2,3}[.:]\d{4}).*?(?P<t>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})",
+                        fmt="%Y-%m-%d %H:%M:%S", desvio_h=-5),
     # Sem GPS (regra por área): Dallas 09/06/2019, Ankeny 10/06/2026, Imelda 19/09/2019 (7300 N. Shepherd).
     "43jbrvd_KkA": dict(ocr=[(0, .94, .5, .06)], re=r"(?P<t>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})",
                         fmt="%Y/%m/%d %H:%M:%S", desvio_h=-5, local=(32.78, -96.80, 10)),
@@ -91,6 +108,10 @@ def ocr(img, cfg, desvio_h=None):
         return None
     g = m.groupdict()
     desvio = cfg["desvio_h"] if desvio_h is None else desvio_h
+    g["t"] = re.sub(r"(?<=\d{4})\W{1,2}(?=\d{2}:)", " ", re.sub(r":\s+", ":", g["t"]))  # "05/15/2024\"15: 37:38"
+    for k in ("lat", "lon"):
+        if g.get(k):
+            g[k] = re.sub(r"[:-]", ".", g[k])  # OCR lê "78:5937" / "118-285645"
     try:
         t = datetime.strptime(g["t"].replace(" PM", "PM").replace(" AM", "AM"), cfg["fmt"]).replace(tzinfo=timezone.utc) \
             - timedelta(hours=desvio)
@@ -146,8 +167,12 @@ def rotular(t, lat, lon, raio_km):
 
 
 def main():
+    """Sem argumentos refaz todos os vídeos; com ids, refaz só esses e mantém o resto do manifest."""
+    so = sys.argv[1:]
     linhas = []
     for vid, cfg in VIDEOS.items():
+        if so and vid not in so:
+            continue
         dest = OUT / vid; dest.mkdir(parents=True, exist_ok=True)
         cap = cv2.VideoCapture(str(VID / f"{vid}.mp4"))
         dur = cap.get(cv2.CAP_PROP_FRAME_COUNT) / cap.get(cv2.CAP_PROP_FPS)
@@ -173,6 +198,8 @@ def main():
             n += 1
         print(vid, n, "frames", flush=True)
     df = pd.DataFrame(linhas)
+    if so and MAN.exists():
+        df = pd.concat([pd.read_csv(MAN).query("video not in @so"), df], ignore_index=True)
     df.to_csv(MAN, index=False)
     ok = df[df.imagem.notna()]
     print(pd.crosstab([ok.video, ok.ambiguo], [ok.dia, ok.classe.fillna("?")]))
