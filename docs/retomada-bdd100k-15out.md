@@ -1,5 +1,15 @@
 # Retomada: modelo do carro sem sintético + BDD100K (parado em 15/10/2026, 00h10)
 
+## Estado em 15/10, 23h30 (atualização)
+
+- Etapas 1–7 rodaram. **v7** (v6 + BDD100K de dia, sem sintético) venceu a v6 nas métricas do carro;
+  números e leitura em `docs/resultados-experimentos.md` ("Sem sintético, só de dia"). Noite fora do escopo.
+- **v7 final** exportada: `ml/runs/intensidade_final_v7_bdd_dia_mnv3_foldfinal__20261015_231604/intensidade_v7.onnx`.
+  É a candidata ao backend (17/10). Falta forte de para-brisa: pedir sessão do Moreno em temporal.
+- Reproduzir (de `ml/`): `etapa6_frames_video.py` (moderada/forte), `etapa6_frames_video.py ... --classes garoa
+  --so-dia --max-videos 300` (garoa), `montar_split_v7.py`, depois `treinar_intensidade.py
+  configs/treino_intensidade_cv_v7_bdd_dia_mnv3.yaml --cv` e `..._final_v7_bdd_dia_mnv3.yaml --fold final`.
+
 ## Decisões de 14/10
 
 - **O orientador rejeitou o dado sintético.** O modelo do carro passa a ser treinado sem sintético.

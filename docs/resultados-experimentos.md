@@ -55,6 +55,41 @@ grande e inequívoco é **irCNN no treino** (0,07 → ~0,46). (`ml/resultados/in
 
 **Sintético × sem sintético (v3 × v6, pareado, 2.000 reamostras):** v3−v6 F1 macro +0,045 [+0,014; +0,082]; Spearman +0,172 [−0,027; +0,364]. Retirar o sintético **piora** o F1 macro de forma significativa (IC não inclui 0) e, nas métricas ordinais, derruba 23/09 > 13/09 (0,685 → 0,554) e pico > início no YouTube (0,605 → 0,339); garoa 13/09 e YouTube > 13/09 não mudam (1,000 e 0,968). Veredito: **v6 é pior que a v3** — o sintético (moderada/forte de para-brisa) ajuda e **não deve sair** do modelo do carro. Nota: no val de v6 o domínio "próprio" fica em 0,167 (o val tem moderada/forte sintéticas, que o modelo sem sintético nunca viu), então o critério de escolha de época ficou dominado pelo irCNN; a comparação com a v3 mantém-se válida (mesmos folds, mesmo critério). (`ml/runs/treino_cv_v6.log`)
 
+### Sem sintético, só de dia: v6 × v7 com BDD100K (15/10/2026)
+
+Decisões de 14–15/10: o orientador rejeitou o sintético e a noite saiu do escopo do modelo do carro.
+Por isso as duas CVs abaixo usam **só os eventos diurnos do irCNN** (1–6, em 3 folds de 2) e não são
+diretamente comparáveis às linhas v1–v6 acima (que têm 12 eventos, dia e noite).
+
+**v7** = v6 + **BDD100K** (dashcam de celular atrás do para-brisa, NY/Califórnia) **de dia**, rotulado
+por **radar NOAA MRMS PrecipRate** (2 min, ~1 km; outra verdade de campo, não pluviômetro), só rótulos
+inequívocos (vizinhança 3×3 e ±2 min concordam). Frames de vídeo a cada 4 s, recorte central 4:3:
+926 de moderada (95 vídeos) e 2.864 de garoa (300 vídeos); forte diurna inequívoca no BDD: 0. Todo o BDD
+fica no treino; o teste continua irCNN + carro. Pipeline: `ml/scripts/bdd/` (etapas 1–7 +
+`montar_split_v7.py`). A busca pelo radar nos 22.883 vídeos que o BDD marcou como nublado/indefinido
+achou só 1 moderada diurna inequívoca: o rótulo `rainy` do BDD já cobre quase toda a chuva.
+
+| CV só dia | irCNN F1 macro | F1 moderada | Spearman | 23/09 > garoa 13/09 | YT pico > início | YT > garoa 13/09 | Temporal 10/03/2023 ≥ moderada |
+|---|---|---|---|---|---|---|---|
+| v6 (sem sintético) | **0,417** | **0,41** | 0,415 | 0,245 | 0,371 | 0,802 | 0–4% |
+| **v7 (v6 + BDD dia)** | 0,375 | 0,30 | **0,596** | **0,640** | **0,641** | **0,966** | **40–74%** |
+
+**Temporal 10/03/2023** (teste novo de forte): vídeo do YouTube `qcI7SWTst4I`, celular atrás do
+para-brisa, Marginal Pinheiros, de dia; CEMADEN Pinheiros/Centro/Mooca marcou 35–87 mm/h entre 14h30
+e 15h20. A hora exata de cada trecho do vídeo não é conhecida, então ele é teste (fração de frames
+≥ moderada), não treino. 236 frames, 1 a cada 10 s (`ml/data/processed/youtube/carro_forte_20230310/`).
+v3 (com sintético) 97% ≥ moderada (9% forte); v6 0–4%; v7 40–74% nos 3 folds; v7 final 64%. Nenhuma
+versão sem sintético prevê forte nele.
+
+**Leitura:** o BDD recupera, sem sintético, a ordenação de intensidade **no domínio do para-brisa**
+(23/09 e YouTube voltam ao nível da v3), ao custo de ~0,04 de F1 no irCNN (câmera de vigilância, fora
+do domínio). Falta forte de para-brisa: só uma sessão real em temporal fecha esse buraco.
+
+**v7 final** (`treino_intensidade_final_v7_bdd_dia_mnv3.yaml`, 8 épocas = mediana da CV 5/8/11, fica a
+última): garoa 13/09 1,000; YT pico > início 0,705; 23/09 > garoa 0,581; YT > garoa 0,836; temporal
+64% ≥ moderada. ONNX em `ml/runs/intensidade_final_v7_bdd_dia_mnv3_foldfinal__20261015_231604/intensidade_v7.onnx`
+(paridade PyTorch × ORT 2,6e-6). A v6 final (piso, sem BDD) ficou em 0,285 / 0,263 / 0,940 e 1% no temporal.
+
 ### Leituras
 
 1. **Domínio manda mais que arquitetura.** Sem irCNN no treino, o modelo aprende "gota no
