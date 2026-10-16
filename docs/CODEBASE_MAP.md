@@ -46,7 +46,7 @@ CityRain/
 │   ├── app/services/   media_service (ingest), inference_service (ONNX), capture_service, geo_service, device_service
 │   ├── app/models/     device, capture, media_file, ingestion_log
 │   ├── app/core/       config (Settings), database, security (token do device, admin key)
-│   ├── app/inference/modelos/intensidade.onnx   modelo de produção (v3)
+│   ├── app/inference/modelos/intensidade.onnx   modelo de produção do carro (v7: sem sintético, + BDD100K de dia)
 │   ├── alembic/versions/  0001 → 0002 → 0003 (ids escritos à mão; próxima = 0004)
 │   └── tests/          testes unitários, sem banco
 ├── frontend/           React 19 + Vite + Tailwind + react-leaflet + h3-js + recharts (JSX)
