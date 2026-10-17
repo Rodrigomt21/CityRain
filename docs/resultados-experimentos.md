@@ -90,6 +90,48 @@ do domínio). Falta forte de para-brisa: só uma sessão real em temporal fecha 
 64% ≥ moderada. ONNX em `ml/runs/intensidade_final_v7_bdd_dia_mnv3_foldfinal__20261015_231604/intensidade_v7.onnx`
 (paridade PyTorch × ORT 2,6e-6). A v6 final (piso, sem BDD) ficou em 0,285 / 0,263 / 0,940 e 1% no temporal.
 
+### Forte de para-brisa real: dashcam + Mapillary rotulados por radar (16–17/10/2026)
+
+Fontes novas, todas de dia, rótulo MRMS inequívoco (3×3 e ±2 min), horário conferido no relógio
+gravado na imagem: **dashcams do YouTube** com GPS/hora na tela (`ml/scripts/dataset_youtube/dashcam_radar.py`)
+e **Mapillary** por área (`mapillary_chuva.py`) e **por usuário** (`mapillary_criador.py`: quem já dirigiu
+num temporal costuma dirigir na chuva outras vezes). Usuários aprovados na revisão visual: `allen`
+(BlackVue, Jacksonville, 7 dias), `cubanoboi` (iPhone dentro do carro, Flórida, 6 dias), `Satsuka_Osaka`
+(iPhone, 1 dia) e BlackVue de Savannah 25/08/2023. Descartados: câmera pela janela lateral, carro
+parado com vidro seco, neve/gelo no chão.
+
+| CV só dia | Dados novos | irCNN agregado | YT pico > início | 23/09 > garoa | Temporal SP ≥ mod. (forte) |
+|---|---|---|---|---|---|
+| v7 | — | 0,375 | 0,641 | 0,640 | 57% (0%) |
+| v8 | + 491 forte dashcam | 0,395 | 0,274 | 0,637 | 68% (3%) |
+| v9 | v8 + 396 forte Mapillary | 0,441 | 0,454 | 0,514 | 70% (4%) |
+| v10 | v7 + dashcam + allen (1.117 forte) | 0,481 | 0,618 | 0,440 | 72% (1%) |
+
+**Nota honesta de para-brisa (v11+).** Até a v10 todo o para-brisa ficava no treino, então nada media
+o domínio do produto. A chave `dados.parabrisa_cv` faz cada fold segurar também um grupo de eventos de
+para-brisa (`test_parabrisa`, agregado no fim da CV). Correção de protocolo junto: o val tem
+forte/moderada **sintéticos** (1.048 linhas) e escolhia a época; v11+ usa **6 épocas fixas** na CV e no
+final (`sem_selecao_por_val`).
+
+| CV só dia | Para-brisa F1 | Spearman frame / evento | irCNN agreg. | YT pico > início | 23/09 > garoa |
+|---|---|---|---|---|---|
+| v7 final (nunca viu para-brisa) | 0,167 | 0,29 / 0,12 | — | — | — |
+| v11 (v10, 12 eventos de para-brisa) | 0,320 | 0,10 / −0,19 | **0,455** | 0,679 | 0,483 |
+| v12 (v11 + 13 blocos congelados) | **0,349** | 0,10 / −0,20 | 0,427 | **0,765** | **0,602** |
+
+**Leitura:** em dia de para-brisa nunca visto, a CNN fica perto do acaso e **não ordena** a intensidade
+entre dias (no mesmo carro, um dia de moderada vira forte e um de forte vira moderada): com ~12 dias ela
+decora o dia (luz, lugar), não a chuva. Ajustar viés de logit em 2 folds e medir no 3º não ajuda. A
+alavanca é **número de dias** de para-brisa, não fotos por dia. Finais: v11 final YT pico > início
+0,878 (melhor até aqui), mas temporal SP 46% ≥ moderada (v7 final 64%).
+
+**Atributos físicos no para-brisa** (20 eventos, sem rede): brilho e contraste caem com a chuva
+(Spearman por evento −0,67 e −0,59; dark channel −0,50). Regressão linear em log(mm/h) com brilho +
+contraste, deixando um dia de fora por vez: Spearman por evento **0,63 (IC 95% 0,28–0,85)**. Mas depende
+da câmera: dashcams (allen +0,79, YouTube +0,60) sim, iPhone (cubanoboi −0,58, exposição automática)
+não, e em 3 folds com 12 eventos o sinal inverte. Implementação em tensor, exportável no mesmo ONNX:
+`ml/src/cityrain_ml/models/hibrido.py`. Fica como candidato a híbrido, não como modelo de produção.
+
 ### Leituras
 
 1. **Domínio manda mais que arquitetura.** Sem irCNN no treino, o modelo aprende "gota no
