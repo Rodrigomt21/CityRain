@@ -1,4 +1,5 @@
 import json
+import logging
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,7 @@ from app.services.media_service import MediaService
 from app.services.retencao_service import limpar_imagens_fixa_throttled
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -62,6 +64,20 @@ async def ingest_capture(
     captura já existente com status 200 em vez de 201. Leituras sem imagem não
     passam por deduplicação (não há arquivo para identificar o retry).
     """
+    try:
+        return await _ingerir(request, response, image, metadata, db, device)
+    except HTTPException as exc:
+        # O last_seen_at já foi atualizado na autenticação: sem este log, a recusa não
+        # deixava rastro (o IngestionLog só existe quando há captura).
+        logger.warning(
+            "ingest recusado (%s) do device %s (%s): %s",
+            exc.status_code, getattr(device, "id", None), getattr(device, "name", "?"), exc.detail,
+        )
+        raise
+
+
+async def _ingerir(request: Request, response: Response, image, metadata: str, db: AsyncSession, device: Device):
+    """Corpo do POST /ingest (separado para o endpoint registrar as recusas)."""
     # Rejeição barata: usa o Content-Length declarado para recusar a requisição
     # antes de processar o corpo. Cliente que mente no header é pego pela
     # leitura com teto dentro do MediaService.
