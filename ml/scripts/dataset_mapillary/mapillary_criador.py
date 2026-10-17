@@ -50,6 +50,8 @@ def main():
     print(len(amostra), "dias com foto", flush=True)
     # janela do QPE termina às 12 UTC: foto antes das 12 UTC conta no arquivo do mesmo dia; olha os dois
     def acum(r):
+        if mrms.indice(r.lat, r.lon) is None:  # fora da grade do MRMS (foto fora dos EUA)
+            return np.nan
         i, j = mrms.indice(r.lat, r.lon)
         d = datetime.strptime(r.dia, "%Y-%m-%d")
         vs = [qpe24(d), qpe24(d + timedelta(days=1))]
@@ -84,6 +86,8 @@ def main():
         for r in fotos[fotos.ts0.isin(bloco)].itertuples():
             v = cache[r.ts0]
             if v is None:
+                continue
+            if mrms.indice(r.lat, r.lon) is None:
                 continue
             i, j = mrms.indice(r.lat, r.lon)
             viz = [mrms_valido(x) for x in v[i - 1:i + 2, j - 1:j + 2].ravel()]

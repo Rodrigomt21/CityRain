@@ -69,6 +69,10 @@ def main() -> None:
     print(f"  irCNN agregado (12 eventos)  F1 macro {r['f1_macro']:.3f}  acc {r['acuracia']:.3f}  (n={r['n']})")
     print(f"  F1 por classe {r['f1_por_classe']}")
     print(f"  Spearman score x mm/h {met['ircnn_spearman_score_vs_mm_h']:.3f}")
+    if "test_parabrisa_agregado" in met:
+        p = met["test_parabrisa_agregado"]
+        print(f"  para-brisa agregado  F1 macro {p['f1_macro']:.3f}  acc {p['acuracia']:.3f}  (n={p['n']})")
+        print(f"  F1 por classe {p['f1_por_classe']}")
     for k, v in met["por_fold"].items():
         print(f"  {k:40s} {v['media']:.3f} ± {v['desvio']:.3f}")
 

@@ -34,7 +34,13 @@ AREAS = {"houston": (-95.80, 29.60, -95.20, 30.05), "miami": (-80.45, 25.60, -80
          "mobile": (-88.25, 30.60, -88.00, 30.80), "baton_rouge": (-91.25, 30.35, -91.00, 30.55),
          "savannah": (-81.25, 31.95, -81.00, 32.15), "charleston": (-80.10, 32.70, -79.85, 32.95),
          "san_antonio": (-98.65, 29.35, -98.35, 29.60), "austin": (-97.90, 30.15, -97.60, 30.45),
-         "washington": (-77.15, 38.80, -76.90, 39.00), "nova_york": (-74.05, 40.60, -73.75, 40.85)}
+         "washington": (-77.15, 38.80, -76.90, 39.00), "nova_york": (-74.05, 40.60, -73.75, 40.85),
+         # 17/10: mais áreas de temporal de verão (a alavanca é nº de dias de para-brisa, ver CV v11)
+         "fort_myers": (-82.00, 26.45, -81.70, 26.75), "port_st_lucie": (-80.50, 27.15, -80.25, 27.45),
+         "sarasota": (-82.65, 27.20, -82.40, 27.45), "lakeland": (-82.05, 27.95, -81.85, 28.15),
+         "daytona": (-81.15, 29.10, -80.95, 29.30), "corpus_christi": (-97.50, 27.65, -97.25, 27.85),
+         "lafayette": (-92.15, 30.10, -91.95, 30.30), "memphis": (-90.15, 35.00, -89.80, 35.25),
+         "nashville": (-86.95, 36.05, -86.65, 36.30), "phoenix": (-112.25, 33.35, -111.90, 33.60)}
 DESDE = datetime(2021, 1, 1, tzinfo=timezone.utc)  # QPE 24 h Pass2 do MRMS existe desde out/2020
 LIMIAR_DIA_MM = 20.0
 TOKEN = re.search(r"MAPILLARY_TOKEN=(\S+)", Path(".env").read_text()).group(1)
@@ -47,19 +53,22 @@ def tiles(area):
         p = D / f"{t.x}_{t.y}.json"
         if p.exists():
             return json.loads(p.read_text())
+        # resposta truncada (DecodeError) ou erro de rede: tenta de novo; se falhar 3 vezes, pula o tile sem
+        # gravar cache (savannah..nova_york morreram aqui em 16/10)
         for _ in range(3):
             try:
                 r = requests.get(f"https://tiles.mapillary.com/maps/vtp/mly1_public/2/{t.z}/{t.x}/{t.y}",
                                  params=dict(access_token=TOKEN), timeout=60)
+                feats = mvt.decode(r.content).get("image", {}).get("features", []) if r.ok else []
                 break
-            except requests.RequestException:
+            except Exception:
                 time.sleep(3)
         else:
             return []
         out = []
         if r.ok:
             b = mercantile.bounds(t)
-            for f in mvt.decode(r.content).get("image", {}).get("features", []):
+            for f in feats:
                 q = f["properties"]
                 if q.get("is_pano") or q.get("captured_at", 0) < DESDE.timestamp() * 1000:
                     continue

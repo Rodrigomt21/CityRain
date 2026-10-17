@@ -22,9 +22,18 @@ DATAS = {"jacksonville": ["2024-07-27"],
          # Fora: GoPro/Garmin pela janela lateral ou sacada (2022-11-10, 2023-*, 2024-07-20, 2024-08-04,
          # 2026-04-07) e inverno com neve no chão (2024-12-27, 2025-01-19: o radar pode estar medindo neve).
          "criador_allen": ["2024-07-27", "2024-09-09", "2025-07-09", "2025-08-23", "2025-08-24", "2026-04-05",
-                           "2026-05-29"]}
+                           "2026-05-29"],
+         # Savannah 25/08/2023: BlackVue DR590W no para-brisa; relógio 11 h fora, minutos e segundos batem;
+         # chuva forte visível nas 8 sequências (radar 14-87 mm/h). NY 04/07/2023 fora: GoPro em carro parado, vidro seco.
+         "savannah": ["2023-08-25"],
+         # usuário 'cubanoboi' (Flórida), iPhone por dentro do para-brisa (limpador/gotas/capô à vista); hora do
+         # celular (GPS), sem desvio de relógio. Fora: 2025-11-27 (foto pela janela lateral), 2025-06-03 (não revisado).
+         "criador_cubanoboi": ["2025-06-10", "2025-07-13", "2025-07-14", "2025-08-08", "2025-08-22", "2026-08-29"],
+         # usuário 'Satsuka_Osaka' (EUA), iPhone por dentro do para-brisa, limpador visível
+         "criador_Satsuka_Osaka": ["2026-04-25"]}
 # câmera aceita por fonte (o BlackVue do allen sobe com make "none" ou "BlackVue"); sem entrada = qualquer câmera
-CAMERAS = {"criador_allen": {"none", "BlackVue"}}
+CAMERAS = {"criador_allen": {"none", "BlackVue"}, "savannah": {"none", "BlackVue"},
+           "criador_cubanoboi": {"Apple"}, "criador_Satsuka_Osaka": {"Apple"}}
 PASSO_S = 2
 FAIXA_TEXTO = 0.05
 LIMIAR_DIF = 3.0
