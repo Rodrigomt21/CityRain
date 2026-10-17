@@ -16,7 +16,15 @@ from PIL import Image
 
 # área -> datas UTC revisadas (Jacksonville 27/07/2024: relógio BlackVue 11 h fora, minutos batem;
 # asfalto seco até 20:39, chuva a partir de 20:48, radar 0 -> 78 mm/h às 20:50)
-DATAS = {"jacksonville": ["2024-07-27"]}
+DATAS = {"jacksonville": ["2024-07-27"],
+         # usuário 'allen' (mapillary_criador.py), BlackVue DR900X no para-brisa; painéis data/review/allen_*.jpg.
+         # Relógio da câmera: 11 h fora em 2024, EDT a partir de 2025 (minutos batem com o Mapillary nos dois).
+         # Fora: GoPro/Garmin pela janela lateral ou sacada (2022-11-10, 2023-*, 2024-07-20, 2024-08-04,
+         # 2026-04-07) e inverno com neve no chão (2024-12-27, 2025-01-19: o radar pode estar medindo neve).
+         "criador_allen": ["2024-07-27", "2024-09-09", "2025-07-09", "2025-08-23", "2025-08-24", "2026-04-05",
+                           "2026-05-29"]}
+# câmera aceita por fonte (o BlackVue do allen sobe com make "none" ou "BlackVue"); sem entrada = qualquer câmera
+CAMERAS = {"criador_allen": {"none", "BlackVue"}}
 PASSO_S = 2
 FAIXA_TEXTO = 0.05
 LIMIAR_DIF = 3.0
@@ -55,6 +63,9 @@ def main():
         info = pd.DataFrame(list(ex.map(um, d.itertuples())))
     d = d.merge(info, on="id")
     d["usar"], d["exclusao"] = d.imagem.notna(), np.where(d.imagem.isna(), "erro_download", "")
+    if area in CAMERAS:
+        fora = d.usar & ~d.make.isin(CAMERAS[area])
+        d.loc[fora, ["usar", "exclusao"]] = [False, "outra_camera"]
     for _, g in d[d.usar].groupby("seq"):
         ultimo = None
         for i, r in g.sort_values("t").iterrows():
