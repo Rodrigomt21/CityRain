@@ -8,6 +8,7 @@ import Topbar from '../components/layout/Topbar'
 import SerieTemporal from '../components/dashboard/SerieTemporal'
 import { CATEGORIES, UNMEASURED, categoryFromLabel, SEVERITY_ORDER } from '../lib/categories'
 import { useHistorico, PERIODOS } from '../hooks/useHistorico'
+import { NOME_TIPO } from '../lib/dispositivos'
 
 const CENTRO_SP = [-23.56, -46.62]
 const ORDEM = [...SEVERITY_ORDER.slice().reverse(), 'unmeasured'] // seco, garoa, moderada, forte, não medido
@@ -53,9 +54,9 @@ function Enquadrar({ poligonos }) {
 }
 
 const TIPOS = [
-  { label: 'Todas', valor: null },
-  { label: 'Fixas', valor: 'fixa' },
-  { label: 'Móveis', valor: 'movel' },
+  { label: 'Todos', valor: null },
+  { label: NOME_TIPO.fixa, valor: 'fixa' },
+  { label: NOME_TIPO.movel, valor: 'movel' },
 ]
 
 const corDe = key => (CATEGORIES[key] ?? UNMEASURED).color
