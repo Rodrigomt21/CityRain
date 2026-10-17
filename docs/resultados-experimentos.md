@@ -132,6 +132,29 @@ da câmera: dashcams (allen +0,79, YouTube +0,60) sim, iPhone (cubanoboi −0,58
 não, e em 3 folds com 12 eventos o sinal inverte. Implementação em tensor, exportável no mesmo ONNX:
 `ml/src/cityrain_ml/models/hibrido.py`. Fica como candidato a híbrido, não como modelo de produção.
 
+**Opções contra "decorar o dia" (17/10), uma de cada vez sobre a v13 (20 eventos de para-brisa):**
+
+| CV | Para-brisa F1 | Spearman evento | F1 moderada | irCNN | YT pico > início | 23/09 > garoa |
+|---|---|---|---|---|---|---|
+| v13 (base) | 0,395 | 0,32 | 0,255 | 0,441 | 0,689 | 0,535 |
+| A: fotometria forte (saturação, balanço de branco, gama, desfoque) | 0,426 | **0,45** | 0,256 | 0,421 | 0,678 | 0,545 |
+| B: amostragem 1/n por evento | 0,396 | 0,25 | 0,268 | 0,374 | 0,613 | 0,508 |
+| C: perda ordinal (CE + E[\|k−y\|]) | 0,399 | 0,26 | 0,267 | 0,430 | 0,697 | **0,727** |
+| E: sem frames de radar perto dos limiares | 0,401 | 0,30 | **0,308** | 0,433 | 0,713 | 0,565 |
+| F: sem rótulos suspeitos no treino | **0,457** | 0,42 | 0,287 | 0,438 | **0,795** | 0,665 |
+| v15 = A + C | 0,419 | 0,42 | 0,252 | 0,412 | 0,681 | 0,620 |
+| v16 = A + F, 27 eventos | 0,438 | 0,59 | 0,231 | **0,449** | 0,630 | 0,555 |
+
+Média de 5–15 frames seguidos quase não ajuda (+0,01 de F1): o erro é do dia inteiro, não do frame.
+Rótulo suspeito (F) = frame em que v13 e v14a, sem ver o dia, dão p < 0,10 à classe do radar (895 de
+4.189, 21%; `ml/scripts/avaliacao/marcar_rotulo_suspeito.py`); sai só do treino. Vazamento leve: a lista
+veio de modelos que viram os outros folds. Matriz da F no para-brisa: 47% exato, 40% erro de uma classe,
+13% garoa↔forte; a moderada é o gargalo (24% de acerto).
+
+**Finais (testes nunca vistos):** v13 temporal 56% ≥ moderada / 22% forte, YT 0,854, 23/09 0,587;
+**v14f** 59% / 13%, **YT 0,931**, 23/09 0,586, garoa 13/09 98,7%; v16 55% / 17%, YT 0,716, 23/09 0,437.
+v13 em produção pelo PR #32; v14f proposta no PR #33.
+
 ### Leituras
 
 1. **Domínio manda mais que arquitetura.** Sem irCNN no treino, o modelo aprende "gota no

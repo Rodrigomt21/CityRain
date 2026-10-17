@@ -30,10 +30,17 @@ DATAS = {"jacksonville": ["2024-07-27"],
          # celular (GPS), sem desvio de relógio. Fora: 2025-11-27 (foto pela janela lateral), 2025-06-03 (não revisado).
          "criador_cubanoboi": ["2025-06-10", "2025-07-13", "2025-07-14", "2025-08-08", "2025-08-22", "2026-08-29"],
          # usuário 'Satsuka_Osaka' (EUA), iPhone por dentro do para-brisa, limpador visível
-         "criador_Satsuka_Osaka": ["2026-04-25"]}
+         "criador_Satsuka_Osaka": ["2026-04-25"],
+         # 17/10 tarde, todos por dentro do para-brisa (gotas/limpador/capô): schok (NY, câmera Schok), vorpalblade
+         # (BlackVue; fora: 2024-07-06 e 2025-09-23, GoPro por fora do vidro), directionup (samsung),
+         # whitecotton (iPhone), jacklehoullier (LG). RobinZyx fora (fotos a pé, fim de tarde).
+         "criador_schok": ["2024-01-09", "2024-03-02"], "criador_vorpalblade": ["2021-07-09", "2021-07-12"],
+         "criador_directionup": ["2026-06-19"], "criador_whitecotton": ["2024-04-09"],
+         "criador_jacklehoullier": ["2021-10-08"]}
 # câmera aceita por fonte (o BlackVue do allen sobe com make "none" ou "BlackVue"); sem entrada = qualquer câmera
 CAMERAS = {"criador_allen": {"none", "BlackVue"}, "savannah": {"none", "BlackVue"},
-           "criador_cubanoboi": {"Apple"}, "criador_Satsuka_Osaka": {"Apple"}}
+           "criador_cubanoboi": {"Apple"}, "criador_Satsuka_Osaka": {"Apple"},
+           "criador_vorpalblade": {"Blackvue", "BlackVue", "none"}}
 PASSO_S = 2
 FAIXA_TEXTO = 0.05
 LIMIAR_DIF = 3.0

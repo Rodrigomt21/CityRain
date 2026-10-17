@@ -188,6 +188,13 @@ def montar_particoes(cfg: dict, csv_path: Path) -> tuple[list[dict], list[dict]]
     lin_tr = [r for r in ler_split(csv_path, {"train"})
               if r["origem"] in origens and r["classe"] in CLASSES and r["evento_id"] not in fora]
     lin_va = [r for r in ler_split(csv_path, {"val"}) if r["classe"] in CLASSES]
+    excluir = cfg["dados"].get("excluir_treino_csv")  # rótulos suspeitos (marcar_rotulo_suspeito.py): saem só do treino
+    if excluir:
+        import csv
+
+        with open(Path(csv_path).parents[2] / excluir, newline="") as f:  # caminho relativo a ml/
+            fora_tr = {r["caminho"] for r in csv.DictReader(f)}
+        lin_tr = [r for r in lin_tr if r["caminho"] not in fora_tr]
     margem = cfg["dados"].get("margem_limiar")  # ex.: [[2.0, 3.2], [8.0, 12.5]] mm/h: rótulo de radar duvidoso
     if margem:
         def perto(r):

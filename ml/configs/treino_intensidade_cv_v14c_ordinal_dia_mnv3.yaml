@@ -45,7 +45,7 @@ treino:
   epocas: 6
   sem_selecao_por_val: true
   congelar_ate: 13
-  perda_ordinal: 1.0          # v12: congelar ajudou para-brisa, YouTube e 23/09
+  perda_ordinal: 1.0
   batch: 32
   lr: 0.0005
   weight_decay: 0.0001
