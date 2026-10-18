@@ -138,6 +138,25 @@ python ml/scripts/treino/treinar_fixa.py ml/configs/treino_fixa_final.yaml --ava
 
 Registrar o `test_prospectivo` em `docs/resultados-experimentos.md`. Olhou o prospectivo, não mexe mais no modelo.
 
+## 6. Trocar o modelo da câmera fixa em produção (~10 min)
+
+O backend lê tudo do próprio `.onnx` (classes, tamanho, normalização, referência): trocar o modelo é
+trocar **um arquivo**, sem mexer em código.
+
+1. Exportar com `ml/scripts/treino/exportar_onnx_fixa.py <run>/melhor.pt --saida /tmp/novo.onnx` (grava o
+   contrato nos `metadata_props` e confere a paridade PyTorch × ONNX).
+2. Conferir antes de trocar (1 comando, ~1 min, com o Python do backend):
+   ```bash
+   backend/.venv/bin/python ml/scripts/avaliacao/checar_modelo_fixa.py /tmp/novo.onnx
+   ```
+   Ele valida o contrato, carrega pelo `InferenceService` do backend e compara com o modelo atual no
+   `test_camera` (Balneário Camboriú, rótulo de pluviômetro) e em fotos de dia de sol (certo = seco).
+   Referência em 18/10, modelo atual (`fixa_f1_mnv3_fold0`): acerto 0,691, F1 macro 0,294, dia de sol
+   9/20 seco. Só troque se o novo não for pior no `test_camera`.
+3. Copiar para `backend/app/inference/modelos/intensidade_fixa.onnx` (e `backend/app/inference/referencias/`
+   se for F3), branch, commit e PR. O Rodrigo faz o merge; o Moreno faz o deploy e confere em
+   `GET /api/v1/cameras/` que `ultima_captura.modelo` mudou.
+
 ## Não fazer
 
 - Mudar limiares, classes, folds ou câmera de teste depois de ver resultado.
