@@ -78,3 +78,16 @@
 /* Ao vivo: anel pulsando na posição atual do dispositivo */
 @keyframes pulso-ao-vivo { 0% { stroke-opacity: .9; } 70% { stroke-opacity: 0; } 100% { stroke-opacity: 0; } }
 .pulso-ao-vivo { animation: pulso-ao-vivo 1.6s ease-out infinite; }
+
+/* Modo apresentação (/apresentacao) */
+@keyframes ap-gota { from { transform: translateY(-30px); opacity: 0; } 10% { opacity: .7; } to { transform: translateY(260px); opacity: 0; } }
+.ap-gota { position: absolute; top: 0; width: 2px; height: 18px; border-radius: 1px; background: linear-gradient(transparent, #bfdbfe); animation: ap-gota .8s linear infinite; }
+@keyframes ap-entrar { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.ap-entrar { animation: ap-entrar .45s ease-out both; }
+@keyframes ap-etapa { 0% { filter: none; } 30% { filter: drop-shadow(0 0 10px #3b82f6) brightness(1.6); } 100% { filter: none; } }
+.ap-etapa { animation: ap-etapa 1s ease-out both; }
+@keyframes ap-fluxo { from { left: -30%; } to { left: 100%; } }
+.ap-fluxo { position: absolute; top: 0; width: 30%; height: 100%; background: linear-gradient(90deg, transparent, #60a5fa, transparent); left: -30%; animation: ap-fluxo .5s ease-in both; }
+@keyframes ap-ponto-vivo { 0%, 100% { box-shadow: 0 0 0 0 #ef444499; } 70% { box-shadow: 0 0 0 8px #ef444400; } }
+.ap-ponto-vivo { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; animation: ap-ponto-vivo 1.6s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) { .ap-gota, .ap-entrar, .ap-etapa, .ap-fluxo, .ap-ponto-vivo { animation: none; } .ap-gota { display: none; } }

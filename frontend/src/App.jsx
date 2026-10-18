@@ -9,6 +9,8 @@ import Cameras from './pages/Cameras'
 // quem abre só o monitoramento ao vivo não precisa baixar o gráfico.
 const Historico = lazy(() => import('./pages/Historico'))
 const CameraDetalhe = lazy(() => import('./pages/CameraDetalhe'))
+const Apresentacao = lazy(() => import('./pages/Apresentacao'))
+const Simulacao = lazy(() => import('./pages/Simulacao'))
 
 function Carregando() {
   return (
@@ -29,6 +31,8 @@ export default function App() {
           <Route path="/historico"   element={<Historico />} />
           <Route path="/cameras"     element={<Cameras />} />
           <Route path="/cameras/:id" element={<CameraDetalhe />} />
+          <Route path="/apresentacao" element={<Apresentacao />} />
+          <Route path="/simulacao" element={<Simulacao />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

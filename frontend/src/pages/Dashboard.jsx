@@ -61,7 +61,7 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            {[['/historico', 'Histórico →'], ['/dispositivos', `${NOME_TIPO.movel} →`], ['/cameras', `${NOME_TIPO.fixa} →`]].map(([to, txt]) => (
+            {[['/apresentacao', 'Apresentação →'], ['/historico', 'Histórico →'], ['/dispositivos', `${NOME_TIPO.movel} →`], ['/cameras', `${NOME_TIPO.fixa} →`]].map(([to, txt]) => (
               <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
                 style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
                 {txt}
