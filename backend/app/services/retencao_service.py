@@ -1,10 +1,11 @@
 """Retenção de imagens de câmera fixa: apaga arquivo + MediaFile antigos, mantém o Capture."""
 
+import asyncio
 import logging
 import os
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Callable, Optional
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,6 +67,37 @@ async def limpar_imagens_fixa(db: AsyncSession, agora: Optional[datetime] = None
         if len(ids) < len(linhas) or len(linhas) < LOTE:
             break
     return total
+
+
+async def rodar_uma_vez(sessao_factory: Callable[[], AsyncSession]) -> int:
+    """Uma varredura com sessão própria (fora de requisição); nunca propaga erro.
+
+    Args:
+        sessao_factory: fábrica de sessões (ex.: AsyncSessionLocal).
+
+    Returns:
+        Quantas imagens foram apagadas (0 se falhou).
+    """
+    try:
+        async with sessao_factory() as db:
+            n = await limpar_imagens_fixa(db)
+        if n:
+            logger.info("retenção periódica: %d imagem(ns) de câmera fixa apagada(s)", n)
+        return n
+    except Exception:
+        logger.exception("retenção periódica: falha ao limpar imagens de câmera fixa")
+        return 0
+
+
+async def tarefa_periodica(sessao_factory: Callable[[], AsyncSession], intervalo_s: float) -> None:
+    """Roda a retenção a cada `intervalo_s`, mesmo sem ingestão (iniciada no lifespan do app).
+
+    Sem isso, as imagens só eram apagadas quando chegava foto nova de câmera fixa: com o
+    coletor parado, imagens de dias atrás continuavam públicas em /captures/{id}/imagem.
+    """
+    while True:
+        await rodar_uma_vez(sessao_factory)
+        await asyncio.sleep(intervalo_s)
 
 
 async def limpar_imagens_fixa_throttled(db: AsyncSession) -> None:

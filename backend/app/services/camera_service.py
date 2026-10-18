@@ -28,7 +28,7 @@ class CameraService:
             saida.append(CameraResumo(
                 id=d.id, name=d.name, descricao=d.descricao, latitude=d.latitude, longitude=d.longitude,
                 stream_url=d.stream_url, is_active=d.is_active, last_seen_at=d.last_seen_at,
-                ultima_captura=UltimaCaptura.model_validate(cap, from_attributes=True) if cap else None,
+                ultima_captura=UltimaCaptura.da_captura(cap) if cap else None,
                 imagem_url=f"/api/v1/captures/{cap.id}/imagem" if cap else None,
             ))
         return saida

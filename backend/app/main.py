@@ -1,19 +1,34 @@
+import asyncio
+import contextlib
+import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.api.router import router as api_router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, engine
 from app.models import Capture, IngestionLog, MediaFile  # noqa: F401 — registra models no Base
+from app.services.retencao_service import tarefa_periodica
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Verifica conectividade com o banco ao iniciar. Nunca altera o schema."""
+    """Verifica conectividade com o banco ao iniciar e liga a retenção periódica. Nunca altera o schema."""
     async with AsyncSessionLocal() as session:
         await session.execute(text("SELECT 1"))
+    retencao = None
+    if settings.retencao_intervalo_s > 0:
+        retencao = asyncio.create_task(tarefa_periodica(AsyncSessionLocal, settings.retencao_intervalo_s))
     yield
+    if retencao is not None:
+        retencao.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await retencao
     await engine.dispose()
 
 
@@ -54,6 +69,19 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+
+@app.exception_handler(RequestValidationError)
+async def registrar_ingest_invalido(request: Request, exc: RequestValidationError):
+    """Loga a ingestão recusada na validação (422) e responde como o FastAPI responderia.
+
+    O Bearer da Jetson é aceito (e o last_seen_at atualizado) antes de o corpo ser validado:
+    sem este log, uma Jetson que manda o multipart errado parecia "online" sem gravar nada.
+    """
+    if request.url.path.endswith("/ingest"):
+        campos = [".".join(str(p) for p in e.get("loc", ())) + f": {e.get('msg')}" for e in exc.errors()]
+        logger.warning("ingest recusado (422) de %s: %s", request.client.host if request.client else "?", "; ".join(campos))
+    return await request_validation_exception_handler(request, exc)
 
 
 @app.get("/health", tags=["health"])
