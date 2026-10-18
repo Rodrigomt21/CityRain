@@ -19,7 +19,7 @@ dados:
       - [ircnn__event_2, ircnn__event_4]    # dia, dia
       - [ircnn__event_3, ircnn__event_1]    # dia (única garoa diurna), dia
       - [ircnn__event_5, ircnn__event_6]    # dia, dia
-  excluir_treino_csv: data/splits/suspeitos_pb.csv
+  excluir_treino_csv: resultados/suspeitos_pb.csv
   parabrisa_cv:   # 1 grupo por fold do irCNN; cada evento fora do treino em exatamente 1 fold
     folds:
       - [mapillary__allen_2024-07-27, mapillary__allen_2024-09-09, mapillary__allen_2025-08-23,

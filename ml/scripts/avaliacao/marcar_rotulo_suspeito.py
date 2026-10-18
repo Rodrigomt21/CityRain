@@ -6,7 +6,7 @@ do radar. Esses frames saem só do TREINO (``dados.excluir_treino_csv``); a nota
 em todos os frames, então a limpeza não maquia o teste.
 
 Uso (de dentro de ml/):
-    .venv/bin/python scripts/avaliacao/marcar_rotulo_suspeito.py v13_pb20 v14a_foto --saida data/splits/suspeitos_pb.csv
+    .venv/bin/python scripts/avaliacao/marcar_rotulo_suspeito.py v13_pb20 v14a_foto --saida resultados/suspeitos_pb.csv
 """
 import argparse
 import glob

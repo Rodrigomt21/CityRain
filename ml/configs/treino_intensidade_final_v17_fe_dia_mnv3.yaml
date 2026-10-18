@@ -18,7 +18,7 @@ dados:
       - [ircnn__event_2, ircnn__event_4]    # dia, dia
       - [ircnn__event_3, ircnn__event_1]    # dia (única garoa diurna), dia
       - [ircnn__event_5, ircnn__event_6]    # dia, dia
-  excluir_treino_csv: data/splits/suspeitos_pb.csv   # 895 frames (21%) que v13 e v14a, sem ver o dia, dão p<0,10 à classe do radar
+  excluir_treino_csv: resultados/suspeitos_pb.csv   # 895 frames (21%) que v13 e v14a, sem ver o dia, dão p<0,10 à classe do radar
   margem_limiar: [[2.0, 3.2], [8.0, 12.5]]   # E: melhor F1 de moderada (0,308)
   parabrisa_cv:   # 1 grupo por fold do irCNN; cada evento fora do treino em exatamente 1 fold
     folds:
