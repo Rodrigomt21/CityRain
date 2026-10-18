@@ -1,0 +1,146 @@
+{
+ "init": "imagenet",
+ "externo": true,
+ "epocas": 3,
+ "lr": 0.0002,
+ "folds": [
+  {
+   "seco_fora": "0408",
+   "chuva_fora": "0109",
+   "n_seco": 247,
+   "n_chuva": 1018,
+   "auc": 0.4350616036842901,
+   "t0.5": {
+    "recall": 0.9990176817288802,
+    "falso_alarme": 1.0
+   },
+   "t0.3": {
+    "recall": 1.0,
+    "falso_alarme": 1.0
+   },
+   "t0.2": {
+    "recall": 1.0,
+    "falso_alarme": 1.0
+   },
+   "t0.1": {
+    "recall": 1.0,
+    "falso_alarme": 1.0
+   }
+  },
+  {
+   "seco_fora": "0408",
+   "chuva_fora": "1309",
+   "n_seco": 247,
+   "n_chuva": 157,
+   "auc": 0.05711854354160757,
+   "t0.5": {
+    "recall": 0.8089171974522293,
+    "falso_alarme": 1.0
+   },
+   "t0.3": {
+    "recall": 0.8726114649681529,
+    "falso_alarme": 1.0
+   },
+   "t0.2": {
+    "recall": 0.8980891719745223,
+    "falso_alarme": 1.0
+   },
+   "t0.1": {
+    "recall": 0.9490445859872612,
+    "falso_alarme": 1.0
+   }
+  },
+  {
+   "seco_fora": "0408",
+   "chuva_fora": "2309",
+   "n_seco": 247,
+   "n_chuva": 242,
+   "auc": 0.04036035734600328,
+   "t0.5": {
+    "recall": 0.7727272727272727,
+    "falso_alarme": 1.0
+   },
+   "t0.3": {
+    "recall": 0.8181818181818182,
+    "falso_alarme": 1.0
+   },
+   "t0.2": {
+    "recall": 0.8429752066115702,
+    "falso_alarme": 1.0
+   },
+   "t0.1": {
+    "recall": 0.8925619834710744,
+    "falso_alarme": 1.0
+   }
+  },
+  {
+   "seco_fora": "0608",
+   "chuva_fora": "0109",
+   "n_seco": 103,
+   "n_chuva": 1018,
+   "auc": 0.17156236290461022,
+   "t0.5": {
+    "recall": 0.668958742632613,
+    "falso_alarme": 0.9514563106796117
+   },
+   "t0.3": {
+    "recall": 0.7367387033398821,
+    "falso_alarme": 0.9514563106796117
+   },
+   "t0.2": {
+    "recall": 0.7701375245579568,
+    "falso_alarme": 1.0
+   },
+   "t0.1": {
+    "recall": 0.8369351669941061,
+    "falso_alarme": 1.0
+   }
+  },
+  {
+   "seco_fora": "0608",
+   "chuva_fora": "1309",
+   "n_seco": 103,
+   "n_chuva": 157,
+   "auc": 0.8134005318162142,
+   "t0.5": {
+    "recall": 1.0,
+    "falso_alarme": 0.9514563106796117
+   },
+   "t0.3": {
+    "recall": 1.0,
+    "falso_alarme": 0.9514563106796117
+   },
+   "t0.2": {
+    "recall": 1.0,
+    "falso_alarme": 0.9514563106796117
+   },
+   "t0.1": {
+    "recall": 1.0,
+    "falso_alarme": 0.9514563106796117
+   }
+  },
+  {
+   "seco_fora": "0608",
+   "chuva_fora": "2309",
+   "n_seco": 103,
+   "n_chuva": 242,
+   "auc": 0.6856695819626093,
+   "t0.5": {
+    "recall": 0.9421487603305785,
+    "falso_alarme": 0.8349514563106796
+   },
+   "t0.3": {
+    "recall": 0.9710743801652892,
+    "falso_alarme": 0.912621359223301
+   },
+   "t0.2": {
+    "recall": 0.9793388429752066,
+    "falso_alarme": 0.912621359223301
+   },
+   "t0.1": {
+    "recall": 0.9917355371900827,
+    "falso_alarme": 0.9611650485436893
+   }
+  }
+ ]
+}
