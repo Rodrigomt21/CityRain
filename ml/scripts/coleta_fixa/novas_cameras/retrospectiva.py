@@ -65,7 +65,9 @@ def planejar(nome: str, passo_chuva: int, passo_resto: int, horas: float, desist
     tri = p / "triagem.csv"
     if not tri.is_file():
         raise SystemExit("Rode antes a triagem.py: só câmeras aprovadas entram na retrospectiva.")
-    aprovadas = {r["id"] for r in csv.DictReader(open(tri, encoding="utf-8")) if r["aprovada"] == "SIM"}
+    # Sem DVR na triagem (live que cai e volta): pular, senão tenta a gravação velha a cada ciclo e o YouTube bloqueia
+    aprovadas = {r["id"] for r in csv.DictReader(open(tri, encoding="utf-8"))
+                 if r["aprovada"] == "SIM" and r.get("dvr") != "sem DVR"}
     agora = datetime.now(timezone.utc)
     inicio = agora - timedelta(hours=horas)
     defeito = estacoes_com_defeito()

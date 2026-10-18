@@ -16,6 +16,7 @@ import argparse
 import subprocess
 import sys
 import tempfile
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -30,11 +31,20 @@ def _jpeg_youtube(fonte) -> bytes:
     import time
     agora = time.time()
     if not fonte.hls or agora - fonte.hls_em > coletor.RENOVAR_HLS_S:
-        r = subprocess.run(["yt-dlp", "-g", "-f", "b[height<=720]/bv*[height<=720]/b/bv*", fonte.url],
-                           capture_output=True, text=True, timeout=coletor.TIMEOUT_S)
+        # --match-filter is_live: live encerrada vira gravação, e o 1º quadro da gravação sairia com a hora de agora
+        r = subprocess.run(["yt-dlp", "-g", "--match-filter", "is_live", "-f", "b[height<=720]/bv*[height<=720]/b/bv*",
+                            fonte.url], capture_output=True, text=True, timeout=coletor.TIMEOUT_S)
         if r.returncode != 0 or not r.stdout.strip():
-            raise RuntimeError(f"yt-dlp: {r.stderr.strip()[-200:]}")
+            raise RuntimeError(f"yt-dlp: sem live no ar agora {r.stderr.strip()[-200:]}")
         fonte.hls, fonte.hls_em = r.stdout.strip().splitlines()[0], agora
+    # HLS em cache de live que acabou ganha #EXT-X-ENDLIST: o ffmpeg leria do começo da gravação
+    try:
+        lista = urllib.request.urlopen(fonte.hls, timeout=20).read(400_000).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001
+        lista = ""
+    if "#EXT-X-ENDLIST" in lista:
+        fonte.hls = ""
+        raise RuntimeError("live encerrada (playlist com ENDLIST): foto descartada")
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir) / "frame.jpg"
         r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", fonte.hls, "-frames:v", "1", "-q:v", "2", str(tmp)],

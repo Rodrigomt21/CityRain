@@ -1,0 +1,163 @@
+# Câmeras novas do Paulo (kit ml/scripts/coleta_fixa/novas_cameras, GUIA.md). Sem segredo: pode ir para o Git.
+destino: ml/data/raw/novas_paulo/frames
+intervalo_s: 600
+
+fontes:
+  # Live reinicia todo dia: link do canal /live (sem DVR, só ao vivo).
+  # Posição: só "Rua do Imperador". O trecho sul/oeste da rua (lon < -43,175) tem 3 estações CEMADEN
+  # reportando a <= 5 km (Alto da Serra 2,2 km, Morin 2,4 km, Quitandinha 4,7 km); o trecho nordeste tem 2.
+  # Falta achar o prédio pela imagem (canal do rio no meio da rua, faixa de pedestre, prédio neoclássico
+  # de esquina) para marcar posicao_verificada: true.
+  - id: petropolis_imperador
+    ativa: false   # desativada em 14/10: estratégia nova só SP/ABC perto de pluviômetro
+    tipo: youtube
+    url: "https://www.youtube.com/channel/UCEugTiIjeITHGvdU-C7D2Jg/live"
+    lat: -22.51037
+    lon: -43.17594
+    descricao: "Petrópolis 24h, Rua do Imperador, Centro, Petrópolis/RJ (aprox.: rua)"
+    posicao_verificada: false
+    fonte_publica: "https://www.youtube.com/watch?v=f93TPY4U-xM"
+
+  # Canal "Tá ao vivo" (Olinda): as lives recomeçam a cada 8 a 12 h com link novo. Trocar o url quando cair
+  # (listar: yt-dlp --flat-playlist https://www.youtube.com/channel/UCAjAwOKrfmZX1552JnE_i5g/streams).
+  # Posição: a câmera mostra a fachada da Sociedade Beneficente de Artistas e Operários de Olinda (placa
+  # legível na imagem), Rua Bernardo Vieira de Melo, 127 (CNPJ 35.617.315/0001-67). A rua tem ~170 m saindo
+  # dos Quatro Cantos; ponto usado = ~127 m do início (numeração métrica), incerteza ~50 m.
+  # Pluviômetro: em qualquer ponto da rua há 3 estações reportando a <= 5 km (Fragoso, Torreão 4,2, Porto 4,8);
+  # Jardim Fragoso fica a 1,90-2,06 km, na fronteira dos 2 km (decide se o rótulo vem de 1 estação ou do consenso).
+  - id: olinda_quatrocantos
+    ativa: false   # desativada em 14/10: estratégia nova só SP/ABC perto de pluviômetro
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=zhOBRQVm950"
+    lat: -8.01575
+    lon: -34.85277
+    descricao: "Tá ao vivo, Rua Bernardo Vieira de Melo em frente ao nº 127 (Sociedade Beneficente de Artistas e Operários), Quatro Cantos, Olinda/PE"
+    posicao_verificada: true
+    fonte_publica: "https://www.infoinvest.com.br/consulta-empresa/35617315000167-sociedade-beneficente-de-artistas-e-operarios-de-olinda"
+  # Posição aproximada: só o bairro (título "Olinda Varadouro"; casa laranja nº 68 ao lado da câmera, rua não
+  # identificada). Aceita pelo critério do GUIA ("qualquer ponto da área passa"): 119 de 121 pontos do bairro
+  # (OSM) têm 1 estação reportando a <= 2 km ou 3 a <= 5 km. Decidido pelo Paulo em 14/10.
+  - id: olinda_varadouro
+    ativa: false   # desativada em 14/10: estratégia nova só SP/ABC perto de pluviômetro
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=KvdrS1IohWc"
+    lat: -8.01914
+    lon: -34.85417
+    descricao: "Tá ao vivo, Varadouro, Olinda/PE (aprox.: bairro, quase todo ponto passa no pluviômetro; casa nº 68 ao lado da câmera)"
+    posicao_verificada: true
+    fonte_publica: "https://www.youtube.com/watch?v=x8l-Zg2WwSI"
+
+  # SP capital: câmera boa (fixa, alta, muito céu), mas SEM estação CEMADEN reportando a <= 5 km.
+  # Coletando só ao vivo enquanto o Rodrigo decide se o teste prospectivo aceita pluviômetro do CGE-SP.
+  # Posição aproximada (estação Tatuapé); a câmera olha o viaduto da Radial Leste com a Salim Farah Maluf.
+  - id: sp_tatuape_radial
+    ativa: false   # desativada em 14/10: estratégia nova só SP/ABC perto de pluviômetro
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=iv_pnlX_td4"
+    lat: -23.5403
+    lon: -46.5765
+    descricao: "TRAINS LIVE BRASIL, Tatuapé SP: Radial Leste, Salim Farah Maluf, Linha 3 e CPTM (aprox.: estação Tatuapé)"
+    posicao_verificada: false
+    fonte_publica: "https://www.youtube.com/watch?v=iv_pnlX_td4"
+  # ===== Estratégia de 14/10: só SP e ABC, perto de pluviômetro CEMADEN, de olho em chuva forte =====
+
+  # Rádio TV CDL SP: "Avenida Paulista, na altura do número 900" (descrição e tarja da live), em frente à
+  # Gazeta/Cásper Líbero. 4 estações reportando a <= 5 km (AC Central 2,9, Centro 3,5, Vila Clementino 3,7,
+  # Luz 4,3): rótulo pelo consenso. A live recomeça todo dia com link novo (o vigia troca o url).
+  - id: sp_paulista900
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=mNtZ7IFlxZU"
+    lat: -23.56544
+    lon: -46.65120
+    descricao: "Rádio TV CDL SP, Av. Paulista altura do nº 900 (Gazeta/Cásper Líbero), Bela Vista, São Paulo"
+    posicao_verificada: true
+    fonte_publica: "https://www.youtube.com/watch?v=mNtZ7IFlxZU"
+
+  # Riacho Grande Online (São Bernardo do Campo): 3 câmeras do mesmo canal, lives contínuas desde 21/09 e 01/10.
+  # A câmera 2 olha de cima a Drogasil da Rua Heinrich Nordhoff: num raio de 300 m dali, todos os pontos têm
+  # 3 estações reportando a <= 5 km (Areião 2,7, Parque Selecta 3,8, Jardim Silvina 4,7).
+  - id: sbc_riachogrande_2
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=8WaOvqdqYmA"
+    lat: -23.77886
+    lon: -46.53075
+    descricao: "Riacho Grande Online, câmera 2: cruzamento da Drogasil, Rua Heinrich Nordhoff, Riacho Grande, SBC"
+    posicao_verificada: true
+    fonte_publica: "https://www.openstreetmap.org/search?query=Drogasil%20Riacho%20Grande"
+  # Câmeras 1 e 3: mesmo canal, posição NÃO verificada (provavelmente perto da 2; confirmar no Street View).
+  # A 1 mostra a estação meteorológica própria do canal (WS Clima, 779 m) com chuva em mm na tela.
+  - id: sbc_riachogrande_1
+    ativa: false   # desativada em 15/10: posição não verificada (só roda câmera aprovada)
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=NX7tG-w6wRQ"
+    lat: -23.77886
+    lon: -46.53075
+    descricao: "Riacho Grande Online, câmera 1: rua do centro com a represa ao fundo, Riacho Grande, SBC (aprox.: Drogasil)"
+    posicao_verificada: false
+    fonte_publica: ""
+  - id: sbc_riachogrande_3
+    ativa: false   # desativada em 15/10: posição não verificada (só roda câmera aprovada)
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=bvofldeqcjY"
+    lat: -23.77886
+    lon: -46.53075
+    descricao: "Riacho Grande Online, câmera 3: vista alta da represa Billings, Riacho Grande, SBC (aprox.: Drogasil)"
+    posicao_verificada: false
+    fonte_publica: ""
+  # ===== 14/10 noite: câmeras a até 2 km de pluviômetro CEMADEN reportando =====
+  # São Paulo com Regiane: celular fixo na janela, de cima do cruzamento. A descrição da live diz:
+  # "Santo Amaro na rua Barão do Rio Branco com Mário Lopes Leão perto do metrô Largo 13". Cruzamento no OSM
+  # (nó comum das duas vias): -23.65107, -46.70911. Estações reportando: Santo Amaro Paulista 0,12 km e
+  # Jardim São Luís 1,57 km (rótulo por 1 estação, regra CF3.1). A live cai e volta com link novo (o vigia troca).
+  - id: sp_santoamaro_largo13
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=JB2qiaZfOIw"
+    lat: -23.65107
+    lon: -46.70911
+    descricao: "São Paulo com Regiane, Rua Barão do Rio Branco com Av. Mário Lopes Leão, Santo Amaro (Largo 13), São Paulo"
+    posicao_verificada: true
+    fonte_publica: "https://www.youtube.com/watch?v=JB2qiaZfOIw"
+  # Golf Oscar Romeo: 3 câmeras de Congonhas, todo dia das 12h às 00h, link novo por dia (o vigia troca).
+  # A câmera 3 olha a Av. Washington Luís e o terminal do lado oeste; prédio não identificado. Conforme o
+  # prédio, Vila Babilônia fica a 1,6-3,0 km: só passa na regra de 1 estação se ficar ao sul do terminal.
+  # Ponto usado = terminal (Vila Babilônia 1,93 km; 5 estações a até 5 km). Confirmar o prédio.
+  - id: sp_congonhas_1
+    ativa: false   # desativada em 15/10: posição não verificada (só roda câmera aprovada)
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=EK3XUotHudM"
+    lat: -23.6267
+    lon: -46.6566
+    descricao: "Golf Oscar Romeo, Congonhas câmera 1: pista vista de lado (aprox.: terminal)"
+    posicao_verificada: false
+    fonte_publica: ""
+  - id: sp_congonhas_2
+    ativa: false   # desativada em 15/10: posição não verificada (só roda câmera aprovada)
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=bVtieBCyFFM"
+    lat: -23.6267
+    lon: -46.6566
+    descricao: "Golf Oscar Romeo, Congonhas câmera 2: pátio e terminal (aprox.: terminal)"
+    posicao_verificada: false
+    fonte_publica: ""
+  - id: sp_congonhas_3
+    ativa: false   # desativada em 15/10: posição não verificada (só roda câmera aprovada)
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=LLE_IGm0Vtk"
+    lat: -23.6267
+    lon: -46.6566
+    descricao: "Golf Oscar Romeo, Congonhas câmera 3: Av. Washington Luís e pista (aprox.: terminal)"
+    posicao_verificada: false
+    fonte_publica: ""
+  # ===== 15/10: busca de lives no ar a até 2 km de pluviômetro =====
+  # Geolan Live 24h (rede de videomonitoramento da Geolan Tecnologia): "Rua Vitória Metrô República",
+  # "Localização: Vitória Hostel, Rua Vitória" (descrição). Câmera de rua, baixa, olha calçada e asfalto.
+  # A rua inteira (OSM, -23.5372 a -23.5396) tem 3 estações reportando a até 2 km: AC Central 0,70-0,72,
+  # Luz 0,87-1,34, Centro 0,99-1,31. Ponto usado: meio da rua (incerteza ~150 m, não muda a regra).
+  - id: sp_republica_vitoria
+    tipo: youtube
+    url: "https://www.youtube.com/watch?v=CKpA7U_wAbw"
+    lat: -23.53825
+    lon: -46.63956
+    descricao: "Geolan Live, Rua Vitória (Vitória Hostel), perto do Metrô República, Centro, São Paulo"
+    posicao_verificada: true
+    fonte_publica: "https://www.youtube.com/watch?v=CKpA7U_wAbw"
