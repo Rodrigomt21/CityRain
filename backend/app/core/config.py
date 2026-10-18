@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     # Imagens de câmera fixa (1 frame/10 s por câmera) só ficam em disco por este tempo;
     # as linhas de captures ficam (histórico). Mídia de dispositivo móvel nunca é apagada.
     retencao_imagem_fixa_min: int = 60
+    # Varredura periódica da retenção (independe de chegar foto); 0 desliga.
+    retencao_intervalo_s: int = 300
     api_key: str = ""
     admin_key: str = ""
     host: str = "0.0.0.0"

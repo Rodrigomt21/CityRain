@@ -67,13 +67,13 @@ async def list_devices(db: AsyncSession = Depends(get_db)):
 
 @router.get("/publico", response_model=list[DevicePublico])
 async def list_devices_publico(db: AsyncSession = Depends(get_db)):
-    """Lista pública dos dispositivos (sem placa, sem credencial) para o dashboard.
+    """Lista pública dos dispositivos **ativos** (sem placa, sem credencial) para o dashboard.
 
-    A listagem completa (com placa) continua em ``GET /`` protegida pela admin key —
-    nunca embutir essa chave no frontend, que é público.
+    A listagem completa (com placa e com os desativados) continua em ``GET /`` protegida
+    pela admin key — nunca embutir essa chave no frontend, que é público.
     """
     service = DeviceService(db)
-    return await service.list_devices()
+    return await service.list_devices(apenas_ativos=True)
 
 
 @router.delete(

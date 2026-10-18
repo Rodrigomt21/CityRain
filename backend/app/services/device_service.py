@@ -82,11 +82,17 @@ class DeviceService:
         )
         return result.scalar_one_or_none()
 
-    async def list_devices(self) -> list[Device]:
-        """Lista todos os dispositivos, do mais recente ao mais antigo."""
-        result = await self.db.execute(
-            select(Device).order_by(Device.registered_at.desc())
-        )
+    async def list_devices(self, apenas_ativos: bool = False) -> list[Device]:
+        """Lista os dispositivos, do mais recente ao mais antigo.
+
+        Args:
+            apenas_ativos: só os habilitados (is_active). A visão pública usa True: cadastro
+                de teste desativado não precisa aparecer para qualquer visitante.
+        """
+        q = select(Device).order_by(Device.registered_at.desc())
+        if apenas_ativos:
+            q = q.where(Device.is_active.is_(True))
+        result = await self.db.execute(q)
         return list(result.scalars().all())
 
     async def get_by_id(self, device_id: int) -> Optional[Device]:
