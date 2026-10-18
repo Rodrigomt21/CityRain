@@ -61,7 +61,7 @@ flowchart LR
 
 Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados-experimentos.md`](docs/resultados-experimentos.md). Teste é sempre com dado real.
 
-**Modelo do carro em produção: v14f** (MobileNetV3-Large, 288×384, sem dado sintético, só de dia). Treinado com sessões do carro, irCNN e **27 dias de chuva real vista de dentro de carros** (BDD100K, dashcams do YouTube e Mapillary), rotulados pelo radar MRMS.
+**Modelo do carro em produção: v14f** (MobileNetV3-Large, 288×384, sem dado sintético, só de dia). Treinado com sessões do carro, irCNN, ~400 vídeos do BDD100K e **20 dias de chuva real vista de dentro de carros** (dashcams do YouTube e Mapillary), rotulados pelo radar MRMS.
 
 | Teste (nenhum visto no treino) | v7 (anterior) | **v14f** |
 |---|---|---|
