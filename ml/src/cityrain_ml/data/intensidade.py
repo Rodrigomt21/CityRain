@@ -62,6 +62,22 @@ def aumentar(img: Image.Image, rng: random.Random, cfg: dict) -> Image.Image:
     if jit > 0:
         img = ImageEnhance.Brightness(img).enhance(rng.uniform(1 - jit, 1 + jit))
         img = ImageEnhance.Contrast(img).enhance(rng.uniform(1 - jit, 1 + jit))
+    # fotometria forte (v14): o modelo decora a luz/câmera de cada dia de para-brisa (CV v11–v13)
+    sat = cfg.get("saturacao", 0.0)
+    if sat > 0:
+        img = ImageEnhance.Color(img).enhance(rng.uniform(1 - sat, 1 + sat))
+    bb = cfg.get("balanco_branco", 0.0)
+    gama = cfg.get("gama", 0.0)
+    if bb > 0 or gama > 0:
+        x = np.asarray(img.convert("RGB"), dtype=np.float32) / 255.0
+        if bb > 0:
+            x = x * np.array([rng.uniform(1 - bb, 1 + bb) for _ in range(3)], dtype=np.float32)
+        if gama > 0:
+            x = np.clip(x, 0, 1) ** rng.uniform(1 - gama, 1 + gama)
+        img = Image.fromarray((np.clip(x, 0, 1) * 255).astype(np.uint8))
+    if rng.random() < cfg.get("desfoque_prob", 0.0):
+        from PIL import ImageFilter
+        img = img.filter(ImageFilter.GaussianBlur(rng.uniform(0.5, 1.5)))
     qmin = cfg.get("jpeg_qualidade_min")
     if qmin:
         buf = io.BytesIO()

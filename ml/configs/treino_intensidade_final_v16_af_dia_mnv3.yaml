@@ -1,0 +1,65 @@
+# FINAL (--fold final): desenho exato da CV abaixo, todo o para-brisa e todos os eventos irCNN de dia no treino.
+# CV v16: receita candidata a final = fotometria forte (A) + sem rótulos suspeitos no treino (F). A ordinal (C) saiu:
+# combinada com A (v15) não somou no para-brisa (0,419 contra 0,426 da A e 0,457 da F).
+# com 27 eventos de para-brisa (split v16: + schok, vorpalblade, directionup, whitecotton, jacklehoullier).
+# Os 7 dias novos não têm predição fora do fold, então não passam pelo filtro de suspeitos.
+nome: intensidade_final_v16_af_dia_mnv3
+seed: 42
+
+dados:
+  splits_csv: ml/data/splits/intensidade_v16_pb27.csv
+  origens_treino: [real, bdd, dashcam, mapillary]   # v10: mapillary = BlackVue do allen (7 dias, 3 classes)
+  # (versão só-dia) Folds declarados, nunca sorteados: 3 eventos por fold, misturando dia/noite e com
+  # garoa (eventos 3, 8, 9, 10, 12) espalhada. No fold k: folds[k] = teste,
+  # folds[k+1][0] = val, o resto = treino. Ver eventos_ircnn() em training/intensidade.py.
+  ircnn_cv:
+    fold: 0
+    max_por_evento: 150        # por (evento, classe)
+    amostrar_por_classe: true
+    folds:   # SÓ DIA (15/10: noite fora do escopo do modelo do carro): eventos noturnos 7-12 fora
+      - [ircnn__event_2, ircnn__event_4]    # dia, dia
+      - [ircnn__event_3, ircnn__event_1]    # dia (única garoa diurna), dia
+      - [ircnn__event_5, ircnn__event_6]    # dia, dia
+  excluir_treino_csv: resultados/suspeitos_pb.csv
+  parabrisa_cv:   # 1 grupo por fold do irCNN; cada evento fora do treino em exatamente 1 fold
+    folds:
+      - [mapillary__allen_2024-07-27, mapillary__allen_2024-09-09, mapillary__allen_2025-08-23,
+         mapillary__cubanoboi_2025-07-13, mapillary__satsuka_2026-04-25,
+         mapillary__schok_2024-03-02, mapillary__jacklehoullier_2021-10-08]
+      - [dashcam__lib41z-4zVk, mapillary__allen_2025-07-09, mapillary__allen_2026-05-29, dashcam__cG3oG9QxjVg,
+         mapillary__cubanoboi_2025-08-08, mapillary__savannah_2023-08-25,
+         mapillary__vorpalblade_2021-07-12, mapillary__whitecotton_2024-04-09, mapillary__vorpalblade_2021-07-09]
+      - [dashcam__BEl8JZr-NHY, dashcam__HRL2l7OVQJs, mapillary__allen_2025-08-24, mapillary__allen_2026-04-05,
+         dashcam__kUhyK5VuwPM, mapillary__cubanoboi_2026-08-29, mapillary__cubanoboi_2025-07-14,
+         mapillary__cubanoboi_2025-08-22, mapillary__cubanoboi_2025-06-10,
+         mapillary__directionup_2026-06-19, mapillary__schok_2024-01-09]
+
+entrada:            # 4:3, igual ao frame da câmera (640x480)
+  altura: 288
+  largura: 384
+
+modelo:
+  arquitetura: mobilenet_v3_large
+  pretreinado: true
+
+aumentacao:
+  flip_horizontal: true
+  recorte_escala_min: 0.85
+  brilho_contraste: 0.2
+  jpeg_qualidade_min: 60
+  saturacao: 0.4
+  balanco_branco: 0.15
+  gama: 0.3
+  desfoque_prob: 0.3   # recomprime tudo: tira o atalho da dupla compressão do sintético
+
+treino:
+  dispositivo: auto
+  epocas: 6
+  sem_selecao_por_val: true
+  congelar_ate: 13
+  batch: 32
+  lr: 0.0005
+  weight_decay: 0.0001
+  label_smoothing: 0.1
+  paciencia: 5
+  workers: 4

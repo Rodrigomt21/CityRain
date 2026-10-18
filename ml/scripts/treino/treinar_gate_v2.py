@@ -40,8 +40,8 @@ from cityrain_ml.evaluation.metricas import taxa_ordenacao  # noqa: E402
 LADO = 384
 FR = "ml/data/processed/imt_coleta"
 ZEN = "ml/data/raw/public_datasets/raindrops_zenodo/images"
-SECAS = ("0408", "0608")
-CHUVAS = ("0109", "1309", "2309")
+SECAS = ("0408", "0608", "1610")
+CHUVAS = ("0109", "1309", "2309", "1610n")
 
 
 def lista_sessoes() -> dict[str, list[str]]:
@@ -54,6 +54,11 @@ def lista_sessoes() -> dict[str, list[str]]:
         "0109": [r["caminho"] for r in g if r["classe"] == "chuva" and r["particao"] in ("train", "val")],
         "1309": [r["caminho"] for r in g if r["particao"] == "test_real"],
         "2309": [r["caminho"] for r in i if r["particao"] == "test_ordinal_2309"],
+        # 16/10 (zips 9 e 10): seco de dia (CEMADEN 355030869A zerado; câmera apontada alta, muito céu) e
+        # chuva de noite pelo rótulo visual (gotas + limpador nas fotos das 19 h locais; pluviômetros perto
+        # zerados ou travados, então não entra na intensidade)
+        "1610": sorted(str(c.relative_to(RAIZ)) for c in (RAIZ / FR / "coleta_jetson_20261016").glob("*.jpg")),
+        "1610n": sorted(str(c.relative_to(RAIZ)) for c in (RAIZ / FR / "coleta_jetson_20261016_noite").glob("frame_20261016_19*.jpg")),
     }
     return s
 
@@ -169,7 +174,13 @@ def main() -> None:
     ap.add_argument("--teto", type=int, default=300, help="máx. frames por sessão no treino")
     ap.add_argument("--saida", type=Path, required=True)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--secas-fora", nargs="*", default=None, help="cv: só folds com estas sessões secas fora")
+    ap.add_argument("--chuvas-fora", nargs="*", default=None, help="cv: só folds com estas sessões de chuva fora")
+    ap.add_argument("--sem-1610", action="store_true", help="sem as sessões de 16/10 (desenho do gate v3)")
     a = ap.parse_args()
+    global SECAS, CHUVAS
+    if a.sem_1610:
+        SECAS, CHUVAS = SECAS[:2], CHUVAS[:3]
     lr = a.lr or (2e-4 if a.init == "imagenet" else 1e-4)
     disp = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     sess, ext = lista_sessoes(), externo()
@@ -193,8 +204,8 @@ def main() -> None:
         return
 
     folds = []
-    for ds in SECAS:
-        for dc in CHUVAS:
+    for ds in [x for x in SECAS if a.secas_fora is None or x in a.secas_fora]:
+        for dc in [x for x in CHUVAS if a.chuvas_fora is None or x in a.chuvas_fora]:
             cam, y = conjunto(sess, [s for s in SECAS + CHUVAS if s not in (ds, dc)], ext, usar_ext, a.teto, maio)
             print(f"[gate2] fold seco={ds} chuva={dc} | treino seco {int((y == 0).sum())} chuva {int((y == 1).sum())}", flush=True)
             m = treinar(a.init, get(cam), y, a.epocas, lr, disp, a.seed)

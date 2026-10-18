@@ -55,6 +55,112 @@ grande e inequívoco é **irCNN no treino** (0,07 → ~0,46). (`ml/resultados/in
 
 **Sintético × sem sintético (v3 × v6, pareado, 2.000 reamostras):** v3−v6 F1 macro +0,045 [+0,014; +0,082]; Spearman +0,172 [−0,027; +0,364]. Retirar o sintético **piora** o F1 macro de forma significativa (IC não inclui 0) e, nas métricas ordinais, derruba 23/09 > 13/09 (0,685 → 0,554) e pico > início no YouTube (0,605 → 0,339); garoa 13/09 e YouTube > 13/09 não mudam (1,000 e 0,968). Veredito: **v6 é pior que a v3** — o sintético (moderada/forte de para-brisa) ajuda e **não deve sair** do modelo do carro. Nota: no val de v6 o domínio "próprio" fica em 0,167 (o val tem moderada/forte sintéticas, que o modelo sem sintético nunca viu), então o critério de escolha de época ficou dominado pelo irCNN; a comparação com a v3 mantém-se válida (mesmos folds, mesmo critério). (`ml/runs/treino_cv_v6.log`)
 
+### Sem sintético, só de dia: v6 × v7 com BDD100K (15/10/2026)
+
+Decisões de 14–15/10: o orientador rejeitou o sintético e a noite saiu do escopo do modelo do carro.
+Por isso as duas CVs abaixo usam **só os eventos diurnos do irCNN** (1–6, em 3 folds de 2) e não são
+diretamente comparáveis às linhas v1–v6 acima (que têm 12 eventos, dia e noite).
+
+**v7** = v6 + **BDD100K** (dashcam de celular atrás do para-brisa, NY/Califórnia) **de dia**, rotulado
+por **radar NOAA MRMS PrecipRate** (2 min, ~1 km; outra verdade de campo, não pluviômetro), só rótulos
+inequívocos (vizinhança 3×3 e ±2 min concordam). Frames de vídeo a cada 4 s, recorte central 4:3:
+926 de moderada (95 vídeos) e 2.864 de garoa (300 vídeos); forte diurna inequívoca no BDD: 0. Todo o BDD
+fica no treino; o teste continua irCNN + carro. Pipeline: `ml/scripts/bdd/` (etapas 1–7 +
+`montar_split_v7.py`). A busca pelo radar nos 22.883 vídeos que o BDD marcou como nublado/indefinido
+achou só 1 moderada diurna inequívoca: o rótulo `rainy` do BDD já cobre quase toda a chuva.
+
+| CV só dia | irCNN F1 macro | F1 moderada | Spearman | 23/09 > garoa 13/09 | YT pico > início | YT > garoa 13/09 | Temporal 10/03/2023 ≥ moderada |
+|---|---|---|---|---|---|---|---|
+| v6 (sem sintético) | **0,417** | **0,41** | 0,415 | 0,245 | 0,371 | 0,802 | 0–4% |
+| **v7 (v6 + BDD dia)** | 0,375 | 0,30 | **0,596** | **0,640** | **0,641** | **0,966** | **40–74%** |
+
+**Temporal 10/03/2023** (teste novo de forte): vídeo do YouTube `qcI7SWTst4I`, celular atrás do
+para-brisa, Marginal Pinheiros, de dia; CEMADEN Pinheiros/Centro/Mooca marcou 35–87 mm/h entre 14h30
+e 15h20. A hora exata de cada trecho do vídeo não é conhecida, então ele é teste (fração de frames
+≥ moderada), não treino. 236 frames, 1 a cada 10 s (`ml/data/processed/youtube/carro_forte_20230310/`).
+v3 (com sintético) 97% ≥ moderada (9% forte); v6 0–4%; v7 40–74% nos 3 folds; v7 final 64%. Nenhuma
+versão sem sintético prevê forte nele.
+
+**Leitura:** o BDD recupera, sem sintético, a ordenação de intensidade **no domínio do para-brisa**
+(23/09 e YouTube voltam ao nível da v3), ao custo de ~0,04 de F1 no irCNN (câmera de vigilância, fora
+do domínio). Falta forte de para-brisa: só uma sessão real em temporal fecha esse buraco.
+
+**v7 final** (`treino_intensidade_final_v7_bdd_dia_mnv3.yaml`, 8 épocas = mediana da CV 5/8/11, fica a
+última): garoa 13/09 1,000; YT pico > início 0,705; 23/09 > garoa 0,581; YT > garoa 0,836; temporal
+64% ≥ moderada. ONNX em `ml/runs/intensidade_final_v7_bdd_dia_mnv3_foldfinal__20261015_231604/intensidade_v7.onnx`
+(paridade PyTorch × ORT 2,6e-6). A v6 final (piso, sem BDD) ficou em 0,285 / 0,263 / 0,940 e 1% no temporal.
+
+### Forte de para-brisa real: dashcam + Mapillary rotulados por radar (16–17/10/2026)
+
+Fontes novas, todas de dia, rótulo MRMS inequívoco (3×3 e ±2 min), horário conferido no relógio
+gravado na imagem: **dashcams do YouTube** com GPS/hora na tela (`ml/scripts/dataset_youtube/dashcam_radar.py`)
+e **Mapillary** por área (`mapillary_chuva.py`) e **por usuário** (`mapillary_criador.py`: quem já dirigiu
+num temporal costuma dirigir na chuva outras vezes). Usuários aprovados na revisão visual: `allen`
+(BlackVue, Jacksonville, 7 dias), `cubanoboi` (iPhone dentro do carro, Flórida, 6 dias), `Satsuka_Osaka`
+(iPhone, 1 dia) e BlackVue de Savannah 25/08/2023. Descartados: câmera pela janela lateral, carro
+parado com vidro seco, neve/gelo no chão.
+
+| CV só dia | Dados novos | irCNN agregado | YT pico > início | 23/09 > garoa | Temporal SP ≥ mod. (forte) |
+|---|---|---|---|---|---|
+| v7 | — | 0,375 | 0,641 | 0,640 | 57% (0%) |
+| v8 | + 491 forte dashcam | 0,395 | 0,274 | 0,637 | 68% (3%) |
+| v9 | v8 + 396 forte Mapillary | 0,441 | 0,454 | 0,514 | 70% (4%) |
+| v10 | v7 + dashcam + allen (1.117 forte) | 0,481 | 0,618 | 0,440 | 72% (1%) |
+
+**Nota honesta de para-brisa (v11+).** Até a v10 todo o para-brisa ficava no treino, então nada media
+o domínio do produto. A chave `dados.parabrisa_cv` faz cada fold segurar também um grupo de eventos de
+para-brisa (`test_parabrisa`, agregado no fim da CV). Correção de protocolo junto: o val tem
+forte/moderada **sintéticos** (1.048 linhas) e escolhia a época; v11+ usa **6 épocas fixas** na CV e no
+final (`sem_selecao_por_val`).
+
+| CV só dia | Para-brisa F1 | Spearman frame / evento | irCNN agreg. | YT pico > início | 23/09 > garoa |
+|---|---|---|---|---|---|
+| v7 final (nunca viu para-brisa) | 0,167 | 0,29 / 0,12 | — | — | — |
+| v11 (v10, 12 eventos de para-brisa) | 0,320 | 0,10 / −0,19 | **0,455** | 0,679 | 0,483 |
+| v12 (v11 + 13 blocos congelados) | **0,349** | 0,10 / −0,20 | 0,427 | **0,765** | **0,602** |
+
+**Leitura:** em dia de para-brisa nunca visto, a CNN fica perto do acaso e **não ordena** a intensidade
+entre dias (no mesmo carro, um dia de moderada vira forte e um de forte vira moderada): com ~12 dias ela
+decora o dia (luz, lugar), não a chuva. Ajustar viés de logit em 2 folds e medir no 3º não ajuda. A
+alavanca é **número de dias** de para-brisa, não fotos por dia. Finais: v11 final YT pico > início
+0,878 (melhor até aqui), mas temporal SP 46% ≥ moderada (v7 final 64%).
+
+**Atributos físicos no para-brisa** (20 eventos, sem rede): brilho e contraste caem com a chuva
+(Spearman por evento −0,67 e −0,59; dark channel −0,50). Regressão linear em log(mm/h) com brilho +
+contraste, deixando um dia de fora por vez: Spearman por evento **0,63 (IC 95% 0,28–0,85)**. Mas depende
+da câmera: dashcams (allen +0,79, YouTube +0,60) sim, iPhone (cubanoboi −0,58, exposição automática)
+não, e em 3 folds com 12 eventos o sinal inverte. Implementação em tensor, exportável no mesmo ONNX:
+`ml/src/cityrain_ml/models/hibrido.py`. Fica como candidato a híbrido, não como modelo de produção.
+
+**Opções contra "decorar o dia" (17/10), uma de cada vez sobre a v13 (20 eventos de para-brisa):**
+
+| CV | Para-brisa F1 | Spearman evento | F1 moderada | irCNN | YT pico > início | 23/09 > garoa |
+|---|---|---|---|---|---|---|
+| v13 (base) | 0,395 | 0,32 | 0,255 | 0,441 | 0,689 | 0,535 |
+| A: fotometria forte (saturação, balanço de branco, gama, desfoque) | 0,426 | **0,45** | 0,256 | 0,421 | 0,678 | 0,545 |
+| B: amostragem 1/n por evento | 0,396 | 0,25 | 0,268 | 0,374 | 0,613 | 0,508 |
+| C: perda ordinal (CE + E[\|k−y\|]) | 0,399 | 0,26 | 0,267 | 0,430 | 0,697 | **0,727** |
+| E: sem frames de radar perto dos limiares | 0,401 | 0,30 | **0,308** | 0,433 | 0,713 | 0,565 |
+| F: sem rótulos suspeitos no treino | **0,457** | 0,42 | 0,287 | 0,438 | **0,795** | 0,665 |
+| v15 = A + C | 0,419 | 0,42 | 0,252 | 0,412 | 0,681 | 0,620 |
+| v16 = A + F, 27 eventos | 0,438 | 0,59 | 0,231 | **0,449** | 0,630 | 0,555 |
+
+Média de 5–15 frames seguidos quase não ajuda (+0,01 de F1): o erro é do dia inteiro, não do frame.
+Rótulo suspeito (F) = frame em que v13 e v14a, sem ver o dia, dão p < 0,10 à classe do radar (895 de
+4.189, 21%; `ml/scripts/avaliacao/marcar_rotulo_suspeito.py`); sai só do treino. Vazamento leve: a lista
+veio de modelos que viram os outros folds. Matriz da F no para-brisa: 47% exato, 40% erro de uma classe,
+13% garoa↔forte; a moderada é o gargalo (24% de acerto).
+
+**Finais (testes nunca vistos):** v13 temporal 56% ≥ moderada / 22% forte, YT 0,854, 23/09 0,587;
+**v14f** 59% / 13%, **YT 0,931**, 23/09 0,586, garoa 13/09 98,7%; v16 55% / 17%, YT 0,716, 23/09 0,437.
+v13 em produção pelo PR #32; v14f proposta no PR #33.
+
+**Tentativas finais para a moderada (17/10 noite), nenhuma supera a v14f:** média de probabilidades de 2–4
+modelos (melhor ensemble 0,443 < 0,457); viés de logit ajustado em 2 folds e medido no 3º (moderada 0,287 →
+0,340, mas F1 macro 0,457 → 0,426); **v17 = F + E** na CV: para-brisa 0,469, moderada 0,385, irCNN 0,448,
+23/09 0,686, mas YT 0,717 e Spearman por evento 0,34; na final perde nos testes nunca vistos (YT 0,599,
+temporal 45% ≥ moderada / 14% forte, 23/09 0,653, garoa 1,000). Fica a v14f.
+
 ### Leituras
 
 1. **Domínio manda mais que arquitetura.** Sem irCNN no treino, o modelo aprende "gota no

@@ -1,0 +1,44 @@
+{
+  "config_sha256": "907094ea30dae7da0bae0b9e4ac65166174ac50ca0384828b43b4d6ab21d998f",
+  "timestamp_execucao_utc": "2026-10-17T01:37:05.383075+00:00",
+  "parametros": {
+    "raio_max_km": 2.0,
+    "janela_min": 15,
+    "zona_morta_frac": 0.15,
+    "minutos_por_leitura": 10,
+    "idade_maxima_posicao_s": 12.0,
+    "consenso_raio_km": 5.0,
+    "consenso_min_estacoes": 3,
+    "janela_seco_min": 60,
+    "consenso_zona_morta_na_mediana": true,
+    "consenso_metropolitano_min_estacoes": 5,
+    "consenso_metropolitano_janela_min": 60
+  },
+  "total_frames": 576,
+  "total_jpg_sem_json": 0,
+  "rotulados": 0,
+  "por_classe": {
+    "seco": 0,
+    "garoa": 0,
+    "moderada": 0,
+    "forte": 0
+  },
+  "por_motivo": {
+    "poucas_estacoes_consenso": 340,
+    "sem_gps_fix": 236
+  },
+  "por_origem_idade_posicao": {},
+  "por_metodo_rotulo": {},
+  "por_evento": {
+    "coleta_jetson_20261016_noite__2026-10-16": {
+      "total": 576,
+      "sem_gps_fix": 236,
+      "poucas_estacoes_consenso": 340
+    }
+  },
+  "seco_por_evento_periodo": {},
+  "ganho_zona_morta_mediana": {},
+  "estacoes_usadas": {},
+  "sensibilidade_raio": {},
+  "sensibilidade_idade_posicao": {}
+}

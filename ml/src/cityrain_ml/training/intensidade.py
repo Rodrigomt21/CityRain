@@ -67,11 +67,12 @@ def _fixar_seed(seed: int) -> None:
     torch.manual_seed(seed)
 
 
-def _loader(ds: DatasetIntensidade, cfg: dict, embaralhar: bool) -> DataLoader:
+def _loader(ds: DatasetIntensidade, cfg: dict, embaralhar: bool, sampler=None) -> DataLoader:
     return DataLoader(
         ds,
         batch_size=cfg["treino"]["batch"],
-        shuffle=embaralhar,
+        shuffle=embaralhar and sampler is None,
+        sampler=sampler,
         num_workers=cfg["treino"].get("workers", 4),
         persistent_workers=False,  # re-spawn por época propaga ds.epoca à aumentação
     )
@@ -85,6 +86,33 @@ def prever(modelo: nn.Module, ds: DatasetIntensidade, cfg: dict, disp: torch.dev
     for x, _ in _loader(ds, cfg, embaralhar=False):
         saidas.append(torch.softmax(modelo(x.to(disp)), dim=1).float().cpu().numpy())
     return np.concatenate(saidas) if saidas else np.zeros((0, len(CLASSES)))
+
+
+def _pesos_por_evento(linhas: list[dict]) -> torch.Tensor:
+    """Peso de amostragem 1/n_evento, reescalado para cada origem manter sua fatia do treino.
+
+    Cada dia de para-brisa passa a pesar igual (um dia com 400 fotos não manda mais que um com 35).
+    """
+    n_ev = Counter(r["evento_id"] for r in linhas)
+    w = np.array([1.0 / n_ev[r["evento_id"]] for r in linhas])
+    origem = np.array([r["origem"] for r in linhas])
+    for o in set(origem):
+        m = origem == o
+        w[m] *= m.sum() / w[m].sum()
+    return torch.as_tensor(w, dtype=torch.double)
+
+
+class _PerdaOrdinal(nn.Module):
+    """CE + λ·E[|k − y|] sob o softmax: errar garoa↔forte custa mais que garoa↔moderada (mesmos 3 logits)."""
+
+    def __init__(self, ce: nn.Module, lam: float, k: int) -> None:
+        super().__init__()
+        self.ce, self.lam = ce, lam
+        self.register_buffer("idx", torch.arange(k, dtype=torch.float32))
+
+    def forward(self, logits: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        dist = (self.idx[None, :] - y[:, None].float()).abs()
+        return self.ce(logits, y) + self.lam * (torch.softmax(logits, 1) * dist).sum(1).mean()
 
 
 def _pesos_classe(linhas: list[dict], classes: tuple[str, ...]) -> torch.Tensor:
@@ -112,6 +140,19 @@ def eventos_ircnn(cfg: dict) -> dict[str, set[str]]:
     val = {folds[(k + 1) % len(folds)][0]}
     train = {e for f in folds for e in f} - test - val
     return {"train": train, "val": val, "test": test}
+
+
+def eventos_parabrisa_teste(cfg: dict) -> set[str]:
+    """Eventos de para-brisa (dashcam/Mapillary) fora do treino no fold atual.
+
+    Com ``dados.parabrisa_cv.folds`` cada fold do irCNN também segura um grupo de
+    eventos de para-brisa: viram ``test_parabrisa``, a nota no domínio do produto.
+    No ``final`` (ou sem a chave) nada sai do treino.
+    """
+    pcv, cv = cfg["dados"].get("parabrisa_cv"), cfg["dados"].get("ircnn_cv")
+    if not pcv or not cv or cv["fold"] == "final":
+        return set()
+    return set(pcv["folds"][cv["fold"]])
 
 
 def subamostrar_por_evento(linhas: list[dict], maximo: int, por_classe: bool = False) -> list[dict]:
@@ -143,8 +184,25 @@ def _tempo_ircnn(caminho: str) -> int:
 def montar_particoes(cfg: dict, csv_path: Path) -> tuple[list[dict], list[dict]]:
     """Linhas de treino e val, incluindo eventos do irCNN quando há ``ircnn_cv``."""
     origens = set(cfg["dados"].get("origens_treino", ["real", "sintetico"]))
-    lin_tr = [r for r in ler_split(csv_path, {"train"}) if r["origem"] in origens and r["classe"] in CLASSES]
+    fora = eventos_parabrisa_teste(cfg)
+    lin_tr = [r for r in ler_split(csv_path, {"train"})
+              if r["origem"] in origens and r["classe"] in CLASSES and r["evento_id"] not in fora]
     lin_va = [r for r in ler_split(csv_path, {"val"}) if r["classe"] in CLASSES]
+    excluir = cfg["dados"].get("excluir_treino_csv")  # rótulos suspeitos (marcar_rotulo_suspeito.py): saem só do treino
+    if excluir:
+        import csv
+
+        with open(Path(csv_path).parents[2] / excluir, newline="") as f:  # caminho relativo a ml/
+            fora_tr = {r["caminho"] for r in csv.DictReader(f)}
+        lin_tr = [r for r in lin_tr if r["caminho"] not in fora_tr]
+    margem = cfg["dados"].get("margem_limiar")  # ex.: [[2.0, 3.2], [8.0, 12.5]] mm/h: rótulo de radar duvidoso
+    if margem:
+        def perto(r):
+            if r["origem"] not in ("dashcam", "mapillary", "bdd") or not r.get("mm_h"):
+                return False
+            v = float(r["mm_h"])
+            return any(a <= v <= b for a, b in margem)
+        lin_tr = [r for r in lin_tr if not perto(r)]
     papeis = eventos_ircnn(cfg)
     if papeis["train"] or papeis["val"]:
         ir = [r for r in ler_split(csv_path, {"test_ircnn"}) if r["classe"] in CLASSES]
@@ -183,11 +241,21 @@ def treinar(cfg: dict, raiz: Path, saida: Path) -> Path:
     print(f"[treino] {disp} | train {Counter(r['classe'] for r in lin_tr)} | val {Counter(r['classe'] for r in lin_va)}")
 
     modelo = construir(cfg["modelo"]["arquitetura"], len(CLASSES), cfg["modelo"].get("pretreinado", True)).to(disp)
+    # congelar_ate: os N primeiros blocos de ``features`` ficam com o peso do ImageNet (e BN em eval).
+    # Com só ~12 eventos de para-brisa a rede inteira decora o dia (CV v11: Spearman por evento -0,19).
+    congelar = cfg["treino"].get("congelar_ate", 0)
+    for prm in modelo.features[:congelar].parameters():
+        prm.requires_grad = False
     perda = nn.CrossEntropyLoss(
         weight=_pesos_classe(lin_tr, CLASSES).to(disp),
         label_smoothing=cfg["treino"].get("label_smoothing", 0.0),
     )
-    otim = torch.optim.AdamW(modelo.parameters(), lr=cfg["treino"]["lr"], weight_decay=cfg["treino"].get("weight_decay", 1e-4))
+    if cfg["treino"].get("perda_ordinal"):
+        perda = _PerdaOrdinal(perda, float(cfg["treino"]["perda_ordinal"]), len(CLASSES)).to(disp)
+    sampler = None
+    if cfg["treino"].get("peso_por_evento"):
+        sampler = torch.utils.data.WeightedRandomSampler(_pesos_por_evento(lin_tr), len(lin_tr), replacement=True)
+    otim = torch.optim.AdamW([q for q in modelo.parameters() if q.requires_grad], lr=cfg["treino"]["lr"], weight_decay=cfg["treino"].get("weight_decay", 1e-4))
     epocas = cfg["treino"]["epocas"]
     passos = epocas * math.ceil(len(ds_tr) / cfg["treino"]["batch"])
     sched = torch.optim.lr_scheduler.OneCycleLR(otim, max_lr=cfg["treino"]["lr"], total_steps=passos, pct_start=0.15)
@@ -199,8 +267,9 @@ def treinar(cfg: dict, raiz: Path, saida: Path) -> Path:
         t0 = time.time()
         ds_tr.epoca = ep
         modelo.train()
+        modelo.features[:congelar].eval()
         soma, n = 0.0, 0
-        for x, y in _loader(ds_tr, cfg, embaralhar=True):
+        for x, y in _loader(ds_tr, cfg, embaralhar=True, sampler=sampler):
             x, y = x.to(disp), y.to(disp)
             otim.zero_grad(set_to_none=True)
             loss = perda(modelo(x), y)
@@ -254,11 +323,16 @@ def avaliar(ckpt: Path, cfg: dict, raiz: Path, saida: Path) -> dict:
     if ler_split(csv_path, {"test_lives"}):
         particoes.append("test_lives")  # câmera fixa separada, nunca vista no treino
     papeis = eventos_ircnn(cfg)
+    parabrisa = eventos_parabrisa_teste(cfg)
+    if parabrisa:
+        particoes.append("test_parabrisa")
     probs: dict[str, np.ndarray] = {}
     linhas: dict[str, list[dict]] = {}
     for p in particoes:
         if p == "val":
             linhas[p] = montar_particoes(cfg, csv_path)[1]
+        elif p == "test_parabrisa":
+            linhas[p] = [r for r in ler_split(csv_path, {"train"}) if r["evento_id"] in parabrisa and r["classe"] in CLASSES]
         elif p == "test_ircnn" and papeis["test"] is not None:
             linhas[p] = [r for r in ler_split(csv_path, {p}) if r["evento_id"] in papeis["test"]]
         else:
@@ -280,7 +354,7 @@ def avaliar(ckpt: Path, cfg: dict, raiz: Path, saida: Path) -> dict:
         "ordenacao": {},
         "baseline_constante_garoa": {},
     }
-    for p in [q for q in ("val", "test_real", "test_ircnn", "test_lives") if q in particoes]:
+    for p in [q for q in ("val", "test_real", "test_ircnn", "test_lives", "test_parabrisa") if q in particoes]:
         y, pr = classificados(p)
         met["classificacao"][p] = resumo_classificacao(y, pr)
         met["baseline_constante_garoa"][p] = _constante_garoa(y)
@@ -333,6 +407,14 @@ def agregar_cv(runs: list[Path], saida: Path) -> dict:
         "baseline_constante_garoa_ircnn": _constante_garoa(y),
         "ircnn_spearman_score_vs_mm_h": spearman(score_intensidade(probs_np), [float(r["mm_h"]) for r in linhas]),
     }
+    if all((r / "predicoes_test_parabrisa.csv").exists() for r in runs):
+        # cada evento de para-brisa fica fora do treino em exatamente um fold
+        pb = []
+        for run in runs:
+            with open(run / "predicoes_test_parabrisa.csv", newline="") as f:
+                pb += list(csv.DictReader(f))
+        pr = np.array([[float(r[f"p_{c}"]) for c in CLASSES] for r in pb])
+        met["test_parabrisa_agregado"] = resumo_classificacao([CLASSES.index(r["classe"]) for r in pb], pr)
     por_fold = [json.loads((r / "metricas.json").read_text()) for r in runs]
     chaves = [("classificacao", "test_real", "f1_macro"), ("classificacao", "test_ircnn", "f1_macro")]
     chaves += [("ordenacao", k, None) for k in por_fold[0]["ordenacao"] if k != "score_medio"]
