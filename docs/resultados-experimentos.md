@@ -279,6 +279,29 @@ Aceite pendente: confirmar visualmente os painéis de maio e testar o onnx numa 
 5. Conferir no log: `[gate] modelo carregado (onnxruntime, limiar=0.5)` e ~100 ms/frame em CUDA.
 6. Rollback: voltar `modelo_chuva_path` para `bestModel.onnx` e reiniciar `citycam`.
 
+### 4.2 Gate v4: seco de dia variado e chuva noturna (18/10/2026)
+
+Sessões novas da Jetson: 16/10 dia e 17/10 manhã (seco; câmera invertida e apontada alta, normalizada) e
+16/10 noite e noite2 (chuva noturna, rótulo visual: gotas e limpador). 17/10 noite ficou **fora** (vidro com
+manchas que podem ser gotas: rótulo ambíguo). Mesmo desenho do v3 (ajuste do gate v2 + Zenodo + seco de maio,
+3 épocas), validação deixando uma sessão seca e uma chuvosa fora (`ml/resultados/gate_v4_cv.json`):
+
+| Seco fora | Chuva fora | AUC | v4 recall / FA (limiar 0,5) | Gate v3 na mesma sessão nunca vista |
+|---|---|---|---|---|
+| 16/10 dia | 13/09 | 0,95 | 0,95 / **0,13** | FA 0,41 |
+| 17/10 manhã | 13/09 | 1,00 | 0,88 / **0,01** | FA 0,33 |
+| 04/08 dia | 23/09 | 0,99 | 0,93 / 0,03 | 0,90 / 0,04 |
+| 06/08 noite | 23/09 | 0,79 | 0,95 / 0,34 | 0,95 / 0,23 |
+| 06/08 noite | 16/10 noite | 0,79 | **0,98** / 0,23 | recall 0,11 |
+| 06/08 noite | 16/10 noite2 | 0,80 | **0,98** / 0,28 | recall 0,19 |
+
+O alarme falso de dia em sessão nova cai de 33–41% para 1–13% e a chuva noturna passa a ser reconhecida.
+Ressalvas: as duas sessões de chuva noturna são da mesma noite (uma fica no treino quando a outra é teste,
+então 0,98 é otimista) e o alarme falso no seco noturno sobe de 0,23 para 0,23–0,34.
+**Gate v4 exportado:** `ml/runs/gate_v4/gate_v4.onnx` (todas as sessões; mesmo contrato do v3: opset 11,
+`input` 1×3×384×384, `output` 2 logits; paridade PyTorch × ONNX 4,5e-7; fora do Git). Instalação na Jetson:
+os mesmos 6 passos do gate v3 acima, trocando `gate_v3.onnx` por `gate_v4.onnx`.
+
 ## 5. Borda (Jetson Nano 4 GB, onnxruntime 1.10, 60 frames reais)
 
 | Modelo | Execução | Inferência (mediana) | Total c/ pré-proc. | FPS |

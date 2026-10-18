@@ -40,8 +40,8 @@ from cityrain_ml.evaluation.metricas import taxa_ordenacao  # noqa: E402
 LADO = 384
 FR = "ml/data/processed/imt_coleta"
 ZEN = "ml/data/raw/public_datasets/raindrops_zenodo/images"
-SECAS = ("0408", "0608", "1610")
-CHUVAS = ("0109", "1309", "2309", "1610n")
+SECAS = ("0408", "0608", "1610", "1710m")
+CHUVAS = ("0109", "1309", "2309", "1610n", "1610n2")
 
 
 def lista_sessoes() -> dict[str, list[str]]:
@@ -59,6 +59,11 @@ def lista_sessoes() -> dict[str, list[str]]:
         # zerados ou travados, então não entra na intensidade)
         "1610": sorted(str(c.relative_to(RAIZ)) for c in (RAIZ / FR / "coleta_jetson_20261016").glob("*.jpg")),
         "1610n": sorted(str(c.relative_to(RAIZ)) for c in (RAIZ / FR / "coleta_jetson_20261016_noite").glob("frame_20261016_19*.jpg")),
+        # 17/10 manhã (zip 12): seco de dia, câmera invertida (normalizada) e apontada alta; 16/10 noite2 (zip 11):
+        # continuação da chuva noturna, gotas e limpador nas fotos (sem GPS). 17/10 noite (zip 13) fica FORA:
+        # vidro com manchas que podem ser gotas restantes, rótulo visual ambíguo.
+        "1710m": sorted(str(c.relative_to(RAIZ)) for c in (RAIZ / FR / "coleta_jetson_20261017_manha").glob("*.jpg")),
+        "1610n2": sorted(str(c.relative_to(RAIZ)) for c in (RAIZ / FR / "coleta_jetson_20261016_noite2").glob("*.jpg")),
     }
     return s
 
@@ -177,10 +182,14 @@ def main() -> None:
     ap.add_argument("--secas-fora", nargs="*", default=None, help="cv: só folds com estas sessões secas fora")
     ap.add_argument("--chuvas-fora", nargs="*", default=None, help="cv: só folds com estas sessões de chuva fora")
     ap.add_argument("--sem-1610", action="store_true", help="sem as sessões de 16/10 (desenho do gate v3)")
+    ap.add_argument("--sem-novas", action="store_true", help="sem 17/10 manhã e 16/10 noite2 (desenho de 17/10)")
+    ap.add_argument("--pares", nargs="*", default=None, help="cv: folds exatos seco:chuva (ex.: 1710m:1309 0608:1610n2)")
     a = ap.parse_args()
     global SECAS, CHUVAS
     if a.sem_1610:
         SECAS, CHUVAS = SECAS[:2], CHUVAS[:3]
+    elif a.sem_novas:
+        SECAS, CHUVAS = SECAS[:3], CHUVAS[:4]
     lr = a.lr or (2e-4 if a.init == "imagenet" else 1e-4)
     disp = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     sess, ext = lista_sessoes(), externo()
@@ -204,20 +213,22 @@ def main() -> None:
         return
 
     folds = []
-    for ds in [x for x in SECAS if a.secas_fora is None or x in a.secas_fora]:
-        for dc in [x for x in CHUVAS if a.chuvas_fora is None or x in a.chuvas_fora]:
-            cam, y = conjunto(sess, [s for s in SECAS + CHUVAS if s not in (ds, dc)], ext, usar_ext, a.teto, maio)
-            print(f"[gate2] fold seco={ds} chuva={dc} | treino seco {int((y == 0).sum())} chuva {int((y == 1).sum())}", flush=True)
-            m = treinar(a.init, get(cam), y, a.epocas, lr, disp, a.seed)
-            ps = prever(m, get(sess[ds]), disp)
-            pc = prever(m, get(sess[dc]), disp)
-            r = {"seco_fora": ds, "chuva_fora": dc, "n_seco": len(ps), "n_chuva": len(pc),
-                 "auc": float(taxa_ordenacao(pc, ps))}
-            for t in (0.5, 0.3, 0.2, 0.1):
-                r[f"t{t}"] = {"recall": float(np.mean(pc > t)), "falso_alarme": float(np.mean(ps > t))}
-            print("  ", json.dumps(r), flush=True)
-            folds.append(r)
-            del m
+    pares = [tuple(p.split(":")) for p in a.pares] if a.pares else [
+        (ds, dc) for ds in SECAS if a.secas_fora is None or ds in a.secas_fora
+        for dc in CHUVAS if a.chuvas_fora is None or dc in a.chuvas_fora]
+    for ds, dc in pares:
+        cam, y = conjunto(sess, [s for s in SECAS + CHUVAS if s not in (ds, dc)], ext, usar_ext, a.teto, maio)
+        print(f"[gate2] fold seco={ds} chuva={dc} | treino seco {int((y == 0).sum())} chuva {int((y == 1).sum())}", flush=True)
+        m = treinar(a.init, get(cam), y, a.epocas, lr, disp, a.seed)
+        ps = prever(m, get(sess[ds]), disp)
+        pc = prever(m, get(sess[dc]), disp)
+        r = {"seco_fora": ds, "chuva_fora": dc, "n_seco": len(ps), "n_chuva": len(pc),
+             "auc": float(taxa_ordenacao(pc, ps))}
+        for t in (0.5, 0.3, 0.2, 0.1):
+            r[f"t{t}"] = {"recall": float(np.mean(pc > t)), "falso_alarme": float(np.mean(ps > t))}
+        print("  ", json.dumps(r), flush=True)
+        folds.append(r)
+        del m
     a.saida.parent.mkdir(parents=True, exist_ok=True)
     a.saida.write_text(json.dumps({"init": a.init, "externo": usar_ext, "maio": a.maio, "epocas": a.epocas, "lr": lr, "folds": folds}, indent=1))
 
