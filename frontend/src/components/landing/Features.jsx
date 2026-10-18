@@ -36,7 +36,7 @@ const FEATURES = [
   {
     icon: Video,
     title: 'Câmeras Fixas',
-    description: 'Transmissões públicas ao vivo, classificadas por um modelo próprio para câmera parada. Cada câmera ganha um círculo no mapa, e a página de dispositivos mostra quem reportou por último.',
+    description: 'Transmissões públicas ao vivo, classificadas por um modelo próprio para câmera parada. Cada câmera ganha um hexágono no mapa com a última foto classificada; o carro fica na página Veículos.',
     borderColor: 'var(--cat-drizzle)',
   },
 ]
