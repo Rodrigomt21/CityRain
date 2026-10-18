@@ -155,6 +155,12 @@ veio de modelos que viram os outros folds. Matriz da F no para-brisa: 47% exato,
 **v14f** 59% / 13%, **YT 0,931**, 23/09 0,586, garoa 13/09 98,7%; v16 55% / 17%, YT 0,716, 23/09 0,437.
 v13 em produção pelo PR #32; v14f proposta no PR #33.
 
+**Tentativas finais para a moderada (17/10 noite), nenhuma supera a v14f:** média de probabilidades de 2–4
+modelos (melhor ensemble 0,443 < 0,457); viés de logit ajustado em 2 folds e medido no 3º (moderada 0,287 →
+0,340, mas F1 macro 0,457 → 0,426); **v17 = F + E** na CV: para-brisa 0,469, moderada 0,385, irCNN 0,448,
+23/09 0,686, mas YT 0,717 e Spearman por evento 0,34; na final perde nos testes nunca vistos (YT 0,599,
+temporal 45% ≥ moderada / 14% forte, 23/09 0,653, garoa 1,000). Fica a v14f.
+
 ### Leituras
 
 1. **Domínio manda mais que arquitetura.** Sem irCNN no treino, o modelo aprende "gota no
