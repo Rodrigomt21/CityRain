@@ -1,4 +1,5 @@
 import hashlib
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -16,6 +17,18 @@ from app.models.ingestion_log import IngestionLog
 from app.models.media_file import MediaFile
 from app.services.geo_service import GeoService
 from app.services.inference_service import roteador_inferencia
+
+
+def detectar_formato(content: bytes) -> Optional[tuple[str, str]]:
+    """(extensão, mime) pelos bytes iniciais; None se não for JPEG nem PNG.
+
+    O Content-Type do multipart é declarado pelo cliente e não prova nada sobre o conteúdo.
+    """
+    if content[:3] == b"\xff\xd8\xff":
+        return ".jpg", "image/jpeg"
+    if content[:8] == b"\x89PNG\r\n\x1a\n":
+        return ".png", "image/png"
+    return None
 
 
 class MediaService:
@@ -139,6 +152,9 @@ class MediaService:
                 status_code=413,
                 detail=f"Imagem excede o limite de {settings.max_upload_size_mb} MB.",
             )
+        formato = detectar_formato(content)
+        if formato is None:
+            raise HTTPException(status_code=422, detail="O arquivo não é uma imagem JPEG ou PNG válida.")
         sha256 = hashlib.sha256(content).hexdigest()
 
         # Idempotência: retry da Jetson devolve a captura já existente.
@@ -189,13 +205,11 @@ class MediaService:
         # Commit 2: salva arquivo + MediaFile + IngestionLog.
         # Em caso de falha, grava IngestionLog("error") para auditoria.
         try:
-            file_path = await self._save_file(
-                content, sha256, image.filename or "image.jpg", capture_id, device_name
-            )
+            file_path = await self._save_file(content, sha256, formato[0], capture_id, device_name)
             self.db.add(MediaFile(
                 capture_id=capture_id,
                 file_path=str(file_path),
-                mime_type=image.content_type or "image/jpeg",
+                mime_type=formato[1],
                 file_name=image.filename or "image.jpg",
                 sha256=sha256,
             ))
@@ -264,15 +278,18 @@ class MediaService:
         self,
         content: bytes,
         sha256: str,
-        original_name: str,
+        suffix: str,
         capture_id: int,
         device_name: Optional[str] = None,
     ) -> Path:
-        """Persiste o arquivo em disco de forma assíncrona, organizado por device e capture_id."""
-        upload_dir = Path(settings.upload_dir) / (device_name or "legacy") / str(capture_id)
+        """Persiste o arquivo em disco de forma assíncrona, organizado por device e capture_id.
+
+        Nome e extensão nunca vêm do cliente: sha256 + extensão do formato detectado no conteúdo.
+        """
+        pasta_device = re.sub(r"[^A-Za-z0-9_.-]", "_", device_name or "legacy").lstrip(".") or "legacy"
+        upload_dir = Path(settings.upload_dir) / pasta_device / str(capture_id)
         upload_dir.mkdir(parents=True, exist_ok=True)
 
-        suffix = Path(original_name).suffix or ".jpg"
         file_path = upload_dir / f"{sha256}{suffix}"
 
         async with aiofiles.open(file_path, "wb") as f:

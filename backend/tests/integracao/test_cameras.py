@@ -5,6 +5,9 @@ import json
 from pathlib import Path
 
 from PIL import Image
+from sqlalchemy import select
+
+from app.models.media_file import MediaFile
 
 from app.services import inference_service as inf
 from app.services.inference_service import Classificacao
@@ -93,8 +96,9 @@ async def test_imagem_da_captura_e_404_se_sumiu_do_disco(client, criar_device, m
     ok = await client.get(f"/api/v1/captures/{cap['id']}/imagem")
     assert ok.status_code == 200 and ok.headers["content-type"].startswith("image/")
     assert ok.headers["cache-control"] == "public, max-age=86400, immutable"
-    det = (await client.get(f"/api/v1/captures/{cap['id']}")).json()
-    Path(det["media_files"][0]["file_path"]).unlink()
+    # o caminho no disco não sai na API pública: vem do banco
+    caminho = (await db.execute(select(MediaFile.file_path).where(MediaFile.capture_id == cap["id"]))).scalar_one()
+    Path(caminho).unlink()
     assert (await client.get(f"/api/v1/captures/{cap['id']}/imagem")).status_code == 404
 
 

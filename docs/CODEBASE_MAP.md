@@ -6,8 +6,8 @@ total_tokens: 384096
 
 # Codebase Map — CityRain
 
-> Gerado pelo Cartographer em 2026-10-08T21:34:44Z. Estado atual em `docs/COMO-CONTINUAR.md`;
-> plano em andamento em `docs/specs/spec-camera-fixa.md`.
+> Gerado pelo Cartographer em 2026-10-08T21:34:44Z e revisado em 18/10/2026. Estado atual no `README.md` da raiz;
+> números em `docs/resultados-experimentos.md`.
 
 ## Visão geral
 
@@ -42,19 +42,21 @@ graph LR
 ```
 CityRain/
 ├── backend/            FastAPI + SQLAlchemy async + Alembic (Python 3.11)
-│   ├── app/api/v1/     media.py (ingest), captures.py, stats.py, devices.py
-│   ├── app/services/   media_service (ingest), inference_service (ONNX), capture_service, geo_service, device_service
+│   ├── app/api/v1/     media.py (ingest), captures.py, cameras.py, veiculos.py, stats.py, devices.py
+│   ├── app/services/   media_service (ingest), inference_service (ONNX, roteador carro × fixa), capture_service,
+│   │                   camera_service, veiculo_service, retencao_service, geo_service, device_service
 │   ├── app/models/     device, capture, media_file, ingestion_log
 │   ├── app/core/       config (Settings), database, security (token do device, admin key)
-│   ├── app/inference/modelos/intensidade.onnx   modelo de produção do carro (v7: sem sintético, + BDD100K de dia)
-│   ├── alembic/versions/  0001 → 0002 → 0003 (ids escritos à mão; próxima = 0004)
-│   └── tests/          testes unitários, sem banco
+│   ├── app/inference/modelos/   intensidade.onnx (carro, v14f) · intensidade_fixa.onnx (câmera fixa)
+│   ├── alembic/versions/  0001 → 0004 (ids escritos à mão; próxima = 0005)
+│   └── tests/          unitários + integracao/ (PostgreSQL real, TEST_DATABASE_URL)
 ├── frontend/           React 19 + Vite + Tailwind + react-leaflet + h3-js + recharts (JSX)
-│   └── src/{pages,components,hooks,api,lib}
+│   └── src/{pages,components,hooks,api,lib}   inclui /apresentacao (defesa) e /simulacao (ilustrativa)
 ├── ml/
 │   ├── src/cityrain_ml/   evaluation/metricas.py (CLASSES), data/intensidade.py, models/fabrica.py, training/intensidade.py, data/sintetico.py
-│   ├── scripts/captura/   código da Jetson (Python 3.6)
-│   ├── scripts/coleta_fixa/  coletor.py, recuperar_dvr.py, importar_celular.py
+│   ├── scripts/captura/   código da Jetson (Python 3.6); replay_do_mac.py e demo_replay.py (demonstração)
+│   ├── scripts/coleta_fixa/  coletor.py, recuperar_dvr.py, importar_celular.py, replay_evento.py
+│   ├── scripts/bdd/ · dataset_mapillary/ · dataset_youtube/   para-brisa rotulado por radar MRMS
 │   ├── scripts/rotulagem/gerar_manifest.py   frame → classe pelo pluviômetro
 │   ├── scripts/estacoes/  baixar_cemaden_ped.py, distancia.py, normalizadores
 │   ├── scripts/dataset/   montar_splits.py, adicionar_lives.py
@@ -63,7 +65,7 @@ CityRain/
 │   ├── configs/           YAML de cada experimento, rotulagem, splits, coleta
 │   ├── data/manifests/    manifests de rótulo (versionados); demais pastas de data/ são gitignored
 │   └── tests/
-├── docs/               specs/, resultados-experimentos.md, COMO-CONTINUAR.md, roteiro-demo-defesa.md
+├── docs/               README.md (índice), resultados-experimentos.md, roteiro-demo-defesa.md, guias, specs/
 └── .github/workflows/ci.yml   ml (pytest, sem torch) · backend (pytest) · frontend (lint + build)
 ```
 
@@ -160,7 +162,7 @@ sequenceDiagram
 | Tarefa | Arquivos |
 |---|---|
 | Novo endpoint | `backend/app/api/v1/*.py`, `app/api/router.py`, `app/schemas/`, `app/services/` |
-| Mudar o banco | `backend/app/models/`, nova migração `backend/alembic/versions/0004_*.py` |
+| Mudar o banco | `backend/app/models/`, nova migração `backend/alembic/versions/0005_*.py` |
 | Trocar o modelo de produção | `exportar_onnx.py --saida backend/app/inference/modelos/...` |
 | Nova câmera fixa | `ml/configs/coleta_fixa.yaml`, estações em `baixar_cemaden_ped.py` |
 | Novo experimento | `ml/configs/treino_*.yaml`, `ml/src/cityrain_ml/` |

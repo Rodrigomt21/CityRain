@@ -58,12 +58,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-_allow_credentials = "*" in settings.cors_origins
-
+# A API autentica por Bearer no header, nunca por cookie: credenciais de navegador ficam desligadas
+# (com allow_origins="*" + credenciais, o Starlette ecoaria a origem de qualquer site).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_credentials=_allow_credentials,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -97,5 +97,7 @@ async def health_db():
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
         return {"status": "ok", "database": "connected"}
-    except Exception as exc:
-        return {"status": "error", "database": str(exc)}
+    except Exception:
+        # o texto da exceção pode trazer host, usuário ou nome do banco: fica só no log do servidor
+        logger.exception("health/db: banco indisponível")
+        return {"status": "error", "database": "unavailable"}
