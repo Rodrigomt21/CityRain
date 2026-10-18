@@ -43,6 +43,19 @@ com as reais).
 As capturas de demonstração têm `metadata.demo` preenchido. Para relatórios, filtrar fora
 (`metadata->'demo' IS NULL`).
 
+
+## Sem a Jetson: replay do carro a partir do Mac
+
+Mesmo efeito do `demo_replay.py`, sem depender da placa ligada: o Mac reenvia a sessão de 23/09 direto
+para a API com o token da Jetson (lido de `ml/scripts/captura/cityrain_config.json`, nunca commitado).
+
+```
+caffeinate -i ml/.venv/bin/python ml/scripts/captura/replay_do_mac.py --intervalo 2 --loop
+```
+
+Tela para a banca: `https://cityrain.vercel.app/apresentacao` (tela cheia) e, para a visão de futuro,
+o botão "Simular a cidade conectada" (`/simulacao`, simulação ilustrativa, nada vai para o banco).
+
 ## Câmera fixa (~3 min)
 
 > Objetivo: mostrar o pipeline de produção com câmeras fixas (lives públicas, CCTV, webcam),
