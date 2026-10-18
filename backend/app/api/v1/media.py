@@ -13,6 +13,9 @@ from app.services.media_service import MediaService
 from app.services.retencao_service import limpar_imagens_fixa_throttled
 
 router = APIRouter()
+
+# metadata é texto livre gravado em JSONB: a Jetson manda < 1 KB; o teto barra abuso com chave válida
+MAX_METADATA_BYTES = 16 * 1024
 logger = logging.getLogger(__name__)
 
 
@@ -92,10 +95,14 @@ async def _ingerir(request: Request, response: Response, image, metadata: str, d
     if image is not None and image.content_type not in ("image/jpeg", "image/png"):
         raise HTTPException(status_code=422, detail="Somente JPEG e PNG são aceitos.")
 
+    if len(metadata) > MAX_METADATA_BYTES:
+        raise HTTPException(status_code=413, detail=f"metadata excede {MAX_METADATA_BYTES // 1024} KB.")
     try:
         meta = json.loads(metadata)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="O campo metadata deve ser um JSON válido.")
+    if not isinstance(meta, dict):
+        raise HTTPException(status_code=400, detail="O campo metadata deve ser um objeto JSON.")
 
     service = MediaService(db)
     capture, created = await service.ingest(image=image, meta=meta, device=device)

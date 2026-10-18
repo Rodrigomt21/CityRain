@@ -1,3 +1,5 @@
+import hmac
+
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +39,7 @@ async def verificar_api_key(
         return device
 
     # Caminho legado: chave única do .env (manter até migrar todos os Jetsons)
-    if settings.api_key and token == settings.api_key:
+    if settings.api_key and hmac.compare_digest(token.encode(), settings.api_key.encode()):
         sentinel = Device(name="legacy", api_key_hash="", is_active=True)
         return sentinel
 
@@ -54,5 +56,5 @@ async def verificar_admin_key(
     baixa frequência como registrar ou desativar um Jetson.
     """
     token = credentials.credentials
-    if not settings.admin_key or token != settings.admin_key:
+    if not settings.admin_key or not hmac.compare_digest(token.encode(), settings.admin_key.encode()):
         raise HTTPException(status_code=401, detail="Chave de administração inválida.")

@@ -1,55 +1,32 @@
 # CLAUDE.md — CityRain
 
-## ⚠️ ESTADO ATUAL (09/10 a 20/10/2026) — ler primeiro
+## ⚠️ ESTADO ATUAL (18/10/2026, véspera da defesa) — ler primeiro
 
-Se alguém perguntar "o que falta?", "onde paramos?" ou "o que eu faço?", a resposta está aqui e
-nos documentos abaixo. **Não** usar o `docs/COMO-CONTINUAR.md` como roteiro: ele é de 07/10, de
-antes da câmera fixa, e descreve o modelo do carro.
+Se alguém perguntar "o que falta?", "onde paramos?" ou "o que eu faço?", a resposta está aqui.
 
-**Objetivo até 20/10:** treinar e colocar em produção o **modelo da câmera fixa** (4 classes, só
-dado real: lives do YouTube rotuladas por pluviômetro CEMADEN + irCNN). Motivo: o orientador
-alertou risco de reprovação por falta de dados; o modelo do carro (v3) segue em produção como está.
+**Em produção:** backend no Railway (conta do Moreno), painel na Vercel (`cityrain.vercel.app`, deploy
+manual `npx vercel deploy --prod --yes` em `frontend/`). Modelo do carro **v14f** (sem sintético, só de
+dia; `ml/configs/treino_intensidade_final_v14f_limpo_dia_mnv3.yaml`); modelo da câmera fixa
+`fixa_f1_mnv3_fold0` até o Mattioli trocar pelo dele (`docs/GUIA-TREINO-EQUIPE.md` §6, checador
+`ml/scripts/avaliacao/checar_modelo_fixa.py`). Confirme o modelo carregado em `GET /api/v1/captures/?limit=1`
+(campo `modelo`): o deploy do backend é manual e pode estar atrás da `main`.
 
 **Documentos, nesta ordem:**
-1. `docs/PASSAGEM-camera-fixa.md` — quem faz o quê, histórico das colheitas, tarefas do backend.
-2. `docs/GUIA-COLETA-EQUIPE.md` — coletor ao vivo, colheita do DVR, CEMADEN, revisão visual.
-3. `docs/GUIA-TREINO-EQUIPE.md` — ambiente, pacote de dados, treino em 1 comando, modelo final.
-4. `docs/specs/spec-camera-fixa.md` — regras (splits CF4, critério de escolha CF5).
-
-**Calendário:**
-
-| Quando | O quê | Como |
-|---|---|---|
-| até 13/10 cedo | coletor ao vivo das 11 câmeras | `GUIA-COLETA` §4 |
-| 11/10 e **13/10 cedo** | colheita do DVR (chuva e seco) + manifests (a de 13/10 fecha o treino: o CEMADEN só completa o dia 12 no dia seguinte) | `GUIA-COLETA` §5–6; `--desde` = fim da colheita anterior (ver tabela "Colheitas" da PASSAGEM) |
-| até 13/10 13h | revisão visual dos painéis + `ml/data/review/camera_fixa/REVISAO.md` | `GUIA-COLETA` §6 |
-| **12/10 21h (Brasília)** | **congelamento**: depois disso tudo é teste prospectivo | não mudar `congelamento_utc` |
-| 13/10 tarde–16/10 | `python ml/scripts/treino/rodar_experimentos_fixa.py tudo`, mandar a tabela no grupo, depois `final` | `GUIA-TREINO` §3–4 (sem GPU: `ml/notebooks/treino_fixa_colab.ipynb`) |
-| 18/10 | teste prospectivo, sem retreinar | `GUIA-TREINO` §5 |
-| 19/10 | demo | `docs/roteiro-demo-defesa.md`, seção "Câmera fixa" |
-
-**Para diagnosticar a máquina:** `python ml/scripts/treino/rodar_experimentos_fixa.py checar` diz o
-que falta (pacotes, dados, splits, revisão, referências secas).
-
-**Dados fora do Git:** pacote `cityrain_dados_treino_fixa_<data>.zip` + `.sha256` na pasta do
-Drive compartilhada pelo Rodrigo no grupo, descompactado na raiz `CityRain/`. Colheitas feitas
-depois do pacote: pegar a pasta `ml/data/raw/coleta_fixa` com quem colheu.
+1. `README.md` — visão geral, resultados e como rodar.
+2. `docs/resultados-experimentos.md` — todos os números (fonte do capítulo de resultados).
+3. `docs/roteiro-demo-defesa.md` — demo: `/apresentacao`, replay do carro pelo Mac
+   (`ml/scripts/captura/replay_do_mac.py`), coletor das câmeras e `/simulacao` (ilustrativa).
+4. `docs/README.md` — índice dos guias e specs.
 
 **Regras que não se negociam:**
 - 4 classes (`seco`, `garoa`, `moderada`, `forte`) e prazo de 20/10 são fixos.
-- Classe vem do pluviômetro; na revisão visual só se exclui imagem defeituosa, nunca se muda classe.
-- Não mudar limiares, folds, câmera de teste (`bc_atlantica`) nem congelamento depois de ver resultado.
-- Sintético não entra no modelo da câmera fixa. Teste é sempre dado real.
-- Santos e Praia Grande só entram com `posicao_verificada: true` depois de achar o endereço real.
-- Nunca commitar `ml/.env`, `ml/configs/coleta_fixa_tokens.json`, imagens ou `ml/runs/`.
-- Treino longo: Mac na tomada (o script usa `caffeinate`); se cair, rodar o mesmo comando de novo.
-- Mudanças vão por branch + PR; o Rodrigo faz o merge.
-
-**Backlog com nomes e datas:** `backlog_camera_fixa_ate_20out.xlsx` (enviado no grupo pelo Rodrigo).
-
-**Pendências conhecidas em 09/10:** posição de Santos/Praia Grande; revisão visual não feita;
-backend (Moreno): volume no Railway, ADMIN_KEY nova, UPDATEs de posição (PASSAGEM); CEMADEN
-limita acessos (HTTP 401) — parar e anotar, não trocar de conta.
+- Classe vem de instrumento (pluviômetro ou radar); a revisão visual só exclui imagem defeituosa.
+- Sintético não entra (vetado pelo orientador em 14/10). Teste é sempre dado real. Modelo do carro só de dia.
+- Câmera fixa: não mudar limiares, folds, câmera de teste (`bc_atlantica`) nem congelamento (12/10 21h).
+- Nunca commitar `.env`, `ml/configs/coleta_fixa_tokens.json`, `ml/scripts/captura/cityrain_config.json`,
+  imagens ou `ml/runs/`. Ver `SECURITY.md`.
+- Treino longo: Mac na tomada e com a tampa aberta (o script usa `caffeinate`).
+- Mudanças vão por branch + PR; o Rodrigo faz o merge. CEMADEN limita acessos (HTTP 401): parar e anotar.
 
 ## Sobre o Projeto
 
@@ -68,16 +45,15 @@ Este é um TCC do curso de Ciência da Computação do Centro Universitário do 
 ## Codebase Overview
 
 Sistema em produção (out/2026): Jetson no carro (gate chuva/seco) e coletor de câmeras fixas enviam
-frames ao `POST /api/v1/ingest`; o backend classifica a intensidade com um modelo ONNX
-(MobileNetV3-Large treinado em PyTorch) e grava em PostgreSQL com índice H3; o dashboard React
-mostra ao vivo e o histórico.
+frames ao `POST /api/v1/ingest`; o backend classifica a intensidade com dois modelos ONNX
+(MobileNetV3-Large treinados em PyTorch: carro e câmera fixa) e grava em PostgreSQL com índice H3;
+o painel React mostra ao vivo, o histórico, o modo apresentação e a simulação ilustrativa.
 
 **Stack**: FastAPI + SQLAlchemy async + Alembic (Python 3.11) · React 19 + Vite + Leaflet + h3-js ·
 PyTorch/torchvision + ONNX Runtime · Jetson Nano (Python 3.6).
 **Structure**: `backend/`, `frontend/`, `ml/` (código, configs, scripts da Jetson) e `docs/`.
 
-Mapa detalhado: [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md). Estado e pendências: seção "ESTADO ATUAL" no topo deste arquivo
-(o [docs/COMO-CONTINUAR.md](docs/COMO-CONTINUAR.md) é de 07/10, só para o modelo do carro).
+Mapa detalhado: [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md). Estado e pendências: seção "ESTADO ATUAL" no topo deste arquivo.
 
 ## Equipe
 
@@ -343,20 +319,13 @@ cityrain/
     ├── public/
     └── src/
         ├── main.jsx               # Entry point
-        ├── App.jsx                # Roteamento (Landing ↔ Dashboard)
-        ├── index.css / App.css    # Estilos globais + Tailwind
-        ├── assets/                # hero.png, ícones
-        ├── components/
-        │   ├── ui/                # Componentes atômicos reutilizáveis (CategoryBadge, StatusDot)
-        │   ├── layout/            # Topbar
-        │   ├── landing/           # Hero, Features
-        │   └── dashboard/         # KPICards, RainfallChart, HeatMap, UrbanMap,
-        │                          # AlertsPanel, ClassificationCards, ReadingsTable
-        ├── pages/                 # Landing.jsx, Dashboard.jsx
-        ├── hooks/                 # useRainfallData.js, useClassificationData.js
-        ├── api/                   # (a criar) — cliente HTTP do backend
-        └── lib/                   # Utilitários: categories.js, mockData.js
-                                   # (dados reais virão via api/ quando o backend estiver pronto)
+        ├── App.jsx                # Rotas: /, /dashboard, /historico, /cameras, /dispositivos, /apresentacao, /simulacao
+        ├── index.css              # Tokens de cor, Tailwind e animações
+        ├── components/            # dashboard (mapa ao vivo, painéis), layout, landing
+        ├── pages/                 # uma página por rota
+        ├── hooks/                 # polling da API: capturas, câmeras, veículos, histórico, série
+        ├── api/client.js          # GET na API (VITE_API_URL ou produção)
+        └── lib/                   # regras puras testadas: categorias, dispositivos/H3, câmeras, apresentação, simulação
 ```
 
 **Comunicação entre subprojetos:**
@@ -384,7 +353,7 @@ cityrain/
   - **Stack de backend:** FastAPI + Uvicorn + PostgreSQL + H3. API REST/HTTP entre frontend e backend, e HTTP entre backend e APIs públicas.
   - **Plataforma embarcada de referência:** NVIDIA Jetson Nano.
   - **Coleta veicular** pela Região Metropolitana de SP + ABC Paulista (não fixa).
-  - **Frontend:** React (JSX) + Vite + Tailwind CSS. Stack inicializada e migrada para `frontend/` em maio/2026. Componentes em JSX (não TypeScript por ora). Dados reais ainda via mock (`lib/mockData.js`) — integração com o backend fica em `src/api/` quando a API estiver pronta.
+  - **Frontend:** React 19 (JSX) + Vite + Tailwind CSS + Leaflet + h3-js, consumindo a API real (`src/api/client.js`).
   - **Sem V2X.** A entrega é o dashboard urbano.
 - **Decisões abertas (continuar tratando como experimento):** framework de ML, arquitetura do modelo, abordagem física vs. ML vs. híbrida, técnicas de pré-processamento, **protocolo Jetson → Backend (HTTP vs MQTT)**.
 - Quando sugerir algo na parte aberta, apresentar como "candidato a testar" e oferecer alternativas
