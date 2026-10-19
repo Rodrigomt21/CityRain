@@ -57,10 +57,10 @@ Mapa detalhado: [docs/CODEBASE_MAP.md](docs/CODEBASE_MAP.md). Estado e pendênci
 
 ## Equipe
 
-- **Rodrigo Monteiro Toffoli Teixeira** — 23.00068-6
-- **Guilherme Mattioli** — 20.00599-7
-- **Gabriel Moreno** — 23.01528-4
-- **Paulo Vespero** — 23.00607-2
+- **Rodrigo Monteiro Toffoli Teixeira**
+- **Guilherme Mattioli**
+- **Gabriel Moreno**
+- **Paulo Vespero**
 - **Orientador:** Prof. Gabriel de Souza Lima
 
 ## Princípios de Desenvolvimento
