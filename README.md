@@ -66,7 +66,31 @@ flowchart LR
 
 ## Resultados
 
-Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados-experimentos.md`](docs/resultados-experimentos.md). Teste é sempre com dado real.
+Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados-experimentos.md`](docs/resultados-experimentos.md). Teste é sempre com dado real, em dias, sessões ou câmeras que o modelo não viu no treino.
+
+O sistema usa **três modelos**:
+
+| Modelo | Onde roda | Tarefa | Rótulo do teste |
+|---|---|---|---|
+| [Gate v4](#1-gate-da-jetson-chuva--seco) | Jetson Nano, no carro | chuva × seco | visual (gota no vidro), por sessão |
+| [Intensidade do carro v14f](#2-intensidade-do-carro-v14f) | backend | garoa · moderada · forte | radar MRMS e pluviômetro CEMADEN |
+| [Câmera fixa](#3-câmera-fixa) | backend | seco · garoa · moderada · forte | pluviômetro |
+
+As matrizes abaixo mostram, em cada linha, para onde vão as imagens de uma classe real: a diagonal é acerto. Gerar de novo: `ml/scripts/avaliacao/matrizes_confusao.py` (as do v14f vêm das predições salvas da validação cruzada).
+
+### 1. Gate da Jetson (chuva × seco)
+
+MobileNetV2 384×384, decide na placa se a foto vai para o backend. Validação deixando uma sessão seca e uma de chuva fora do treino em cada rodada (`ml/resultados/gate_v4_cv.json`), limiar 0,5:
+
+- **Seco de dia:** alarme falso de **1–13%** (gate v3: 33–41%).
+- **Chuva:** recall de **88–98%**.
+- **Seco à noite:** alarme falso de **23–34%**. Só há uma sessão seca noturna (06/08); é o ponto fraco do gate.
+
+<img src="docs/assets/matriz-confusao-gate-v4.png" alt="Matrizes do gate v4, uma por rodada: seco de dia com 87%, 99% e 97% de acerto; seco de noite com 66% a 77%; chuva com 88% a 98% de recall" width="760">
+
+As duas sessões de chuva noturna são da mesma noite (uma fica no treino quando a outra é teste), então o recall de 98% à noite é otimista.
+
+### 2. Intensidade do carro (v14f)
 
 **Modelo do carro em produção: v14f** (MobileNetV3-Large, 288×384, sem dado sintético, só de dia). Treinado com sessões do carro, irCNN, ~400 vídeos do BDD100K e **20 dias de chuva real vista de dentro de carros** (dashcams do YouTube e Mapillary), rotulados pelo radar MRMS.
 
@@ -84,11 +108,22 @@ Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados
 
 **Chuva forte:** no temporal de SP o modelo subestima a intensidade: o CEMADEN marcou 35 a 87 mm/h, mas só 13% dos frames saíram como forte (59% como moderada ou forte). O forte de para-brisa do treino vem de dashcams e do Mapillary nos EUA, rotulados pelo radar MRMS; não há chuva forte de para-brisa rotulada em SP. E o vídeo do temporal não tem a hora exata de cada trecho, por isso ele mede só a fração de frames ≥ moderada, sem rótulo por frame.
 
-**Gate da Jetson (chuva × seco), sessão nunca vista:** recall de chuva 83–100% e alarme falso de 4–11% de dia (gate original: 10–36% e 17%).
+### 3. Câmera fixa
 
-**Borda (Jetson Nano, CUDA):** gate 11 FPS e intensidade 14 FPS, contra captura a 1 fps. FP16 sem perda (8,4 MB).
+Modelo do Mattioli em produção (`loco_bc_atlantica_f2ord`): EfficientNet-B0 com perda ordinal, treinado só com chuva real medida por pluviômetro e **sem** a câmera de teste.
 
-**Câmera fixa** (modelo do Mattioli, EfficientNet-B0 com perda ordinal, treinado sem a câmera de teste): câmera nunca vista (Balneário Camboriú, 819 fotos) com 70% de acerto e F1 macro 0,381 (modelo anterior: 69% e 0,294); num dia de sol (18/10, 2.794 fotos), 77% classificadas como seco (anterior: 36%). Medido com `ml/scripts/avaliacao/checar_modelo_fixa.py`.
+- **Câmera nunca vista** (Balneário Camboriú, 819 fotos): 70% de acerto e F1 macro 0,381 (modelo anterior: 69% e 0,294). **A matriz mostra o limite:** o modelo responde garoa para praticamente tudo. Todas as 229 fotos de moderada saem garoa, e responder sempre garoa daria 69,6% de acerto. Numa câmera nova, ele ainda não separa a intensidade.
+- **Dia de sol** (18/10, 2.794 fotos das câmeras de produção): **77% classificadas como seco** (anterior: 36%). É o ganho real deste modelo: separar seco de chuva.
+
+<img src="docs/assets/matriz-confusao-fixa-bc.png" alt="Matriz da câmera fixa em Balneário Camboriú: garoa 100% certa, moderada 100% classificada como garoa, seco 80% classificado como garoa" width="520">
+
+<img src="docs/assets/matriz-confusao-fixa-sol.png" alt="Dia de sol em 18/10: 77% seco, 22% garoa, 0% moderada ou forte" width="520">
+
+O teste de Balneário Camboriú não tem foto de chuva forte. As câmeras do painel entraram no treino, então ao vivo elas mostram o melhor caso do modelo. Medido com `ml/scripts/avaliacao/checar_modelo_fixa.py`.
+
+### Borda
+
+Jetson Nano com CUDA: gate a 11 FPS e intensidade a 14 FPS, contra captura a 1 fps. FP16 sem perda (8,4 MB).
 
 ## Demonstração
 
@@ -137,6 +172,7 @@ Dados (imagens, splits e runs) ficam fora do Git; os manifests de rótulo e os r
 ## Limitações conhecidas
 
 - No para-brisa, a generalização para dias e câmeras nunca vistos ainda é limitada (F1 0,457); a moderada é a classe mais difícil.
+- Numa câmera fixa que não entrou no treino, o modelo responde garoa para quase tudo: nenhuma das 229 fotos de moderada de Balneário Camboriú foi reconhecida.
 - O modelo da câmera fixa ainda marca como garoa parte das fotos secas, sobretudo à noite (46% das fotos de 18/10 à noite saíram como seco).
 - Garoa em câmera fixa é quase invisível (F1 ≤ 0,06 no irCNN).
 - O modelo do carro é só de dia; o gate erra mais à noite.
