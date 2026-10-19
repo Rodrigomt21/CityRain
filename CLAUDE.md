@@ -7,9 +7,10 @@ Se alguém perguntar "o que falta?", "onde paramos?" ou "o que eu faço?", a res
 **Em produção:** backend no Railway (conta do Moreno), painel na Vercel (`cityrain.vercel.app`, deploy
 manual `npx vercel deploy --prod --yes` em `frontend/`). Modelo do carro **v14f** (sem sintético, só de
 dia; `ml/configs/treino_intensidade_final_v14f_limpo_dia_mnv3.yaml`); modelo da câmera fixa
-`fixa_f1_mnv3_fold0` até o Mattioli trocar pelo dele (`docs/GUIA-TREINO-EQUIPE.md` §6, checador
-`ml/scripts/avaliacao/checar_modelo_fixa.py`). Confirme o modelo carregado em `GET /api/v1/captures/?limit=1`
-(campo `modelo`): o deploy do backend é manual e pode estar atrás da `main`.
+`loco_bc_atlantica_f2ord` (Mattioli, PR #42; trocar: `docs/GUIA-TREINO-EQUIPE.md` §6 e
+`ml/scripts/avaliacao/checar_modelo_fixa.py`). Câmeras de produção: `docs/CAMERAS-FIXAS-PRODUCAO.md`.
+Confirme o modelo carregado em `GET /api/v1/captures/?limit=1` (campo `modelo`). **O Railway faz deploy do
+fork `gabrielMOliveiraa/CityRain`**: depois do merge na `main`, o Moreno precisa clicar em "Sync fork".
 
 **Documentos, nesta ordem:**
 1. `README.md` — visão geral, resultados e como rodar.
