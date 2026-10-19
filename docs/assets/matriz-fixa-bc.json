@@ -1,0 +1,50 @@
+{
+ "modelo": "loco_bc_atlantica_f2ord",
+ "teste": "test_camera fixa_v1.csv (Balneário Camboriú, câmera fora do treino)",
+ "n": 819,
+ "distribuicao": {
+  "moderada": 229,
+  "garoa": 570,
+  "seco": 20
+ },
+ "previsoes_fora_das_classes": {},
+ "acuracia": 0.6996,
+ "f1_macro": 0.3808,
+ "classes": [
+  "seco",
+  "garoa",
+  "moderada",
+  "forte"
+ ],
+ "matriz_confusao_linhas_real_colunas_previsto": [
+  [
+   4,
+   16,
+   0,
+   0
+  ],
+  [
+   1,
+   569,
+   0,
+   0
+  ],
+  [
+   0,
+   229,
+   0,
+   0
+  ],
+  [
+   0,
+   0,
+   0,
+   0
+  ]
+ ],
+ "baseline_sempre_garoa": {
+  "acuracia": 0.696,
+  "f1_macro": 0.2736
+ },
+ "metodo": "backend InferenceService (mesmo caminho de ml/scripts/avaliacao/checar_modelo_fixa.py); F1 macro sobre as classes presentes no teste"
+}

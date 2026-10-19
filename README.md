@@ -88,7 +88,9 @@ Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados
 
 **Borda (Jetson Nano, CUDA):** gate 11 FPS e intensidade 14 FPS, contra captura a 1 fps. FP16 sem perda (8,4 MB).
 
-**Câmera fixa** (modelo do Mattioli, EfficientNet-B0 com perda ordinal, treinado sem a câmera de teste): câmera nunca vista (Balneário Camboriú, 819 fotos) com 70% de acerto e F1 macro 0,381 (modelo anterior: 69% e 0,294); num dia de sol (18/10, 2.794 fotos), 77% classificadas como seco (anterior: 36%). Medido com `ml/scripts/avaliacao/checar_modelo_fixa.py`.
+**Câmera fixa** (modelo do Mattioli, EfficientNet-B0 com perda ordinal, treinado sem a câmera de teste): na câmera nunca vista (Balneário Camboriú, 819 fotos, sem forte no teste) o acerto é de 70% e o F1 macro 0,381, mas responder sempre garoa já dá 69,6% e 0,274: o modelo reconhece parte do seco (4 de 20) e nenhuma das 229 fotos de moderada. O ganho claro sobre o modelo anterior está no seco: num dia de sol (18/10, 2.794 fotos), 77% saem como seco (anterior: 36%). Medido com `ml/scripts/avaliacao/checar_modelo_fixa.py` ([`docs/assets/matriz-fixa-bc.json`](docs/assets/matriz-fixa-bc.json)).
+
+<img src="docs/assets/matriz-confusao-fixa-bc.png" alt="Matriz de confusão do modelo fixo em Balneário Camboriú: 569 de 570 garoas certas, 229 moderadas classificadas como garoa e 4 de 20 secos certos" width="460">
 
 ## Demonstração
 
@@ -137,7 +139,7 @@ Dados (imagens, splits e runs) ficam fora do Git; os manifests de rótulo e os r
 ## Limitações conhecidas
 
 - No para-brisa, a generalização para dias e câmeras nunca vistos ainda é limitada (F1 0,457); a moderada é a classe mais difícil.
-- O modelo da câmera fixa ainda marca como garoa parte das fotos secas, sobretudo à noite (46% das fotos de 18/10 à noite saíram como seco).
+- Em câmera nunca vista, o modelo fixo fica no nível de responder sempre garoa: não reconhece moderada e ainda marca como garoa parte das fotos secas, sobretudo à noite (46% das fotos de 18/10 à noite saíram como seco).
 - Garoa em câmera fixa é quase invisível (F1 ≤ 0,06 no irCNN).
 - O modelo do carro é só de dia; o gate erra mais à noite.
 - O forte de para-brisa rotulado vem dos EUA (radar MRMS); em SP o único teste de temporal não tem hora exata por frame.
