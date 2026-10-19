@@ -12,10 +12,10 @@ O CityRain estima a intensidade da chuva a partir de câmeras que já existem: n
 | Arquivo | Papel | Versão | Entrada | Classes | Tamanho | SHA-256 |
 |---|---|---|---|---|---|---|
 | `intensidade.onnx` | intensidade no carro (backend) | v14f (`intensidade_final_v14f_limpo_dia_mnv3_foldfinal`, época 6) | 3×288×384 | garoa, moderada, forte | 16,8 MB | `5abd9189…2b21e546` |
-| `intensidade_fixa.onnx` | intensidade na câmera fixa (backend) | `fixa_f1_mnv3_fold0`, época 2 | 3×288×384 | seco, garoa, moderada, forte | 16,8 MB | `e48d2ff3…c9948346` |
+| `intensidade_fixa.onnx` | intensidade na câmera fixa (backend) | `loco_bc_atlantica_f2ord` (EfficientNet-B0, perda ordinal), época 2 | 3×288×384 | seco, garoa, moderada, forte | 16,0 MB | `e1a1bba5…0b7e402` |
 | `gate_v4.onnx` | gate chuva × seco na Jetson Nano | gate v4 (MobileNetV2, opset 11) | 3×384×384 | seco, com gota | 8,9 MB | `b38f7aef…b6d65879` |
 
-Os dois modelos de intensidade são MobileNetV3-Large treinados em PyTorch e trazem no próprio arquivo as classes, o tamanho de entrada e a normalização, que o backend lê ao carregar. O gate devolve dois logits (índice 1 = com gota); a Jetson aplica limiar 0,5 (`limiar_chuva` no `cityrain_config.json`).
+O modelo do carro é uma MobileNetV3-Large e o da câmera fixa uma EfficientNet-B0, ambos treinados em PyTorch. Os dois trazem no próprio arquivo as classes, o tamanho de entrada e a normalização, que o backend lê ao carregar. O gate devolve dois logits (índice 1 = com gota); a Jetson aplica limiar 0,5 (`limiar_chuva` no `cityrain_config.json`).
 
 ## Principais resultados
 
@@ -37,11 +37,11 @@ No mesmo teste de para-brisa, responder sempre a classe majoritária dá F1 macr
 
 **Borda (Jetson Nano, CUDA):** gate 11 FPS e intensidade 14 FPS, contra captura a 1 fps.
 
-**Câmera fixa:** câmera nunca vista (Balneário Camboriú) com 69% de acerto e 98% em chuva × seco; recall de forte 0,72 no irCNN.
+**Câmera fixa** (modelo do Mattioli, EfficientNet-B0 com perda ordinal, treinado sem a câmera de teste): câmera nunca vista (Balneário Camboriú, 819 fotos) com 70% de acerto e F1 macro 0,381 (modelo anterior: 69% e 0,294); num dia de sol (18/10, 2.794 fotos), 77% classificadas como seco (anterior: 36%). Medido com `ml/scripts/avaliacao/checar_modelo_fixa.py`.
 
 ## Limitações conhecidas
 
 - No para-brisa, a generalização para dias e câmeras nunca vistos ainda é limitada; a moderada é a classe mais difícil (24% de acerto).
 - O forte de para-brisa rotulado vem dos EUA (radar MRMS); em SP o teste de temporal não tem hora exata por frame.
 - O modelo do carro é só de dia; o gate erra mais à noite.
-- O modelo da câmera fixa tem poucos exemplos de seco e marca parte das fotos secas como garoa.
+- O modelo da câmera fixa ainda marca como garoa parte das fotos secas, sobretudo à noite (46% das fotos de 18/10 à noite saíram como seco).
