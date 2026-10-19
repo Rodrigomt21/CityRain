@@ -5,8 +5,6 @@
   </picture>
 </p>
 
-<h1 align="center">CityRain</h1>
-
 **Intensidade de chuva medida por câmeras, rua a rua.** Câmeras que já existem (no para-brisa de carros, em lives públicas e CCTV) estimam a intensidade da chuva em quatro níveis, e o resultado aparece ao vivo num mapa hexagonal da cidade.
 
 [![CI](https://github.com/Rodrigomt21/CityRain/actions/workflows/ci.yml/badge.svg)](https://github.com/Rodrigomt21/CityRain/actions/workflows/ci.yml)
