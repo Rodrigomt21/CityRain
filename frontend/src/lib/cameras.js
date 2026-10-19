@@ -1,6 +1,9 @@
 // Apresentação das câmeras fixas (GET /api/v1/cameras/). Funções puras: testadas com Vitest.
 import { categoryFromLabel, UNMEASURED } from './categories'
 
+/** Câmeras desativadas no cadastro (is_active = false) não aparecem no painel. */
+export const ativas = cams => (cams || []).filter(c => c.is_active !== false)
+
 export const MINUTOS_AO_VIVO = 15
 const NIVEL = { dry: 0, drizzle: 1, moderate: 2, heavy: 3 }
 
