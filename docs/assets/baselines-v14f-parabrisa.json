@@ -1,0 +1,44 @@
+{
+ "n": 4189,
+ "distribuicao": {
+  "garoa": 1437,
+  "moderada": 1414,
+  "forte": 1338
+ },
+ "f1_macro_v14f": 0.4571,
+ "f1_por_classe_v14f": {
+  "garoa": 0.5415,
+  "moderada": 0.2866,
+  "forte": 0.5433
+ },
+ "acuracia_v14f": 0.4705,
+ "majoritaria": "garoa",
+ "f1_macro_majoritaria": 0.1703,
+ "f1_macro_aleatorio_estratificado_media": 0.3333,
+ "f1_macro_aleatorio_estratificado_ic95": [
+  0.3199,
+  0.3472
+ ],
+ "matriz_confusao_linhas_real_colunas_previsto": [
+  [
+   868,
+   356,
+   213
+  ],
+  [
+   574,
+   337,
+   503
+  ],
+  [
+   327,
+   245,
+   766
+  ]
+ ],
+ "folds": [
+  "intensidade_cv_v14f_limpo_dia_mnv3_fold0__20261017_155258",
+  "intensidade_cv_v14f_limpo_dia_mnv3_fold1__20261017_160718",
+  "intensidade_cv_v14f_limpo_dia_mnv3_fold2__20261017_162035"
+ ]
+}

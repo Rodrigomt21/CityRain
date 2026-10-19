@@ -11,6 +11,8 @@
 ![Jetson](https://img.shields.io/badge/NVIDIA-Jetson%20Nano-76B900?logo=nvidia&logoColor=white)
 ![License](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
 
+![Modo apresentação do painel: o carro em replay da chuva de 23/09 anda no mapa de São Paulo, a classe de cada foto aparece em destaque, o pipeline de produção acende a cada envio e as câmeras fixas ao vivo ficam na faixa de baixo](docs/assets/demo.gif)
+
 | | |
 |---|---|
 | **Painel ao vivo** | https://cityrain.vercel.app · modo apresentação em [`/apresentacao`](https://cityrain.vercel.app/apresentacao) |
@@ -70,6 +72,12 @@ Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados
 | Temporal de SP: frames moderada ou mais | 64% | 59% |
 | Vídeos de temporal: pico classificado acima do início | 0,705 | **0,931** |
 | Garoa do nosso carro em sessão nunca vista | 100% | 98,7% |
+
+**Referências no mesmo teste de para-brisa** (4.189 frames de 20 dias: 1.437 garoa, 1.414 moderada, 1.338 forte): responder sempre a classe majoritária (garoa) dá F1 macro **0,170**; sortear a classe na proporção do teste dá **0,333** (1.000 sorteios, IC 95% 0,320–0,347). O v7 estava no nível da classe majoritária; o v14f fica acima do sorteio. Valores e matriz de confusão calculados a partir das predições salvas da validação cruzada ([`docs/assets/baselines-v14f-parabrisa.json`](docs/assets/baselines-v14f-parabrisa.json)).
+
+<img src="docs/assets/matriz-confusao-v14f-parabrisa.png" alt="Matriz de confusão do v14f no para-brisa em dias nunca vistos: garoa 60% certa, moderada 24%, forte 57%; 13% dos frames trocam garoa e forte" width="420">
+
+**Chuva forte:** no temporal de SP o modelo subestima a intensidade: o CEMADEN marcou 35 a 87 mm/h, mas só 13% dos frames saíram como forte (59% como moderada ou forte). O forte de para-brisa do treino vem de dashcams e do Mapillary nos EUA, rotulados pelo radar MRMS; não há chuva forte de para-brisa rotulada em SP. E o vídeo do temporal não tem a hora exata de cada trecho, por isso ele mede só a fração de frames ≥ moderada, sem rótulo por frame.
 
 **Gate da Jetson (chuva × seco), sessão nunca vista:** recall de chuva 83–100% e alarme falso de 4–11% de dia (gate original: 10–36% e 17%).
 
@@ -131,12 +139,12 @@ Dados (imagens, splits e runs) ficam fora do Git; os manifests de rótulo e os r
 
 ## Equipe
 
-| Nome | RA | Frente |
-|---|---|---|
-| Rodrigo Monteiro Toffoli Teixeira | 23.00068-6 | Modelo do carro (gate e intensidade) |
-| Guilherme Mattioli | 20.00599-7 | Modelo da câmera fixa |
-| Gabriel Moreno | 23.01528-4 | Backend, coleta no carro |
-| Paulo Vespero | 23.00607-2 | Frontend |
+| Nome | Frente |
+|---|---|
+| Rodrigo Monteiro Toffoli Teixeira | Modelo do carro (gate e intensidade) |
+| Guilherme Mattioli | Modelo da câmera fixa |
+| Gabriel Moreno | Backend, coleta no carro |
+| Paulo Vespero | Frontend |
 
 **Orientador:** Prof. Gabriel de Souza Lima · Centro Universitário do Instituto Mauá de Tecnologia (IMT)
 
