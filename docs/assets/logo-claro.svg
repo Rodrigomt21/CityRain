@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="128" viewBox="0 0 560 128" role="img" aria-label="CityRain">
+  <defs>
+    <linearGradient id="gota" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8 8)">
+    <polygon points="56,2 104,30 104,82 56,110 8,82 8,30" fill="none" stroke="#3b82f6" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M56 24 C 56 24, 80 52, 80 68 A 24 24 0 0 1 32 68 C 32 52, 56 24, 56 24 Z" fill="url(#gota)"/>
+    <path d="M45 66 A 11 11 0 0 0 53 79" fill="none" stroke="#ffffff" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="136" y="74" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="58" font-weight="700" letter-spacing="-1" fill="#0f172a">City<tspan fill="#3b82f6">Rain</tspan></text>
+  <text x="138" y="106" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="16" letter-spacing="1.5" fill="#475569">CHUVA MEDIDA POR CÂMERAS, RUA A RUA</text>
+</svg>

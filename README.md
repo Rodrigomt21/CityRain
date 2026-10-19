@@ -1,4 +1,9 @@
-# CityRain
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-escuro.svg">
+    <img src="docs/assets/logo-claro.svg" alt="CityRain" width="440">
+  </picture>
+</p>
 
 **Intensidade de chuva medida por câmeras, rua a rua.** Câmeras que já existem (no para-brisa de carros, em lives públicas e CCTV) estimam a intensidade da chuva em quatro níveis, e o resultado aparece ao vivo num mapa hexagonal da cidade.
 
