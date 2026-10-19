@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aoVivo, estadoCirculo, haQuanto, pontosSerie, resumoCamera, rotuloTempo, separarMedidos } from './cameras'
+import { aoVivo, ativas, estadoCirculo, haQuanto, pontosSerie, resumoCamera, rotuloTempo, separarMedidos } from './cameras'
 
 const AGORA = new Date('2026-10-09T18:00:00Z')
 const iso = (minAtras) => new Date(AGORA.getTime() - minAtras * 60e3).toISOString()
@@ -117,5 +117,15 @@ describe('estadoCirculo', () => {
     expect(estadoCirculo({ captured_at: iso(3), weather_label: 'garoa' }, AGORA).raioM).toBeNull()
     expect(estadoCirculo({ captured_at: iso(1), weather_label: null }, AGORA).raioM).toBeNull()
     expect(estadoCirculo(null, AGORA).raioM).toBeNull()
+  })
+})
+
+describe('ativas', () => {
+  it('tira as câmeras desativadas e mantém as que não informam is_active', () => {
+    const cams = [{ id: 1, is_active: true }, { id: 2, is_active: false }, { id: 3 }]
+    expect(ativas(cams).map(c => c.id)).toEqual([1, 3])
+  })
+  it('aceita lista vazia ou nula', () => {
+    expect(ativas(null)).toEqual([])
   })
 })

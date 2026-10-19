@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { apiGet } from '../api/client'
+import { ativas } from '../lib/cameras'
 
 const POLL_MS = Number(import.meta.env.VITE_POLL_MS) || 10_000
 
@@ -13,7 +14,7 @@ export function useCameras({ excluirDemo = false } = {}) {
     let cancelado = false
     const buscar = () =>
       apiGet(`/api/v1/cameras/?excluir_demo=${excluirDemo}`)
-        .then(d => { if (!cancelado) { setCameras(d); setAtualizadoEm(new Date()); setError(null) } })
+        .then(d => { if (!cancelado) { setCameras(ativas(d)); setAtualizadoEm(new Date()); setError(null) } })
         .catch(e => { if (!cancelado) setError(e) })
     buscar()
     const id = setInterval(buscar, POLL_MS)
