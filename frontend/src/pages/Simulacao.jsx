@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Topbar from '../components/layout/Topbar'
 import { MapContainer, TileLayer, Polygon, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { AlertTriangle, Pause, Play, RotateCcw } from 'lucide-react'
@@ -22,7 +23,7 @@ function horaSimulada(t) {
 function Bairros({ lista }) {
   const max = Math.max(1, ...lista.map(b => b.mm ?? 0))
   return (
-    <div style={{ flex: 1, minHeight: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 16, padding: '14px 16px', overflow: 'hidden' }}>
+    <div style={{ flex: 1, minHeight: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 12, padding: '14px 16px', overflow: 'hidden' }}>
       <div className="font-mono" style={{ fontSize: 12, letterSpacing: 1.5, color: 'var(--text-secondary)', marginBottom: 8 }}>QUANTO CHOVE EM CADA BAIRRO</div>
       {lista.map(b => (
         <div key={b.nome} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0' }}>
@@ -71,20 +72,29 @@ export default function Simulacao() {
   const alerta = bairros.filter(b => b.categoria === CATEGORIES.heavy).map(b => b.nome)
 
   return (
-    <div style={{ height: '100vh', background: 'radial-gradient(1200px 600px at 70% -10%, #7c3aed22, transparent), var(--bg-base)',
-      display: 'flex', flexDirection: 'column', padding: '16px 24px', gap: 12, overflow: 'hidden' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <Link to="/apresentacao" className="no-underline" style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <span className="font-mono font-bold" style={{ fontSize: 28, color: 'var(--text-primary)' }}>City<span style={{ color: 'var(--accent-brand)' }}>Rain</span></span>
-          <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>a cidade conectada: cada carro e cada câmera viram um pluviômetro</span>
-        </Link>
-        <div style={{ flex: 1 }} />
-        <span className="font-mono" style={{ fontSize: 13, letterSpacing: 1.5, padding: '6px 12px', borderRadius: 999,
-          color: '#c4b5fd', border: '1px solid #8b5cf666', background: '#8b5cf61a' }}>
-          SIMULAÇÃO ILUSTRATIVA · dados gerados, não medidos
-        </span>
-        <span className="font-mono" style={{ fontSize: 26, color: 'var(--text-primary)' }}>{horaSimulada(t)}</span>
-      </header>
+    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Topbar breadcrumb="Simulação" backTo="/apresentacao" />
+      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+            A cidade conectada
+          </h1>
+          <p className="text-[13px]" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+            Cada carro e cada câmera viram um pluviômetro · relógio simulado {horaSimulada(t)}
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <span className="font-mono text-xs px-2 py-0.5 rounded"
+            style={{ color: '#fbbf24', background: '#fbbf241a', border: '1px solid #fbbf2433' }}>
+            SIMULAÇÃO ILUSTRATIVA · dados gerados, não medidos
+          </span>
+          <Link to="/apresentacao" className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
+            style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
+            Apresentação →
+          </Link>
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: 12 }}>
         <Kpi rotulo="CARROS NA RUA" valor={nCarros} detalhe="Jetson no para-brisa" />
@@ -94,7 +104,7 @@ export default function Simulacao() {
       </div>
 
       <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 14 }}>
-        <div style={{ flex: 1, minWidth: 0, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--bg-border)', position: 'relative' }}>
+        <div style={{ flex: 1, minWidth: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-border)', position: 'relative' }}>
           <MapContainer center={[-23.575, -46.625]} zoom={12} preferCanvas zoomControl={false}
             style={{ height: '100%', width: '100%', background: '#0b1220' }}>
             <TileLayer className="mapa-escuro" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -125,7 +135,7 @@ export default function Simulacao() {
         </div>
 
         <div style={{ width: 470, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 16, padding: '14px 16px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button type="button" onClick={() => setRodando(r => !r)} aria-label={rodando ? 'Pausar' : 'Continuar'}
                 style={{ width: 40, height: 40, borderRadius: 10, display: 'grid', placeItems: 'center', cursor: 'pointer',
@@ -162,6 +172,7 @@ export default function Simulacao() {
           <Bairros lista={bairros} />
         </div>
       </div>
+      </main>
     </div>
   )
 }

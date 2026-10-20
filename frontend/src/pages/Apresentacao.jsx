@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Camera, Car, Cpu, Database, Monitor, Radio, Sparkles } from 'lucide-react'
+import Topbar from '../components/layout/Topbar'
 import MapaAoVivo from '../components/dashboard/MapaAoVivo'
 import { BASE_URL } from '../api/client'
 import { useCameras } from '../hooks/useCameras'
@@ -16,19 +17,11 @@ import { camerasAoVivo, confiancaMedia, contagemPorClasse, feed, gotasPorClasse 
 
 const ORDEM = ['dry', 'drizzle', 'moderate', 'heavy']
 
-/** "Agora" que avança a cada segundo: relógio, frescor da foto do carro e veículos ativos. */
+/** "Agora" que avança a cada segundo: frescor da foto do carro e veículos ativos. */
 function useAgora() {
   const [agora, setAgora] = useState(() => new Date())
   useEffect(() => { const id = setInterval(() => setAgora(new Date()), 1000); return () => clearInterval(id) }, [])
   return agora
-}
-
-function Relogio({ agora }) {
-  return (
-    <span className="font-mono" style={{ fontSize: 22, color: 'var(--text-primary)', letterSpacing: 1 }}>
-      {agora.toLocaleTimeString('pt-BR')}
-    </span>
-  )
 }
 
 /** Chuva animada por cima do card: quantidade de gotas pela classe (seco = céu limpo). */
@@ -63,7 +56,7 @@ function CardCarro({ ultima, recentes, agora }) {
   const cont = contagemPorClasse(recentes)
   const total = Object.values(cont).reduce((a, b) => a + b, 0)
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 16, padding: '18px 22px',
+    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 12, padding: '18px 22px',
       background: `linear-gradient(135deg, ${cat.color}33, var(--bg-card) 60%)`, border: `1px solid ${cat.color}66`,
       transition: 'background 0.6s, border-color 0.6s' }}>
       {fresca && <Chuva categoria={cat} />}
@@ -116,7 +109,7 @@ const ETAPAS = [
 /** Pipeline de produção; `pulso` muda a cada captura nova e reinicia a onda de luz da esquerda para a direita. */
 function Pipeline({ pulso }) {
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 16, padding: '14px 16px' }}>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 12, padding: '14px 16px' }}>
       <div className="font-mono" style={{ fontSize: 12, letterSpacing: 1.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
         PIPELINE DE PRODUÇÃO · CADA FOTO PERCORRE
       </div>
@@ -148,7 +141,7 @@ function Pipeline({ pulso }) {
 
 function Feed({ itens }) {
   return (
-    <div style={{ flex: 1, minHeight: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 16, padding: '14px 16px', overflow: 'hidden' }}>
+    <div style={{ flex: 1, minHeight: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 12, padding: '14px 16px', overflow: 'hidden' }}>
       <div className="font-mono" style={{ fontSize: 12, letterSpacing: 1.5, color: 'var(--text-secondary)', marginBottom: 8 }}>ÚLTIMAS CLASSIFICAÇÕES</div>
       {itens.length === 0 && <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Aguardando a primeira foto…</div>}
       {itens.map(it => (
@@ -213,24 +206,37 @@ export default function Apresentacao() {
   const veiculosAtivos = moveis.filter(m => m.captura && (agora.getTime() - new Date(m.captura.captured_at).getTime()) / 60e3 <= JANELA_MIN).length
   const conf = confiancaMedia(recentes)
 
+  // "AO VIVO" só com dado recente de verdade (carro nos últimos 2 min ou alguma câmera fixa ao vivo)
+  const carroFresco = ultima && (agora.getTime() - new Date(ultima.captured_at).getTime()) / 60e3 <= 2
+  const aoVivo = Boolean(carroFresco) || camerasAoVivo(cameras, agora) > 0
+
   return (
-    <div style={{ height: '100vh', background: 'radial-gradient(1200px 600px at 70% -10%, #1e3a8a33, transparent), var(--bg-base)',
-      display: 'flex', flexDirection: 'column', padding: '18px 24px', gap: 14, overflow: 'hidden' }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        <Link to="/dashboard" className="no-underline" style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-          <span className="font-mono font-bold" style={{ fontSize: 28, color: 'var(--text-primary)' }}>City<span style={{ color: 'var(--accent-brand)' }}>Rain</span></span>
-          <span style={{ fontSize: 15, color: 'var(--text-secondary)' }}>intensidade de chuva estimada por câmeras, em tempo real</span>
-        </Link>
-        <div style={{ flex: 1 }} />
-        <Link to="/simulacao" className="font-mono no-underline" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
-          padding: '8px 14px', borderRadius: 999, color: '#e9d5ff', background: 'linear-gradient(90deg, #7c3aed, #3b82f6)', letterSpacing: 1 }}>
-          <Sparkles size={16} /> SIMULAR A CIDADE CONECTADA
-        </Link>
-        <span className="font-mono" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: '#f87171', letterSpacing: 2 }}>
-          <span className="ap-ponto-vivo" /> AO VIVO
-        </span>
-        <Relogio agora={agora} />
-      </header>
+    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Topbar breadcrumb="Apresentação" backTo="/dashboard" />
+      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+            Modo apresentação
+          </h1>
+          <p className="text-[13px]" style={{ color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+            Intensidade de chuva estimada por câmeras, em tempo real · mesmas fontes do ao vivo
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <span className="font-mono text-xs px-2 py-0.5 rounded" role="status"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, color: aoVivo ? '#22c55e' : '#94a3b8',
+              background: aoVivo ? '#22c55e1a' : '#94a3b81a', border: `1px solid ${aoVivo ? '#22c55e33' : '#94a3b833'}` }}>
+            {aoVivo ? <><span className="ap-ponto-vivo" /> AO VIVO</> : 'SEM SINAL RECENTE'}
+          </span>
+          {[['/simulacao', 'Simular a cidade conectada →'], ['/dashboard', 'Ao vivo →']].map(([to, txt]) => (
+            <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
+              style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
+              {to === '/simulacao' && <Sparkles size={13} />}{txt}
+            </Link>
+          ))}
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: 12 }}>
         <Kpi rotulo="VEÍCULOS ATIVOS" valor={veiculosAtivos} detalhe={`foto nos últimos ${JANELA_MIN} min`} />
@@ -241,7 +247,7 @@ export default function Apresentacao() {
 
       <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 14 }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ flex: 1, minHeight: 0, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
+          <div style={{ flex: 1, minHeight: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
             <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} celulas={celulas} chaveEnquadrar="apresentacao" />
           </div>
           <FaixaCameras cameras={cameras} />
@@ -252,6 +258,7 @@ export default function Apresentacao() {
           <Feed itens={feed(recentes, cameras, 7)} />
         </div>
       </div>
+      </main>
     </div>
   )
 }
