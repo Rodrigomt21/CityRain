@@ -147,7 +147,7 @@ export default function Simulacao() {
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '8px 0 0', lineHeight: 1.45 }}>
               Arraste a frota: com poucos carros a cidade fica às cegas; com muitos, cada célula de ~460 m ganha uma estimativa.
-              Hoje há algumas dezenas de pluviômetros públicos para toda a cidade.
+              Hoje são 113 estações públicas para 1.522 km²: só 4% das células de ~460 m têm um pluviômetro.
             </p>
           </div>
 
