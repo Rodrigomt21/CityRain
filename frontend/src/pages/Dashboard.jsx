@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import MapaAoVivo from '../components/dashboard/MapaAoVivo'
 import PainelAgora from '../components/dashboard/PainelAgora'
@@ -8,7 +8,7 @@ import { BASE_URL } from '../api/client'
 import { useCameras } from '../hooks/useCameras'
 import { useLiveCaptures, JANELA_MIN } from '../hooks/useLiveCaptures'
 import { useMoveis } from '../hooks/useMoveis'
-import { NOME_TIPO, TIPOS_MAPA, celulasH3, dispositivosDoMapa, filtrarPorTipo, tipoDaUrl } from '../lib/dispositivos'
+import { TIPOS_MAPA, celulasH3, dispositivosDoMapa, filtrarPorTipo, tipoDaUrl } from '../lib/dispositivos'
 
 // Ao vivo = capturas reais dos últimos JANELA_MIN minutos, em mapa real.
 // (A versão anterior, com mapa esquemático e simulação quando não havia dado,
@@ -51,7 +51,8 @@ export default function Dashboard() {
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
-            <div role="group" aria-label="Tipo de dispositivo no mapa" style={{ display: 'flex', gap: 4, marginRight: 8 }}>
+            <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>Mostrar no mapa:</span>
+            <div role="group" aria-label="Tipo de dispositivo no mapa" style={{ display: 'flex', gap: 4 }}>
               {TIPOS_MAPA.map(t => (
                 <button key={t.label} type="button" onClick={() => escolherTipo(t.valor)} aria-pressed={t.valor === tipo}
                   className="font-mono text-xs px-3 py-1.5 rounded"
@@ -61,12 +62,6 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            {[['/apresentacao', 'Apresentação →'], ['/historico', 'Histórico →'], ['/dispositivos', `${NOME_TIPO.movel} →`], ['/cameras', `${NOME_TIPO.fixa} →`]].map(([to, txt]) => (
-              <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
-                style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
-                {txt}
-              </Link>
-            ))}
           </div>
         </div>
 

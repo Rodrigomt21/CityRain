@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import { MapContainer, TileLayer, Polygon, CircleMarker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -89,10 +88,6 @@ export default function Simulacao() {
             style={{ color: '#fbbf24', background: '#fbbf241a', border: '1px solid #fbbf2433' }}>
             SIMULAÇÃO ILUSTRATIVA · dados gerados, não medidos
           </span>
-          <Link to="/apresentacao" className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
-            style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
-            Apresentação →
-          </Link>
         </div>
       </div>
 
