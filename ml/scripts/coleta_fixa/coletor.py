@@ -122,18 +122,30 @@ def hls_valido(url: str, resolvida_em: float, agora: float, max_idade_s: float =
 def _jpeg_youtube(fonte: Fonte) -> bytes:
     agora = time.time()
     if not hls_valido(fonte.hls, fonte.hls_em, agora):
-        r = subprocess.run(["yt-dlp", "-g", "-f", "b[height<=720]/bv*[height<=720]/b/bv*", fonte.url],
+        # --match-filter is_live: live encerrada vira gravação, e o 1º quadro dela sairia com a hora de agora
+        r = subprocess.run(["yt-dlp", "-g", "--match-filter", "is_live", "-f",
+                            "b[height<=720]/bv*[height<=720]/b/bv*", fonte.url],
                            capture_output=True, text=True, timeout=TIMEOUT_S)
         if r.returncode != 0 or not r.stdout.strip():
-            raise RuntimeError(f"yt-dlp: {r.stderr.strip()[-200:]}")
+            raise RuntimeError(f"yt-dlp: sem live no ar agora {r.stderr.strip()[-200:]}")
         fonte.hls, fonte.hls_em = r.stdout.strip().splitlines()[0], agora
-    with tempfile.NamedTemporaryFile(suffix=".jpg") as tmp:
+    # HLS em cache de live que acabou ganha #EXT-X-ENDLIST: o ffmpeg leria do começo da gravação
+    try:
+        lista = urllib.request.urlopen(fonte.hls, timeout=20).read(400_000).decode("utf-8", "replace")
+    except Exception:  # noqa: BLE001
+        lista = ""
+    if "#EXT-X-ENDLIST" in lista:
+        fonte.hls = ""
+        raise RuntimeError("live encerrada (playlist com ENDLIST): foto descartada")
+    # pasta temporária em vez de NamedTemporaryFile: no Windows o arquivo aberto não pode ser escrito pelo ffmpeg
+    with tempfile.TemporaryDirectory() as pasta:
+        tmp = Path(pasta) / "frame.jpg"
         r = subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", fonte.hls, "-frames:v", "1",
-                            "-q:v", "2", tmp.name], capture_output=True, text=True, timeout=TIMEOUT_S)
+                            "-q:v", "2", str(tmp)], capture_output=True, text=True, timeout=TIMEOUT_S)
         if r.returncode != 0:
             fonte.hls = ""  # força renovar na próxima
             raise RuntimeError(f"ffmpeg: {r.stderr.strip()[-200:]}")
-        return Path(tmp.name).read_bytes()
+        return tmp.read_bytes()
 
 
 def _jpeg_snapshot(fonte: Fonte) -> bytes:
