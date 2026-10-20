@@ -22,11 +22,17 @@ export class ApiError extends Error {
 export async function apiGet(path, { token } = {}) {
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined
 
+  // Falha de rede (Wi-Fi oscilando, roteador do celular): tenta de novo uma vez antes de acusar erro,
+  // para uma piscada da conexão não virar "API indisponível" na tela.
   let res
-  try {
-    res = await fetch(`${BASE_URL}${path}`, { headers })
-  } catch {
-    throw new ApiError('Falha de rede ao conectar à API.', 0)
+  for (let tentativa = 0; ; tentativa++) {
+    try {
+      res = await fetch(`${BASE_URL}${path}`, { headers })
+      break
+    } catch {
+      if (tentativa >= 1) throw new ApiError('Falha de rede ao conectar à API.', 0)
+      await new Promise(r => setTimeout(r, 1500))
+    }
   }
 
   if (!res.ok) {

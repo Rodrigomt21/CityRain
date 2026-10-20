@@ -1,8 +1,18 @@
 import { useResumoPublico } from '../../hooks/useResumoPublico'
 import { useEffect, useState } from 'react'
 import { Droplets, ChevronLeft } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { statusSistema } from '../../lib/status'
+import { NOME_TIPO } from '../../lib/dispositivos'
+
+// Páginas principais: a navegação fica aqui, igual em todas as telas
+const ABAS = [
+  ['/dashboard', 'Ao vivo'],
+  ['/cameras', NOME_TIPO.fixa],
+  ['/dispositivos', NOME_TIPO.movel],
+  ['/historico', 'Histórico'],
+  ['/apresentacao', 'Apresentação'],
+]
 
 function formatDateTime(date) {
   const d = date.toLocaleDateString('pt-BR')
@@ -20,6 +30,10 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
   }, [])
 
   const status = statusSistema({ saude, ultimas: [ultima, ultimaCamera], agora: now })
+  const { pathname } = useLocation()
+  const abaAtiva = ABAS.find(([to]) => pathname === to || pathname.startsWith(`${to}/`))?.[0]
+  // breadcrumb só para subpáginas (detalhe da câmera, simulação): as páginas principais já aparecem nas abas
+  const mostrarBreadcrumb = !ABAS.some(([, rotulo]) => rotulo === breadcrumb)
 
   return (
     <header
@@ -41,11 +55,29 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
           <span className="font-mono text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
             CityRain
           </span>
-          <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>/</span>
-          <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
-            {breadcrumb}
-          </span>
+          {mostrarBreadcrumb && (
+            <>
+              <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>/</span>
+              <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {breadcrumb}
+              </span>
+            </>
+          )}
         </div>
+        <span className="w-px h-4" style={{ background: 'var(--bg-border)' }} />
+        <nav aria-label="Páginas" className="flex items-center gap-1 h-11">
+          {ABAS.map(([to, rotulo]) => {
+            const ativa = to === abaAtiva
+            return (
+              <Link key={to} to={to} aria-current={ativa ? 'page' : undefined}
+                className="flex items-center h-full px-3 font-mono text-xs no-underline"
+                style={{ color: ativa ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  borderBottom: `2px solid ${ativa ? 'var(--accent-brand)' : 'transparent'}` }}>
+                {rotulo}
+              </Link>
+            )
+          })}
+        </nav>
       </div>
 
       <div className="flex items-center gap-2 font-mono text-xs">

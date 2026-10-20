@@ -229,7 +229,7 @@ export default function Apresentacao() {
               background: aoVivo ? '#22c55e1a' : '#94a3b81a', border: `1px solid ${aoVivo ? '#22c55e33' : '#94a3b833'}` }}>
             {aoVivo ? <><span className="ap-ponto-vivo" /> AO VIVO</> : 'SEM SINAL RECENTE'}
           </span>
-          {[['/simulacao', 'Simular a cidade conectada →'], ['/dashboard', 'Ao vivo →']].map(([to, txt]) => (
+          {[['/simulacao', 'Simular a cidade conectada →']].map(([to, txt]) => (
             <Link key={to} to={to} className="flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded no-underline"
               style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
               {to === '/simulacao' && <Sparkles size={13} />}{txt}
