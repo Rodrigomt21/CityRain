@@ -64,11 +64,24 @@ export default function PainelAgora({ capturas, ultima, janelaMin }) {
 
       {ref ? (
         <div>
-          <div className="font-mono font-bold" style={{ fontSize: 44, lineHeight: 1, color: cat.color }}>{cat.label.toUpperCase()}</div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)', margin: '8px 0 0' }}>{DESCRICAO[cat.key]}</p>
-          <div className="font-mono text-xs" style={{ color: 'var(--text-secondary)', marginTop: 12, display: 'grid', gridTemplateColumns: '92px 1fr', rowGap: 4 }}>
+          {/* Sem captura na janela, a classe da última captura (pode ser de dias atrás) não é o "agora":
+              mostrar a classe em destaque fazia o painel dizer "GAROA" sem sinal nenhum. */}
+          {aoVivo ? (
+            <>
+              <div className="font-mono font-bold" style={{ fontSize: 44, lineHeight: 1, color: cat.color }}>{cat.label.toUpperCase()}</div>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)', margin: '8px 0 0' }}>{DESCRICAO[cat.key]}</p>
+            </>
+          ) : (
+            <>
+              <div className="font-mono font-bold" style={{ fontSize: 44, lineHeight: 1, color: UNMEASURED.color }}>SEM SINAL</div>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)', margin: '8px 0 0' }}>
+                Última captura: <span style={{ color: cat.color }}>{cat.label.toLowerCase()}</span>, {haQuanto(new Date(ref.captured_at), agora)}.
+              </p>
+            </>
+          )}
+          <div className="font-mono text-xs" style={{ color: 'var(--text-secondary)', marginTop: 12, display: 'grid', gridTemplateColumns: '110px 1fr', rowGap: 4 }}>
             <span>confiança</span><span style={{ color: 'var(--text-primary)' }}>{ref.confidence != null ? `${Math.round(ref.confidence * 100)}%` : '—'}</span>
-            <span>captura</span><span style={{ color: 'var(--text-primary)' }}>{new Date(ref.captured_at).toLocaleString('pt-BR')} ({haQuanto(new Date(ref.captured_at), agora)})</span>
+            <span>{aoVivo ? 'captura' : 'última captura'}</span><span style={{ color: 'var(--text-primary)' }}>{new Date(ref.captured_at).toLocaleString('pt-BR')} ({haQuanto(new Date(ref.captured_at), agora)})</span>
             <span>local</span><span style={{ color: 'var(--text-primary)' }}>{endereco ?? `${ref.latitude.toFixed(4)}, ${ref.longitude.toFixed(4)}`}</span>
             <span>dispositivo</span><span style={{ color: 'var(--text-primary)' }}>{ref.source_type} #{ref.device_id ?? '—'}{ref.metadata?.demo ? ' · DEMONSTRAÇÃO' : ''}</span>
           </div>
