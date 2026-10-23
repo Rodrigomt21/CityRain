@@ -1,6 +1,7 @@
 // Simulação ILUSTRATIVA da "cidade conectada" (visão de futuro para a defesa): nada aqui é medido.
 // Uma chuva sintética atravessa São Paulo; carros e câmeras amostram a chuva onde estão (com ruído) e cada
 // célula H3 é estimada pelos sensores próximos (IDW). Mostra como a cobertura e o erro melhoram com a frota.
+// O ponto de partida são os pluviômetros de hoje, na densidade real de SP (posição ilustrativa).
 // Funções puras e determinísticas por semente (testadas com Vitest).
 import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js'
 import { getCategory } from './categories'
@@ -8,7 +9,11 @@ import { getCategory } from './categories'
 // Retângulo do centro expandido de SP (lat, lng)
 export const SP = { sul: -23.68, norte: -23.47, oeste: -46.78, leste: -46.47 }
 export const RES_SIM = 8
-const RAIO_ESTIMATIVA_KM = 2.5
+// 1,5 km: com só os pluviômetros, ~metade da área fica sem estimativa, como na cidade real
+// (53% de SP a mais de 2 km de uma estação). Com 2,5 km os pluviômetros sozinhos já cobriam 76%.
+const RAIO_ESTIMATIVA_KM = 1.5
+// Densidade real: 113 estações públicas (CEMADEN, CGE, INMET) para 1.522 km²
+export const KM2_POR_PLUVIOMETRO = 13
 
 // Bairros para o painel "quanto chove em cada bairro" (centro aproximado)
 export const BAIRROS = [
@@ -63,15 +68,28 @@ function pontoAleatorio(r) {
   return { lat: SP.sul + r() * (SP.norte - SP.sul), lng: SP.oeste + r() * (SP.leste - SP.oeste) }
 }
 
-/** Frota e câmeras fixas: carros com rota (pontos de passagem) e velocidade, câmeras paradas. */
+/**
+ * Frota e câmeras fixas: carros com rota (pontos de passagem) e velocidade, câmeras paradas.
+ * Carros e câmeras têm sorteios separados: aumentar a frota acrescenta sensores sem mover os que já estão no mapa.
+ */
 export function criarSensores(nCarros, nCameras, semente = 7) {
   const r = rng(semente)
   const carros = Array.from({ length: nCarros }, (_, i) => ({
     id: `c${i}`, tipo: 'carro', rota: Array.from({ length: 6 }, () => pontoAleatorio(r)),
     kmh: 25 + r() * 25, fase: r(),
   }))
-  const cameras = Array.from({ length: nCameras }, (_, i) => ({ id: `f${i}`, tipo: 'camera', ...pontoAleatorio(r) }))
+  const rc = rng(semente + 1000)
+  const cameras = Array.from({ length: nCameras }, (_, i) => ({ id: `f${i}`, tipo: 'camera', ...pontoAleatorio(rc) }))
   return { carros, cameras }
+}
+
+/** Pluviômetros de hoje: quantidade pela densidade real (1 a cada 13 km²), posição sorteada (ilustrativa). */
+export function criarPluviometros(semente = 3) {
+  const areaKm2 = distKm({ lat: SP.sul, lng: SP.oeste }, { lat: SP.norte, lng: SP.oeste })
+    * distKm({ lat: SP.sul, lng: SP.oeste }, { lat: SP.sul, lng: SP.leste })
+  const r = rng(semente)
+  return Array.from({ length: Math.round(areaKm2 / KM2_POR_PLUVIOMETRO) },
+    (_, i) => ({ id: `p${i}`, tipo: 'pluviometro', ...pontoAleatorio(r) }))
 }
 
 /** Posição do carro no instante t: anda pela rota (ida e volta) na velocidade dele; o tempo da simulação é acelerado. */
@@ -90,15 +108,23 @@ export function posicaoCarro(carro, t) {
   return carro.rota[carro.rota.length - 1]
 }
 
-/** Leitura de cada sensor no instante t: chuva verdadeira + erro do modelo (ruído multiplicativo). */
-export function leituras(sensores, t, semente = 11) {
+/**
+ * Leitura de cada sensor no instante t: câmera = chuva verdadeira + erro do modelo (ruído multiplicativo);
+ * pluviômetro mede a chuva exata, mas só no ponto onde está.
+ */
+export function leituras(sensores, t, pluviometros = [], semente = 11) {
   const r = rng(semente + Math.floor(t))
   const todos = [...sensores.carros.map(c => ({ ...c, ...posicaoCarro(c, t) })), ...sensores.cameras]
-  return todos.map(s => {
+  const deCamera = todos.map(s => {
     const real = chuvaEm(s, t)
     const lido = real * (0.75 + 0.5 * r())
     return { id: s.id, tipo: s.tipo, lat: s.lat, lng: s.lng, mm: lido, categoria: getCategory(lido) }
   })
+  const dePluviometro = pluviometros.map(p => {
+    const mm = chuvaEm(p, t)
+    return { id: p.id, tipo: p.tipo, lat: p.lat, lng: p.lng, mm, categoria: getCategory(mm) }
+  })
+  return [...deCamera, ...dePluviometro]
 }
 
 /** Células H3 do retângulo de SP (calculadas uma vez). */
@@ -125,22 +151,35 @@ export function estimar(p, leit, raioKm = RAIO_ESTIMATIVA_KM) {
 }
 
 /**
- * Mapa estimado + métricas contra a chuva "verdadeira" da simulação: cobertura (% de células com sensor perto)
- * e acerto de classe na cidade inteira (célula sem sensor conta como erro: sem dado, não se sabe a chuva ali).
+ * Mapa estimado + métricas contra a chuva "verdadeira" da simulação: cobertura (% de células com sensor perto),
+ * acerto de classe na cidade inteira (célula sem sensor conta como erro: sem dado, não se sabe a chuva ali) e
+ * chuva forte enxergada (% das células com chuva forte de verdade que o mapa também marca como forte;
+ * null quando não há chuva forte na cidade naquele instante).
  */
 export function estimarCidade(celulas, leit, t) {
   let cobertas = 0
   let acertos = 0
+  let fortes = 0
+  let fortesVistas = 0
   const estimadas = celulas.map(c => {
     const mm = estimar(c, leit)
     const real = getCategory(chuvaEm(c, t))
     const categoria = mm == null ? null : getCategory(mm)
     if (mm != null) cobertas += 1
     if (categoria === real) acertos += 1
+    if (real.key === 'heavy') {
+      fortes += 1
+      if (categoria === real) fortesVistas += 1
+    }
     return { ...c, mm, categoria }
   })
   const n = celulas.length || 1
-  return { estimadas, coberturaPct: Math.round((100 * cobertas) / n), acertoPct: Math.round((100 * acertos) / n) }
+  return {
+    estimadas,
+    coberturaPct: Math.round((100 * cobertas) / n),
+    acertoPct: Math.round((100 * acertos) / n),
+    fortePct: fortes ? Math.round((100 * fortesVistas) / fortes) : null,
+  }
 }
 
 /** Chuva estimada em cada bairro, da mais forte para a mais fraca (null = bairro sem sensor perto). */

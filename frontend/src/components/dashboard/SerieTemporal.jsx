@@ -85,9 +85,9 @@ export default function SerieTemporal({ capturas, loading, altura = 150 }) {
         <ResponsiveContainer width="100%" height={altura}>
           <BarChart data={dados} margin={{ top: 4, right: 8, left: -24, bottom: 0 }}>
             <CartesianGrid stroke="var(--bg-border)" vertical={false} />
-            <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
+            <XAxis dataKey="rotulo" tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontFamily: 'JetBrains Mono' }}
               axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} />
-            <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 11, fontFamily: 'JetBrains Mono' }}
+            <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 12, fontFamily: 'JetBrains Mono' }}
               axisLine={false} tickLine={false} />
             <Tooltip
               cursor={{ fill: '#ffffff0d' }}

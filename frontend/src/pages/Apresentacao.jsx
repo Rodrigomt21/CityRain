@@ -42,7 +42,7 @@ function Chuva({ categoria }) {
 function Kpi({ rotulo, valor, detalhe }) {
   return (
     <div style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 12, padding: '12px 16px' }}>
-      <div className="font-mono" style={{ fontSize: 11, letterSpacing: 1.5, color: 'var(--text-secondary)' }}>{rotulo}</div>
+      <div className="font-mono" style={{ fontSize: 12, letterSpacing: 1.5, color: 'var(--text-secondary)' }}>{rotulo}</div>
       <div className="font-mono font-bold" style={{ fontSize: 30, color: 'var(--text-primary)', lineHeight: 1.15 }}>{valor}</div>
       {detalhe && <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{detalhe}</div>}
     </div>
@@ -65,7 +65,7 @@ function CardCarro({ ultima, recentes, agora }) {
           <Car size={16} /> CARRO · CÂMERA NO PARA-BRISA
         </span>
         {fresca && ehDemo(ultima) && (
-          <span className="font-mono" style={{ fontSize: 11, padding: '2px 8px', borderRadius: 999, color: '#fbbf24', border: '1px solid #fbbf2466' }}>
+          <span className="font-mono" style={{ fontSize: 12, padding: '2px 8px', borderRadius: 999, color: '#fbbf24', border: '1px solid #fbbf2466' }}>
             REPLAY 23/09
           </span>
         )}
@@ -124,7 +124,7 @@ function Pipeline({ pulso }) {
                   <Icone size={20} />
                 </div>
                 <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-primary)', marginTop: 6 }}>{e.titulo}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{e.texto}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{e.texto}</div>
               </div>
               {i < ETAPAS.length - 1 && (
                 <div style={{ flex: 1, height: 2, margin: '0 4px 30px', background: 'var(--bg-border)', position: 'relative', overflow: 'hidden' }}>

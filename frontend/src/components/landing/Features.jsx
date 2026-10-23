@@ -55,7 +55,7 @@ const STEPS = [
   {
     n: '03',
     title: 'O painel agrega',
-    desc: 'O dashboard desenha o trajeto, agrupa as capturas em células H3 e mostra como a chuva evoluiu no tempo.',
+    desc: 'O mapa desenha o trajeto, agrupa as capturas em células H3 e mostra como a chuva evoluiu no tempo.',
   },
 ]
 
@@ -84,16 +84,16 @@ export default function Features() {
               className="font-mono text-xs uppercase tracking-widest"
               style={{ color: 'var(--accent-brand)' }}
             >
-              Plataforma
+              Como funciona por dentro
             </span>
             <h2
               className="font-mono font-bold mt-2"
               style={{ fontSize: '1.6rem', color: 'var(--text-primary)' }}
             >
-              Tudo que você precisa numa tela
+              Da câmera ao mapa, em segundos
             </h2>
             <p className="font-sans mt-3 text-sm" style={{ color: 'var(--text-secondary)', maxWidth: '440px', margin: '12px auto 0' }}>
-              Um dashboard pensado para operadores sob pressão: denso em informação, zero em ruído.
+              Cada foto vira um ponto no mapa com a intensidade da chuva, o lugar e a hora.
             </p>
           </div>
 
