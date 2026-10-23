@@ -37,31 +37,34 @@ function Seguir({ pontos, posDispositivos, chave }) {
 
 const ORDEM_LEGENDA = ['heavy', 'moderate', 'drizzle', 'dry']
 
-/** Legenda no canto inferior esquerdo: não captura cliques, então não atrapalha arrastar o mapa. */
+/** Legenda no canto inferior esquerdo: não captura cliques, então não atrapalha arrastar o mapa.
+ * No celular fica só a régua de cores, em linha, para não cobrir metade do mapa. */
 function Legenda() {
   return (
     <div role="group" aria-label="Legenda do mapa" className="font-mono"
       style={{
         position: 'absolute', left: 10, bottom: 22, zIndex: 1000, pointerEvents: 'none',
         background: 'rgba(11, 18, 32, 0.88)', border: '1px solid var(--bg-border)', borderRadius: 8,
-        padding: '8px 10px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-primary)', maxWidth: 240,
+        padding: '8px 10px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-primary)', maxWidth: 'min(240px, calc(100% - 20px))',
       }}>
-      <div style={{ color: 'var(--text-secondary)', letterSpacing: 1, marginBottom: 4 }}>CLASSE DA ÚLTIMA FOTO</div>
+      <div className="hidden md:block" style={{ color: 'var(--text-secondary)', letterSpacing: 1, marginBottom: 4 }}>CLASSE DA ÚLTIMA FOTO</div>
+      <div className="flex flex-wrap md:block gap-x-3">
       {ORDEM_LEGENDA.map(k => (
         <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ width: 10, height: 10, borderRadius: 2, background: CATEGORIES[k].color, flexShrink: 0 }} />
           <span>{CATEGORIES[k].label}</span>
         </div>
       ))}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, paddingTop: 4, borderTop: '1px solid var(--bg-border)' }}>
+      </div>
+      <div className="hidden md:flex" style={{ alignItems: 'center', gap: 8, marginTop: 4, paddingTop: 4, borderTop: '1px solid var(--bg-border)' }}>
         <span style={{ width: 10, height: 10, borderRadius: 2, border: `1px dashed ${UNMEASURED.color}`, flexShrink: 0 }} />
         <span>Tracejado · sem dado há mais de {MINUTOS_CIRCULO_FRESCO} min ou sem classe</span>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+      <div className="hidden md:flex" style={{ alignItems: 'center', gap: 8, marginTop: 2 }}>
         <span style={{ width: 10, height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #67e8f9, #fb923c)', flexShrink: 0 }} />
         <span style={{ color: 'var(--text-secondary)' }}>Linha · trajeto do carro, cor pela classe</span>
       </div>
-      <div style={{ color: 'var(--text-secondary)', marginTop: 2 }}>Hexágono H3 ~460 m · clique para ver o último frame</div>
+      <div className="hidden md:block" style={{ color: 'var(--text-secondary)', marginTop: 2 }}>Hexágono H3 ~460 m · clique para ver o último frame</div>
     </div>
   )
 }
