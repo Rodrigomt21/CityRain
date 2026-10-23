@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Topbar from '../components/layout/Topbar'
-import { MapContainer, TileLayer, Polygon, CircleMarker } from 'react-leaflet'
+import { MapContainer, TileLayer, Polygon, CircleMarker, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { AlertTriangle, Car, Pause, Play, RotateCcw } from 'lucide-react'
 import { CATEGORIES } from '../lib/categories'
@@ -8,7 +8,7 @@ import { celulasCidade, criarPluviometros, criarSensores, estimarCidade, leitura
 
 // Visão de futuro: frota de carros + câmeras fixas cobrindo São Paulo. SIMULAÇÃO ILUSTRATIVA:
 // a chuva e as leituras são geradas no navegador; nada vem da API nem vai para o banco.
-// Abre em "hoje" (só pluviômetros, na densidade real) e o visitante conecta a frota com um toque:
+// Abre em "hoje" (só os pluviômetros públicos reais) e o visitante conecta a frota com um toque:
 // o contraste entre as duas situações é o argumento do projeto.
 
 const PASSO_S = 15        // segundos simulados por quadro
@@ -156,7 +156,7 @@ export default function Simulacao() {
       </div>
 
       <div className="grid grid-cols-2 md:flex gap-3">
-        <Kpi rotulo="PLUVIÔMETROS" valor={pluviometros.length} detalhe="densidade real de SP (1 a cada 13 km²)" cor={COR_PLUVIOMETRO} />
+        <Kpi rotulo="PLUVIÔMETROS" valor={pluviometros.length} detalhe="reais nesta área: CEMADEN, CGE e INMET" cor={COR_PLUVIOMETRO} />
         <Kpi rotulo="FROTA" valor={nCarros + nCameras} detalhe={`${nCarros} carros + ${nCameras} câmeras`} />
         <Kpi rotulo="CIDADE COBERTA" valor={`${cidade.coberturaPct}%`} detalhe="área com sensor a até 1,5 km" cor="#60a5fa" />
         <Kpi rotulo="CHUVA FORTE VISTA" valor={cidade.fortePct == null ? '—' : `${cidade.fortePct}%`}
@@ -174,8 +174,10 @@ export default function Simulacao() {
                 pathOptions={{ stroke: false, fillColor: c.categoria.color, fillOpacity: 0.45 }} />
             ))}
             {pluviometros.map(p => (
-              <CircleMarker key={p.id} center={[p.lat, p.lng]} radius={4.5} interactive={false}
-                pathOptions={{ color: '#0b1220', weight: 1.5, fillColor: COR_PLUVIOMETRO, fillOpacity: 1 }} />
+              <CircleMarker key={p.id} center={[p.lat, p.lng]} radius={4.5}
+                pathOptions={{ color: '#0b1220', weight: 1.5, fillColor: COR_PLUVIOMETRO, fillOpacity: 1 }}>
+                <Tooltip>{p.fonte} · {p.nome}{p.aprox ? ' (posição aproximada)' : ''}</Tooltip>
+              </CircleMarker>
             ))}
             {sensores.cameras.map(cam => (
               <CircleMarker key={cam.id} center={[cam.lat, cam.lng]} radius={4} interactive={false}
@@ -214,7 +216,8 @@ export default function Simulacao() {
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '8px 0 0', lineHeight: 1.45 }}>
               Arraste a frota: com poucos carros a cidade fica às cegas; com muitos, cada célula de ~460 m ganha uma estimativa.
               Hoje são 113 estações públicas para 1.522 km²: só 4% das células de ~460 m têm um pluviômetro.
-              Os pontos amarelos seguem essa densidade; a posição deles é ilustrativa.
+              Os pontos amarelos são os pluviômetros reais desta área (CEMADEN e INMET na posição exata; CGE aproximada
+              pelo bairro, que ela não publica). Cada sensor estima a chuva até 1,5 km ao redor.
             </p>
           </div>
 

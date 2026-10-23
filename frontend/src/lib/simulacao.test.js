@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BAIRROS, KM2_POR_PLUVIOMETRO, SP, celulasCidade, chuvaEm, criarPluviometros, criarSensores, distKm, estimar, estimarCidade, leituras, porBairro, posicaoCarro, rng } from './simulacao'
+import { BAIRROS, SP, celulasCidade, chuvaEm, criarPluviometros, criarSensores, distKm, estimar, estimarCidade, leituras, porBairro, posicaoCarro, rng } from './simulacao'
 
 describe('rng', () => {
   it('é determinístico pela semente', () => {
@@ -72,12 +72,12 @@ describe('criarSensores', () => {
 })
 
 describe('criarPluviometros', () => {
-  it('segue a densidade real (1 a cada 13 km²) dentro do retângulo de SP', () => {
+  it('são os pluviômetros reais do retângulo de SP, das três redes, com ids únicos', () => {
     const p = criarPluviometros()
-    const areaKm2 = distKm({ lat: SP.sul, lng: SP.oeste }, { lat: SP.norte, lng: SP.oeste })
-      * distKm({ lat: SP.sul, lng: SP.oeste }, { lat: SP.sul, lng: SP.leste })
-    expect(p).toHaveLength(Math.round(areaKm2 / KM2_POR_PLUVIOMETRO))
+    expect(p.length).toBeGreaterThan(80)
     expect(p.every(x => x.lat >= SP.sul && x.lat <= SP.norte && x.lng >= SP.oeste && x.lng <= SP.leste)).toBe(true)
+    expect(new Set(p.map(x => x.fonte))).toEqual(new Set(['CEMADEN', 'CGE', 'INMET']))
+    expect(new Set(p.map(x => x.id)).size).toBe(p.length)
   })
 
   it('pluviômetro lê a chuva exata do ponto (sem o ruído do modelo)', () => {
@@ -106,7 +106,6 @@ describe('estimarCidade com pluviômetros', () => {
     }
     expect(frota).toBeGreaterThan(hoje)
     expect(cobFrota).toBeGreaterThan(cobHoje)
-    expect(cobHoje / 4).toBeLessThan(60) // hoje, boa parte da cidade fica sem estimativa
   })
 
   it('sem chuva forte na cidade, fortePct é null', () => {

@@ -1,19 +1,21 @@
 // Simulação ILUSTRATIVA da "cidade conectada" (visão de futuro para a defesa): nada aqui é medido.
 // Uma chuva sintética atravessa São Paulo; carros e câmeras amostram a chuva onde estão (com ruído) e cada
 // célula H3 é estimada pelos sensores próximos (IDW). Mostra como a cobertura e o erro melhoram com a frota.
-// O ponto de partida são os pluviômetros de hoje, na densidade real de SP (posição ilustrativa).
+// O ponto de partida são os pluviômetros reais desta área (pluviometros-sp.json): CEMADEN (feed oficial,
+// 22/10/2026, posição exata, inclui as cidades vizinhas dentro do retângulo), CGE (32 estações do site, sem
+// coordenada publicada: posição aproximada pelo bairro) e INMET (Mirante de Santana).
 // Funções puras e determinísticas por semente (testadas com Vitest).
 import { cellToBoundary, cellToLatLng, polygonToCells } from 'h3-js'
 import { getCategory } from './categories'
+import PLUVIOMETROS_SP from './pluviometros-sp.json'
 
 // Retângulo do centro expandido de SP (lat, lng)
 export const SP = { sul: -23.68, norte: -23.47, oeste: -46.78, leste: -46.47 }
 export const RES_SIM = 8
-// 1,5 km: com só os pluviômetros, ~metade da área fica sem estimativa, como na cidade real
-// (53% de SP a mais de 2 km de uma estação). Com 2,5 km os pluviômetros sozinhos já cobriam 76%.
-const RAIO_ESTIMATIVA_KM = 1.5
-// Densidade real: 113 estações públicas (CEMADEN, CGE, INMET) para 1.522 km²
-export const KM2_POR_PLUVIOMETRO = 13
+// Até onde um sensor "enxerga" a chuva: escolha de modelagem, não medida. Com os pluviômetros reais desta área,
+// 1,5 km deixa ~59% coberta (com 2,5 km seriam 90%: núcleos de chuva forte têm poucos km e um pluviômetro
+// mede um ponto só).
+export const RAIO_ESTIMATIVA_KM = 1.5
 
 // Bairros para o painel "quanto chove em cada bairro" (centro aproximado)
 export const BAIRROS = [
@@ -83,13 +85,11 @@ export function criarSensores(nCarros, nCameras, semente = 7) {
   return { carros, cameras }
 }
 
-/** Pluviômetros de hoje: quantidade pela densidade real (1 a cada 13 km²), posição sorteada (ilustrativa). */
-export function criarPluviometros(semente = 3) {
-  const areaKm2 = distKm({ lat: SP.sul, lng: SP.oeste }, { lat: SP.norte, lng: SP.oeste })
-    * distKm({ lat: SP.sul, lng: SP.oeste }, { lat: SP.sul, lng: SP.leste })
-  const r = rng(semente)
-  return Array.from({ length: Math.round(areaKm2 / KM2_POR_PLUVIOMETRO) },
-    (_, i) => ({ id: `p${i}`, tipo: 'pluviometro', ...pontoAleatorio(r) }))
+/** Pluviômetros públicos reais dentro do retângulo da simulação (CEMADEN, CGE e INMET). */
+export function criarPluviometros() {
+  return PLUVIOMETROS_SP
+    .filter(p => p.lat >= SP.sul && p.lat <= SP.norte && p.lng >= SP.oeste && p.lng <= SP.leste)
+    .map(p => ({ ...p, id: `p-${p.fonte}-${p.id}`, tipo: 'pluviometro' }))
 }
 
 /** Posição do carro no instante t: anda pela rota (ida e volta) na velocidade dele; o tempo da simulação é acelerado. */
