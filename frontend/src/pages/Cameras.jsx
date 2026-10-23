@@ -16,8 +16,8 @@ export default function Cameras() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <Topbar breadcrumb={NOME_TIPO.fixa} backTo="/dashboard" />
-      <main className="p-6 flex flex-col gap-4">
-        <div className="flex items-end justify-between gap-3">
+      <main className="p-3 md:p-6 flex flex-col gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-mono font-bold" style={{ fontSize: '22px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
               {NOME_TIPO.fixa}

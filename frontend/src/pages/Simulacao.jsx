@@ -26,12 +26,12 @@ function Bairros({ lista }) {
       <div className="font-mono" style={{ fontSize: 12, letterSpacing: 1.5, color: 'var(--text-secondary)', marginBottom: 8 }}>QUANTO CHOVE EM CADA BAIRRO</div>
       {lista.map(b => (
         <div key={b.nome} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0' }}>
-          <span style={{ width: 112, fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{b.nome}</span>
+          <span style={{ width: 112, flexShrink: 0, fontSize: 14, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.nome}</span>
           <div style={{ flex: 1, height: 10, borderRadius: 5, background: 'var(--bg-border)', overflow: 'hidden' }}>
             <div style={{ width: `${b.mm == null ? 0 : Math.max(2, (100 * b.mm) / max)}%`, height: '100%',
               background: b.categoria?.color ?? 'transparent', transition: 'width 0.3s, background 0.3s' }} />
           </div>
-          <span className="font-mono" style={{ width: 168, textAlign: 'right', fontSize: 13, whiteSpace: 'nowrap', color: b.categoria?.color ?? 'var(--text-secondary)' }}>
+          <span className="font-mono w-[120px] md:w-[168px] shrink-0" style={{ textAlign: 'right', fontSize: 13, whiteSpace: 'nowrap', color: b.categoria?.color ?? 'var(--text-secondary)' }}>
             {b.mm == null ? 'sem sensor perto' : `${b.categoria.label} · ${b.mm.toLocaleString('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mm/h`}
           </span>
         </div>
@@ -71,10 +71,10 @@ export default function Simulacao() {
   const alerta = bairros.filter(b => b.categoria === CATEGORIES.heavy).map(b => b.nome)
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="min-h-screen md:h-screen flex flex-col md:overflow-hidden" style={{ background: 'var(--bg-base)' }}>
       <Topbar breadcrumb="Simulação" backTo="/apresentacao" />
-      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+      <main className="flex-1 min-h-0 flex flex-col gap-3 px-3 py-3 md:px-5 md:py-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
             A cidade conectada
@@ -83,7 +83,7 @@ export default function Simulacao() {
             Cada carro e cada câmera viram um pluviômetro · relógio simulado {horaSimulada(t)}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <span className="font-mono text-xs px-2 py-0.5 rounded"
             style={{ color: '#fbbf24', background: '#fbbf241a', border: '1px solid #fbbf2433' }}>
             SIMULAÇÃO ILUSTRATIVA · dados gerados, não medidos
@@ -91,15 +91,15 @@ export default function Simulacao() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div className="grid grid-cols-2 md:flex gap-3">
         <Kpi rotulo="CARROS NA RUA" valor={nCarros} detalhe="Jetson no para-brisa" />
         <Kpi rotulo="CÂMERAS FIXAS" valor={nCameras} detalhe="CCTV e lives públicas" />
         <Kpi rotulo="CIDADE COBERTA" valor={`${cidade.coberturaPct}%`} detalhe="células H3 com sensor a até 2,5 km" cor="#60a5fa" />
         <Kpi rotulo="ACERTO DA CLASSE" valor={`${cidade.acertoPct}%`} detalhe="contra a chuva simulada, cidade inteira" cor="#4ade80" />
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 14 }}>
-        <div style={{ flex: 1, minWidth: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-border)', position: 'relative' }}>
+      <div className="flex flex-col md:flex-row gap-3.5 flex-1 min-h-0">
+        <div className="md:flex-1 min-w-0 h-[60vh] md:h-auto" style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-border)', position: 'relative' }}>
           <MapContainer center={[-23.575, -46.625]} zoom={12} preferCanvas zoomControl={false}
             style={{ height: '100%', width: '100%', background: '#0b1220' }}>
             <TileLayer className="mapa-escuro" attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -129,7 +129,7 @@ export default function Simulacao() {
           </div>
         </div>
 
-        <div style={{ width: 470, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
+        <div className="w-full md:w-[470px] shrink-0 flex flex-col gap-3 min-h-0">
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', borderRadius: 12, padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button type="button" onClick={() => setRodando(r => !r)} aria-label={rodando ? 'Pausar' : 'Continuar'}

@@ -71,7 +71,7 @@ function CardCarro({ ultima, recentes, agora }) {
         )}
       </div>
       <div key={ultima?.id} className="font-mono font-bold ap-entrar"
-        style={{ position: 'relative', fontSize: 64, lineHeight: 1.1, color: cat.color, marginTop: 6, textShadow: `0 0 28px ${cat.color}55` }}>
+        style={{ position: 'relative', fontSize: 'clamp(34px, 10vw, 64px)', overflowWrap: 'anywhere', lineHeight: 1.1, color: cat.color, marginTop: 6, textShadow: `0 0 28px ${cat.color}55` }}>
         {fresca ? cat.label.toUpperCase() : 'AGUARDANDO'}
       </div>
       <div style={{ position: 'relative', fontSize: 14, color: 'var(--text-secondary)', minHeight: 20 }}>
@@ -113,12 +113,12 @@ function Pipeline({ pulso }) {
       <div className="font-mono" style={{ fontSize: 12, letterSpacing: 1.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
         PIPELINE DE PRODUÇÃO · CADA FOTO PERCORRE
       </div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
         {ETAPAS.map((e, i) => {
           const Icone = e.icone
           return (
             <div key={e.titulo} style={{ display: 'flex', alignItems: 'center', flex: i < ETAPAS.length - 1 ? 1 : 'none' }}>
-              <div key={`${pulso}-${i}`} className="ap-etapa" style={{ animationDelay: `${i * 0.22}s`, textAlign: 'center', minWidth: 74 }}>
+              <div key={`${pulso}-${i}`} className="ap-etapa" style={{ animationDelay: `${i * 0.22}s`, textAlign: 'center', minWidth: 56 }}>
                 <div style={{ width: 42, height: 42, margin: '0 auto', borderRadius: 12, display: 'grid', placeItems: 'center',
                   background: '#3b82f61a', border: '1px solid #3b82f655', color: 'var(--accent-brand)' }}>
                   <Icone size={20} />
@@ -164,7 +164,8 @@ function Feed({ itens }) {
 function FaixaCameras({ cameras }) {
   const resumos = cameras.map(c => resumoCamera(c, BASE_URL)).slice(0, 6)
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(resumos.length, 1)}, 1fr)`, gap: 10 }}>
+    // no celular 2 por linha; no desktop todas numa faixa só
+    <div className="grade-cameras" style={{ display: 'grid', '--n': Math.max(resumos.length, 1), gap: 10 }}>
       {resumos.length === 0 && (
         <div style={{ fontSize: 13, color: 'var(--text-secondary)', padding: 12 }}>Nenhuma câmera fixa cadastrada nesta API.</div>
       )}
@@ -211,10 +212,10 @@ export default function Apresentacao() {
   const aoVivo = Boolean(carroFresco) || camerasAoVivo(cameras, agora) > 0
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="min-h-screen md:h-screen flex flex-col md:overflow-hidden" style={{ background: 'var(--bg-base)' }}>
       <Topbar breadcrumb="Apresentação" backTo="/dashboard" />
-      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+      <main className="flex-1 min-h-0 flex flex-col gap-3 px-3 py-3 md:px-5 md:py-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
             Modo apresentação
@@ -223,7 +224,7 @@ export default function Apresentacao() {
             Intensidade de chuva estimada por câmeras, em tempo real · mesmas fontes do ao vivo
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <span className="font-mono text-xs px-2 py-0.5 rounded" role="status"
             style={{ display: 'flex', alignItems: 'center', gap: 6, color: aoVivo ? '#22c55e' : '#94a3b8',
               background: aoVivo ? '#22c55e1a' : '#94a3b81a', border: `1px solid ${aoVivo ? '#22c55e33' : '#94a3b833'}` }}>
@@ -238,21 +239,21 @@ export default function Apresentacao() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div className="grid grid-cols-2 md:flex gap-3">
         <Kpi rotulo="VEÍCULOS ATIVOS" valor={veiculosAtivos} detalhe={`foto nos últimos ${JANELA_MIN} min`} />
         <Kpi rotulo="CÂMERAS FIXAS AO VIVO" valor={`${camerasAoVivo(cameras, agora)}/${cameras.length}`} detalhe="lives públicas e CCTV" />
         <Kpi rotulo="FOTOS DO CARRO" valor={recentes.length} detalhe={`últimos ${JANELA_MIN} min`} />
         <Kpi rotulo="CONFIANÇA MÉDIA" valor={conf != null ? `${conf}%` : '—'} detalhe="modelo do carro" />
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 14 }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ flex: 1, minHeight: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
+      <div className="flex flex-col md:flex-row gap-3.5 flex-1 min-h-0">
+        <div className="flex flex-col gap-3 flex-1 min-w-0">
+          <div className="md:flex-1 md:min-h-0 h-[60vh] md:h-auto" style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
             <MapaAoVivo capturas={recentes} ultimaConhecida={ultima} celulas={celulas} chaveEnquadrar="apresentacao" />
           </div>
           <FaixaCameras cameras={cameras} />
         </div>
-        <div style={{ width: 460, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
+        <div className="w-full md:w-[460px] shrink-0 flex flex-col gap-3 min-h-0">
           <CardCarro ultima={ultima} recentes={recentes} agora={agora} />
           <Pipeline pulso={pulso} />
           <Feed itens={feed(recentes, cameras, 7)} />

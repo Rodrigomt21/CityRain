@@ -65,9 +65,9 @@ export default function Historico() {
   const maxN = Math.max(1, ...celulas.map(c => c.count))
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-screen md:h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
       <Topbar breadcrumb="Histórico" backTo="/dashboard" />
-      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: '12px' }}>
+      <main className="flex-1 min-h-0 flex flex-col gap-3 px-3 py-3 md:px-5 md:py-4">
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0 }}>Histórico de capturas</h1>
@@ -75,7 +75,7 @@ export default function Historico() {
               Células H3 coloridas pela classe predominante · intensidade estimada pelo modelo no backend
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="flex flex-wrap items-center gap-2">
             {PERIODOS.map(p => (
               <button key={p.key} onClick={() => setPeriodo(p)} className="font-mono text-xs px-3 py-1.5 rounded"
                 style={{ cursor: 'pointer', color: p.key === periodo.key ? 'var(--bg-base)' : 'var(--text-secondary)',
@@ -105,8 +105,8 @@ export default function Historico() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 14, flex: 1, minHeight: 0 }}>
-          <aside className="rounded-xl p-4" style={{ width: 340, flexShrink: 0, background: 'var(--bg-card)', border: '1px solid var(--bg-border)', overflowY: 'auto' }}>
+        <div className="flex flex-col md:flex-row gap-3.5 flex-1 min-h-0">
+          <aside className="rounded-xl p-4 w-full md:w-[340px] shrink-0" style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)', overflowY: 'auto' }}>
             <p className="text-xs font-mono" style={{ color: 'var(--text-secondary)', letterSpacing: 1, margin: 0 }}>CAPTURAS NO PERÍODO</p>
             <p className="font-mono font-bold" style={{ fontSize: 34, color: 'var(--text-primary)', margin: '4px 0 12px' }}>
               {loading ? <Skeleton style={{ display: 'inline-block', width: 90, height: 30, verticalAlign: 'middle' }} /> : total}
@@ -144,7 +144,7 @@ export default function Historico() {
             })}
           </aside>
 
-          <div className="rounded-xl" style={{ flex: 1, minWidth: 0, overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
+          <div className="rounded-xl md:flex-1 min-w-0 h-[60vh] md:h-auto order-first md:order-none" style={{ overflow: 'hidden', border: '1px solid var(--bg-border)' }}>
             <MapContainer center={CENTRO_SP} zoom={12} style={{ height: '100%', width: '100%', background: '#0b1220' }}>
               <TileLayer
                 className="mapa-escuro"

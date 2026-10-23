@@ -97,7 +97,7 @@ export default function Features() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map(({ icon: Icon, title, description, borderColor }) => (
               <div
                 key={title}
@@ -141,10 +141,10 @@ export default function Features() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-6 relative">
             {/* Linha conectora */}
             <div
-              className="absolute"
+              className="absolute hidden sm:block"
               style={{
                 top: '28px',
                 left: 'calc(16.66% + 16px)',
@@ -203,7 +203,7 @@ export default function Features() {
             </p>
           </div>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {CATEGORIES.map(({ key, range, color, desc }) => (
               <div
                 key={key}
