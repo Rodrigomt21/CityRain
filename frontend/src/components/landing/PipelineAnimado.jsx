@@ -99,14 +99,19 @@ function Palco({ etapa }) {
   )
 }
 
-export default function PipelineAnimado() {
+/**
+ * Palco + lista de etapas, com o próprio relógio. Roda só quando está na tela.
+ * `grande`: versão do telão (letras maiores). `retomarMs`: depois de um clique numa etapa, volta a andar
+ * sozinho após esse tempo (no telão ninguém fica para apertar "continuar").
+ */
+export function Pipeline({ grande = false, retomarMs = null }) {
   const [etapa, setEtapa] = useState(0)
   const [visivel, setVisivel] = useState(false)
   const [pausado, setPausado] = useState(false)
   const ref = useRef(null)
   const reduzido = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-  // começa quando a seção entra na tela ("ao descer") e para quando sai
+  // começa quando entra na tela ("ao descer") e para quando sai
   useEffect(() => {
     const el = ref.current
     if (!el || !('IntersectionObserver' in window)) { setVisivel(true); return undefined }
@@ -122,10 +127,59 @@ export default function PipelineAnimado() {
     return () => clearTimeout(id)
   }, [rodando, etapa])
 
+  useEffect(() => {
+    if (!pausado || retomarMs == null) return undefined
+    const id = setTimeout(() => setPausado(false), retomarMs)
+    return () => clearTimeout(id)
+  }, [pausado, retomarMs, etapa])
+
   const escolher = i => { setEtapa(i); setPausado(true) }
+  const fonte = grande ? { titulo: 'clamp(16px, 1.5vw, 26px)', texto: 'clamp(14px, 1.2vw, 21px)', num: 'clamp(13px, 1.1vw, 18px)' }
+    : { titulo: 14, texto: 14, num: 12 }
 
   return (
-    <section ref={ref} className="py-20 px-4 sm:px-6" style={{ background: 'var(--bg-base)', borderTop: '1px solid var(--bg-border)' }}>
+    <div ref={ref} className={`grid gap-6 md:items-center ${grande ? 'md:grid-cols-[2.2fr_1fr] pl-grande' : 'md:grid-cols-[1.6fr_1fr]'}`}>
+      <Palco etapa={etapa} />
+
+      <ol className="flex flex-col gap-1" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {ETAPAS.map((e, i) => {
+          const ativa = i === etapa
+          return (
+            <li key={e.titulo}>
+              <button type="button" onClick={() => escolher(i)} aria-current={ativa ? 'step' : undefined}
+                className="w-full text-left rounded-lg px-4 py-3"
+                style={{ background: ativa ? 'var(--bg-card)' : 'transparent', border: `1px solid ${ativa ? 'var(--bg-border)' : 'transparent'}`, cursor: 'pointer', color: 'inherit' }}>
+                <span className="flex items-center gap-3">
+                  <span className="font-mono" style={{ fontSize: fonte.num, color: ativa ? 'var(--accent-brand)' : 'var(--text-secondary)' }}>{i + 1}</span>
+                  <span className="font-mono font-semibold" style={{ fontSize: fonte.titulo, color: ativa ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{e.titulo}</span>
+                </span>
+                {ativa && (
+                  <>
+                    <span className="block mt-1.5" style={{ fontSize: fonte.texto, color: 'var(--text-secondary)', lineHeight: 1.5, paddingLeft: 22 }}>{e.texto}</span>
+                    {rodando && <span className="pl-progresso" key={etapa} style={{ animationDuration: `${PASSO_MS}ms` }} />}
+                  </>
+                )}
+              </button>
+            </li>
+          )
+        })}
+        {pausado && !reduzido && retomarMs == null && (
+          <li>
+            <button type="button" onClick={() => setPausado(false)} className="font-mono text-xs px-4 py-2"
+              style={{ background: 'none', border: 0, color: 'var(--accent-brand)', cursor: 'pointer' }}>
+              ▶ continuar sozinho
+            </button>
+          </li>
+        )}
+      </ol>
+    </div>
+  )
+}
+
+/** Seção da landing: título + pipeline. */
+export default function PipelineAnimado() {
+  return (
+    <section className="py-20 px-4 sm:px-6" style={{ background: 'var(--bg-base)', borderTop: '1px solid var(--bg-border)' }}>
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <h2 className="font-mono font-bold" style={{ fontSize: '1.6rem', color: 'var(--text-primary)', margin: 0 }}>
@@ -135,42 +189,7 @@ export default function PipelineAnimado() {
             O caminho de uma foto de verdade, tirada pelo nosso carro em 13/09, até virar um hexágono no mapa.
           </p>
         </div>
-
-        <div className="grid gap-6 md:grid-cols-[1.6fr_1fr] md:items-center">
-          <Palco etapa={etapa} />
-
-          <ol className="flex flex-col gap-1" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {ETAPAS.map((e, i) => {
-              const ativa = i === etapa
-              return (
-                <li key={e.titulo}>
-                  <button type="button" onClick={() => escolher(i)} aria-current={ativa ? 'step' : undefined}
-                    className="w-full text-left rounded-lg px-4 py-3"
-                    style={{ background: ativa ? 'var(--bg-card)' : 'transparent', border: `1px solid ${ativa ? 'var(--bg-border)' : 'transparent'}`, cursor: 'pointer', color: 'inherit' }}>
-                    <span className="flex items-center gap-3">
-                      <span className="font-mono text-xs" style={{ color: ativa ? 'var(--accent-brand)' : 'var(--text-secondary)' }}>{i + 1}</span>
-                      <span className="font-mono text-sm font-semibold" style={{ color: ativa ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{e.titulo}</span>
-                    </span>
-                    {ativa && (
-                      <>
-                        <span className="block text-[14px] mt-1.5" style={{ color: 'var(--text-secondary)', lineHeight: 1.5, paddingLeft: 22 }}>{e.texto}</span>
-                        {rodando && <span className="pl-progresso" key={etapa} style={{ animationDuration: `${PASSO_MS}ms` }} />}
-                      </>
-                    )}
-                  </button>
-                </li>
-              )
-            })}
-            {pausado && !reduzido && (
-              <li>
-                <button type="button" onClick={() => setPausado(false)} className="font-mono text-xs px-4 py-2"
-                  style={{ background: 'none', border: 0, color: 'var(--accent-brand)', cursor: 'pointer' }}>
-                  ▶ continuar sozinho
-                </button>
-              </li>
-            )}
-          </ol>
-        </div>
+        <Pipeline />
       </div>
     </section>
   )

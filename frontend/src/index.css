@@ -172,3 +172,5 @@
   .pl-palco[data-etapa] .pl-pino, .pl-palco[data-etapa] .pl-legenda-mapa, .pl-palco[data-etapa] .pl-meta { opacity: 1; }
   .pl-palco[data-etapa="4"] .pl-hex-centro { fill-opacity: .45; }
 }
+/* Telão: o mesmo palco com letras maiores */
+.pl-grande .pl-palco { font-size: clamp(13px, 1.25vw, 24px); border-radius: 18px; }
