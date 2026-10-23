@@ -64,6 +64,12 @@ flowchart LR
     DB --> UI["Painel React<br/>(Vercel)"]
 ```
 
+### Uma foto pelo pipeline
+
+![Animação: uma foto real do carro (13/09/2026, 16:51, Mooca) passa pela câmera, pelo gate da Jetson, pelo envio ao servidor e pelo modelo, que responde garoa com 86%, e cai numa célula H3 pintada de garoa](docs/assets/pipeline.gif)
+
+A foto é real (13/09/2026, 16:51, Mooca, placas borradas). As barras são a saída do modelo de produção (v14f) para essa foto: garoa 86%, moderada 7%, forte 7%. As estações da região marcaram 1,2 mm/h, também garoa. A animação está na página inicial do painel e, em tela grande, em [`/telao`](https://cityrain.vercel.app/telao).
+
 ## Resultados
 
 Protocolo, intervalos de confiança e todos os experimentos em [`docs/resultados-experimentos.md`](docs/resultados-experimentos.md). Teste é sempre com dado real, em dias, sessões ou câmeras que o modelo não viu no treino.
@@ -128,7 +134,8 @@ Jetson Nano com CUDA: gate a 11 FPS e intensidade a 14 FPS, contra captura a 1 f
 ## Demonstração
 
 - **[`/apresentacao`](https://cityrain.vercel.app/apresentacao):** tela cheia com o carro andando no mapa, a classe atual, o pipeline de produção acendendo a cada foto e as câmeras fixas ao vivo.
-- **[`/simulacao`](https://cityrain.vercel.app/simulacao):** simulação **ilustrativa** de uma frota de carros e câmeras cobrindo São Paulo, com chuva por bairro e alerta de chuva forte. Nada vai para a API.
+- **[`/telao`](https://cityrain.vercel.app/telao):** para o monitor do estande. A animação do pipeline em loop, com o QR code do site. **S** (ou **→**) abre a cidade conectada, **F** liga a tela cheia.
+- **[`/simulacao`](https://cityrain.vercel.app/simulacao):** simulação **ilustrativa** de uma frota de carros e câmeras cobrindo São Paulo. Começa em "a cidade hoje", com os 91 pluviômetros reais da área (CEMADEN, CGE e INMET), e o botão "Conectar a frota" mostra a cobertura subir. Nada vai para a API. Aberta pelo telão, volta para ele com **Esc** ou sozinha após 3 min parada.
 - Roteiro completo, incluindo o replay da sessão de chuva de 23/09 pelo Mac: [`docs/roteiro-demo-defesa.md`](docs/roteiro-demo-defesa.md).
 
 ## Estrutura do repositório

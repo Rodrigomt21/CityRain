@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import Topbar from '../components/layout/Topbar'
 import { MapContainer, TileLayer, Polygon, CircleMarker, Tooltip } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { AlertTriangle, Car, Pause, Play, RotateCcw } from 'lucide-react'
 import { CATEGORIES } from '../lib/categories'
+import { ROTA_TELAO, VOLTA_TELAO_MS } from '../lib/telao'
 import { celulasCidade, criarPluviometros, criarSensores, estimarCidade, leituras, porBairro, posicaoCarro } from '../lib/simulacao'
 
 // Visão de futuro: frota de carros + câmeras fixas cobrindo São Paulo. SIMULAÇÃO ILUSTRATIVA:
@@ -100,7 +102,30 @@ function ConviteConectar({ nPluviometros, onConectar }) {
   )
 }
 
+/** Aberta a partir do telão: Esc ou T volta, e volta sozinha depois de VOLTA_TELAO_MS sem ninguém mexer. */
+function useVoltaAoTelao(ativo) {
+  const navigate = useNavigate()
+  useEffect(() => {
+    if (!ativo) return undefined
+    let id
+    const armar = () => { clearTimeout(id); id = setTimeout(() => navigate(ROTA_TELAO), VOLTA_TELAO_MS) }
+    const tecla = e => { if (e.key === 'Escape' || e.key === 't' || e.key === 'T') navigate(ROTA_TELAO); else armar() }
+    const eventos = ['pointerdown', 'pointermove', 'wheel', 'touchstart']
+    eventos.forEach(ev => window.addEventListener(ev, armar, { passive: true }))
+    window.addEventListener('keydown', tecla)
+    armar()
+    return () => {
+      clearTimeout(id)
+      eventos.forEach(ev => window.removeEventListener(ev, armar))
+      window.removeEventListener('keydown', tecla)
+    }
+  }, [ativo, navigate])
+}
+
 export default function Simulacao() {
+  const [params] = useSearchParams()
+  const doTelao = params.get('telao') === '1'
+  useVoltaAoTelao(doTelao)
   const [nCarros, setNCarros] = useState(0)
   const [conectando, setConectando] = useState(false)
   const [t, setT] = useState(0)
@@ -148,6 +173,12 @@ export default function Simulacao() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {doTelao && (
+            <Link to={ROTA_TELAO} className="font-mono text-xs px-3 py-1.5 rounded no-underline" title="Voltar ao telão (Esc)"
+              style={{ color: 'var(--accent-brand)', background: '#3b82f61a', border: '1px solid #3b82f633' }}>
+              ← Voltar ao telão (Esc)
+            </Link>
+          )}
           <span className="font-mono text-xs px-2 py-0.5 rounded"
             style={{ color: '#fbbf24', background: '#fbbf241a', border: '1px solid #fbbf2433' }}>
             SIMULAÇÃO ILUSTRATIVA · dados gerados, não medidos

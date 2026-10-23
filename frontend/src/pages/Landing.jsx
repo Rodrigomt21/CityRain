@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Droplets, ArrowRight, Sparkles } from 'lucide-react'
 import Hero from '../components/landing/Hero'
 import Features from '../components/landing/Features'
+import PipelineAnimado from '../components/landing/PipelineAnimado'
 
 function CallToAction() {
   const navigate = useNavigate()
@@ -61,6 +62,7 @@ export default function Landing() {
   return (
     <div style={{ background: 'var(--bg-base)' }}>
       <Hero />
+      <PipelineAnimado />
       <Features />
       <CallToAction />
       <footer

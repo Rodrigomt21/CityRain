@@ -11,6 +11,7 @@ const Historico = lazy(() => import('./pages/Historico'))
 const CameraDetalhe = lazy(() => import('./pages/CameraDetalhe'))
 const Apresentacao = lazy(() => import('./pages/Apresentacao'))
 const Simulacao = lazy(() => import('./pages/Simulacao'))
+const Telao = lazy(() => import('./pages/Telao'))
 
 function Carregando() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/cameras/:id" element={<CameraDetalhe />} />
           <Route path="/apresentacao" element={<Apresentacao />} />
           <Route path="/simulacao" element={<Simulacao />} />
+          <Route path="/telao" element={<Telao />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
