@@ -215,7 +215,7 @@ export default function Simulacao() {
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '8px 0 0', lineHeight: 1.45 }}>
               Arraste a frota: com poucos carros a cidade fica às cegas; com muitos, cada célula de ~460 m ganha uma estimativa.
-              Hoje são 113 estações públicas para 1.522 km²: só 4% das células de ~460 m têm um pluviômetro.
+              Hoje são 110 estações públicas para 1.522 km²: só 5% das células de ~460 m da cidade têm um pluviômetro.
               Os pontos amarelos são os pluviômetros reais desta área (CEMADEN e INMET na posição exata; CGE aproximada
               pelo bairro, que ela não publica). Cada sensor estima a chuva até 1,5 km ao redor.
             </p>

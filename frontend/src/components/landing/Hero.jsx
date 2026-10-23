@@ -9,11 +9,11 @@ const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   animationDelay: `${(i * 0.18) % 2.5}s`,
 }))
 
-// Números verificáveis, não promessas: estações públicas de SP (CEMADEN 79, CGE 32, INMET 2 para
+// Números verificáveis, não promessas: estações públicas na capital (CEMADEN 79, CGE 29, INMET 2 para
 // 1.522 km², ver README), as 4 classes do modelo e os 10 s de atualização do painel ao vivo.
 const STATS = [
-  { value: '113',  label: 'pluviômetros públicos em SP' },
-  { value: '13 km²', label: 'por pluviômetro, em média' },
+  { value: '110',  label: 'pluviômetros públicos em SP' },
+  { value: '14 km²', label: 'por pluviômetro, em média' },
   { value: '4',    label: 'níveis de chuva' },
   { value: '10 s', label: 'para o mapa atualizar' },
 ]
@@ -89,7 +89,7 @@ export default function Hero() {
           className="font-mono font-bold mb-4"
           style={{ fontSize: 'clamp(1.35rem, 5.5vw, 1.9rem)', color: 'var(--text-primary)', lineHeight: 1.25, margin: '0 0 16px' }}
         >
-          São Paulo tem 1.522 km² e só 113 pluviômetros.
+          São Paulo tem 1.522 km² e só 110 pluviômetros.
         </h1>
         <p
           className="font-sans mb-10"
