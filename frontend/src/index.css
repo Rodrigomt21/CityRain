@@ -95,3 +95,80 @@
 /* Apresentação: faixa de câmeras (2 por linha no celular, todas lado a lado no desktop) */
 .grade-cameras { grid-template-columns: repeat(2, 1fr); }
 @media (min-width: 768px) { .grade-cameras { grid-template-columns: repeat(var(--n), 1fr); } }
+
+/* Landing: pipeline animado (foto -> Jetson -> servidor -> modelo -> H3). Cada camada aparece pelo data-etapa do palco. */
+.pl-palco { position: relative; aspect-ratio: 16 / 11; border-radius: 14px; overflow: hidden; background: #0b1018;
+  border: 1px solid var(--bg-border); font-size: clamp(10px, 2.6vw, 13px); color: var(--text-primary); }
+.pl-palco > div { position: absolute; transition: opacity .5s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+.pl-foto { inset: 0; transform-origin: 0 0; overflow: hidden; border-radius: 0; transition: opacity .5s ease, transform .7s cubic-bezier(.2,.8,.2,1), border-radius .5s; }
+.pl-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pl-palco[data-etapa="1"] .pl-foto { transform: translate(5%, 18%) scale(.52); }
+.pl-palco[data-etapa="1"] .pl-foto, .pl-palco[data-etapa="3"] .pl-foto { border-radius: 28px; }
+.pl-palco[data-etapa="2"] .pl-foto { transform: translate(6%, 34%) scale(.16); opacity: 0; }
+.pl-palco[data-etapa="3"] .pl-foto { transform: translate(5%, 28%) scale(.36); }
+.pl-palco[data-etapa="4"] .pl-foto { transform: translate(40%, 40%) scale(.1); opacity: 0; }
+.pl-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.pl-palco[data-etapa="0"] .pl-flash { animation: pl-flash 1.1s ease-out .2s both; }
+@keyframes pl-flash { 0% { opacity: 0 } 8% { opacity: .85 } 100% { opacity: 0 } }
+.pl-scan { position: absolute; left: 0; right: 0; height: 18%; top: -20%; opacity: 0;
+  background: linear-gradient(to bottom, transparent, #67e8f966, transparent); border-bottom: 2px solid #67e8f9; }
+.pl-palco[data-etapa="1"] .pl-scan { opacity: 1; animation: pl-scan 1.4s ease-in-out .4s 2; }
+@keyframes pl-scan { from { top: -20% } to { top: 100% } }
+.pl-meta { position: absolute; left: 10px; bottom: 10px; padding: 4px 8px; border-radius: 6px; background: #0b1018cc;
+  white-space: nowrap; overflow: hidden; max-width: calc(100% - 20px); opacity: 0; transition: opacity .3s; }
+.pl-palco[data-etapa="0"] .pl-meta { opacity: 1; animation: pl-digita 1.2s steps(40) .9s both; }
+@keyframes pl-digita { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 0 0 0) } }
+
+.pl-jetson { right: 5%; top: 50%; width: 36%; transform: translate(12%, -50%); opacity: 0; display: flex; flex-direction: column; gap: 10px; }
+.pl-palco[data-etapa="1"] .pl-jetson { opacity: 1; transform: translate(0, -50%); transition-delay: .35s; }
+.pl-chip { border: 1px solid #3b82f688; background: #3b82f61a; border-radius: 8px; padding: 10px; letter-spacing: 1px; font-weight: 700; }
+.pl-chip span { font-weight: 400; color: var(--text-secondary); letter-spacing: 0; }
+.pl-veredito { color: #67e8f9; opacity: 0; }
+.pl-veredito b { color: #fff; }
+.pl-palco[data-etapa="1"] .pl-veredito { animation: pl-surge .4s ease-out 2.1s both; }
+.pl-descarte { color: var(--text-secondary); opacity: 0; }
+.pl-palco[data-etapa="1"] .pl-descarte { animation: pl-surge .4s ease-out 2.4s both; }
+@keyframes pl-surge { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+
+.pl-envio { inset: 0; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 0 6%; opacity: 0; }
+.pl-palco[data-etapa="2"] .pl-envio { opacity: 1; }
+.pl-no { border: 1px solid var(--bg-border); background: var(--bg-card); border-radius: 8px; padding: 10px 12px; }
+.pl-trilho { position: relative; height: 2px; background: repeating-linear-gradient(90deg, #8896aa 0 6px, transparent 6px 12px); }
+.pl-pacote { position: absolute; top: 50%; left: 0; transform: translate(0, -50%); white-space: nowrap; padding: 5px 8px; border-radius: 6px;
+  background: #3b82f6; color: #fff; }
+.pl-palco[data-etapa="2"] .pl-pacote { animation: pl-viaja 1.8s cubic-bezier(.5,0,.3,1) .4s both; }
+@keyframes pl-viaja { from { left: 0; transform: translate(0, -50%) } to { left: 100%; transform: translate(-100%, -50%) } }
+.pl-rota { position: absolute; left: 0; right: 0; bottom: 18%; text-align: center; color: var(--text-secondary); }
+
+.pl-modelo { right: 5%; top: 50%; width: 47%; transform: translate(10%, -50%); opacity: 0; display: flex; flex-direction: column; gap: 10px; }
+.pl-palco[data-etapa="3"] .pl-modelo { opacity: 1; transform: translate(0, -50%); transition-delay: .3s; }
+.pl-rotulo { color: var(--text-secondary); letter-spacing: 1px; }
+.pl-barra-linha { display: flex; align-items: center; gap: 8px; }
+.pl-barra { flex: 1; height: 10px; border-radius: 5px; background: var(--bg-border); overflow: hidden; }
+.pl-barra > div { height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+.pl-palco:not([data-etapa="3"]) .pl-barra > div { width: 0 !important; transition: none; }
+.pl-resultado { font-size: 1.5em; font-weight: 700; opacity: 0; }
+.pl-palco[data-etapa="3"] .pl-resultado { animation: pl-surge .4s ease-out 1.6s both; }
+
+.pl-mapa { inset: 0; opacity: 0; }
+.pl-palco[data-etapa="4"] .pl-mapa { opacity: 1; }
+.pl-mapa svg { width: 100%; height: 100%; display: block; }
+.pl-hex { fill: transparent; stroke: #2a3448; stroke-width: 1; opacity: 0; transition: opacity .4s; }
+.pl-palco[data-etapa="4"] .pl-hex { opacity: 1; }
+.pl-hex-centro { fill-opacity: 0; stroke-width: 2; }
+.pl-palco[data-etapa="4"] .pl-hex-centro { animation: pl-pinta .8s ease-out 1.2s both; }
+@keyframes pl-pinta { from { fill-opacity: 0 } to { fill-opacity: .45 } }
+.pl-pino { fill: #fff; stroke: #0b1018; stroke-width: 2; opacity: 0; }
+.pl-palco[data-etapa="4"] .pl-pino { animation: pl-cai .6s cubic-bezier(.3,1.6,.5,1) .5s both; }
+@keyframes pl-cai { from { opacity: 0; transform: translateY(-40px) } to { opacity: 1; transform: none } }
+.pl-legenda-mapa { position: absolute; left: 10px; bottom: 10px; padding: 6px 9px; border-radius: 6px; background: #0b1018dd; line-height: 1.5; opacity: 0; }
+.pl-palco[data-etapa="4"] .pl-legenda-mapa { animation: pl-surge .4s ease-out 1.8s both; }
+
+.pl-progresso { display: block; height: 2px; margin: 10px 0 0 22px; background: var(--accent-brand); transform-origin: 0 50%; animation: pl-progresso linear both; }
+@keyframes pl-progresso { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+@media (prefers-reduced-motion: reduce) {
+  .pl-palco *, .pl-palco > div { animation: none !important; transition: none !important; }
+  .pl-palco[data-etapa] .pl-veredito, .pl-palco[data-etapa] .pl-descarte, .pl-palco[data-etapa] .pl-resultado,
+  .pl-palco[data-etapa] .pl-pino, .pl-palco[data-etapa] .pl-legenda-mapa, .pl-palco[data-etapa] .pl-meta { opacity: 1; }
+  .pl-palco[data-etapa="4"] .pl-hex-centro { fill-opacity: .45; }
+}
