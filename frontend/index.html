@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>City Rain — Monitoramento Pluviométrico</title>
+    <title>CityRain — a chuva rua a rua</title>
+    <meta name="description" content="São Paulo tem 1.522 km² e só 110 pluviômetros. O CityRain transforma câmeras em sensores de chuva e mostra no mapa onde está chovendo." />
+    <meta name="theme-color" content="#0a0d12" />
+    <!-- prévia do link no WhatsApp, Instagram e afins -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://cityrain.vercel.app/" />
+    <meta property="og:title" content="CityRain — a chuva rua a rua" />
+    <meta property="og:description" content="Câmeras viram sensores de chuva: seco, garoa, moderada ou forte, no mapa e ao vivo. TCC de Ciência da Computação do Instituto Mauá de Tecnologia." />
+    <meta property="og:image" content="https://cityrain.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,6 +26,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- VLibras (gov.br): tradução automática do conteúdo para Libras -->
+    <div vw class="enabled">
+      <div vw-access-button class="active"></div>
+      <div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>if (window.VLibras) new window.VLibras.Widget('https://vlibras.gov.br/app')</script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

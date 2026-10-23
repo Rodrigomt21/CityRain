@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Droplets, ArrowRight } from 'lucide-react'
+import { Droplets, ArrowRight, Sparkles } from 'lucide-react'
 import Hero from '../components/landing/Hero'
 import Features from '../components/landing/Features'
 
@@ -15,13 +15,14 @@ function CallToAction() {
         className="font-mono font-bold mb-4"
         style={{ fontSize: '1.6rem', color: 'var(--text-primary)' }}
       >
-        Pronto para monitorar sua cidade?
+        Veja a chuva agora
       </h2>
       <p className="font-sans text-sm mb-8" style={{ color: 'var(--text-secondary)', maxWidth: '400px' }}>
-        Acesse o dashboard operacional e veja os dados de precipitação em tempo real para todos os bairros monitorados.
+        O mapa mostra as câmeras ao vivo e o carro do projeto. Quando chove, os hexágonos mudam de cor.
       </p>
+      <div className="flex flex-col sm:flex-row items-center gap-3">
       <button
-        onClick={() => navigate('/dashboard')}
+        onClick={() => navigate('/apresentacao')}
         className="flex items-center gap-2 px-7 py-3.5 rounded-lg font-mono font-semibold text-sm"
         style={{
           background: 'var(--accent-brand)',
@@ -40,9 +41,18 @@ function CallToAction() {
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
-        Acessar Dashboard
+        Ver a chuva agora
         <ArrowRight size={16} />
       </button>
+      <button
+        onClick={() => navigate('/simulacao')}
+        className="flex items-center gap-2 px-6 py-3.5 rounded-lg font-mono font-semibold text-sm"
+        style={{ background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--bg-border)', cursor: 'pointer' }}
+      >
+        <Sparkles size={16} color="var(--accent-brand)" />
+        Simular a cidade conectada
+      </button>
+      </div>
     </section>
   )
 }
@@ -63,7 +73,7 @@ export default function Landing() {
         >
           <div className="flex items-center gap-2">
             <Droplets size={14} color="var(--accent-brand)" />
-            <span className="font-mono font-semibold" style={{ color: 'var(--text-primary)' }}>City Rain</span>
+            <span className="font-mono font-semibold" style={{ color: 'var(--text-primary)' }}>CityRain</span>
             <span>© 2026</span>
           </div>
           <span>TCC em Ciência da Computação · Instituto Mauá de Tecnologia</span>

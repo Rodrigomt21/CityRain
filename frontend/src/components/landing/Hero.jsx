@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Droplets, ArrowRight } from 'lucide-react'
+import { Droplets, ArrowRight, Sparkles } from 'lucide-react'
 
 // Gotas uniformes: mesma cor, 1px, espaçamento regular, velocidade lenta
 const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
@@ -9,13 +9,13 @@ const RAIN_DROPS = Array.from({ length: 50 }, (_, i) => ({
   animationDelay: `${(i * 0.18) % 2.5}s`,
 }))
 
-// Números verificáveis no sistema, não promessas: 4 classes do modelo, CNN como
-// método, 10 s de polling do painel ao vivo e H3 como unidade de agregação.
+// Números verificáveis, não promessas: estações públicas na capital (CEMADEN 79, CGE 29, INMET 2 para
+// 1.522 km², ver README), as 4 classes do modelo e os 10 s de atualização do painel ao vivo.
 const STATS = [
-  { value: '4',    label: 'Níveis de Intensidade' },
-  { value: 'CNN',  label: 'Classificação por Imagem' },
-  { value: '10s',  label: 'Atualização do Painel' },
-  { value: 'H3',   label: 'Agregação Espacial' },
+  { value: '110',  label: 'pluviômetros públicos em SP' },
+  { value: '14 km²', label: 'por pluviômetro, em média' },
+  { value: '4',    label: 'níveis de chuva' },
+  { value: '10 s', label: 'para o mapa atualizar' },
 ]
 
 export default function Hero() {
@@ -80,24 +80,31 @@ export default function Hero() {
             className="font-mono font-bold"
             style={{ fontSize: 'clamp(2.1rem, 9vw, 3rem)', color: 'var(--text-primary)', letterSpacing: '-0.03em' }}
           >
-            City Rain
+            CityRain
           </span>
         </div>
 
-        {/* Texto principal */}
+        {/* Texto principal: o problema primeiro, depois a proposta */}
+        <h1
+          className="font-mono font-bold mb-4"
+          style={{ fontSize: 'clamp(1.35rem, 5.5vw, 1.9rem)', color: 'var(--text-primary)', lineHeight: 1.25, margin: '0 0 16px' }}
+        >
+          São Paulo tem 1.522 km² e só 110 pluviômetros.
+        </h1>
         <p
           className="font-sans mb-10"
           style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.6 }}
         >
-          Monitoramento de chuva urbana por visão computacional. Uma câmera embarcada
-          em veículo e câmeras públicas fixas classificam a intensidade da chuva em tempo real,
-          enquanto o carro percorre a cidade e as câmeras vigiam pontos fixos.
+          A chuva forte cai num bairro e não aparece em estação nenhuma. O CityRain transforma câmeras
+          (no carro, na rua, ao vivo) em sensores de chuva: a inteligência artificial olha a imagem e diz se
+          está seco, garoando, chovendo moderado ou forte, e o mapa mostra onde.
         </p>
 
         {/* CTA */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 mb-14">
         <button
-          onClick={() => navigate('/dashboard')}
-          className="flex items-center gap-2 px-7 py-3.5 rounded-lg font-mono font-semibold text-sm mb-14"
+          onClick={() => navigate('/apresentacao')}
+          className="flex items-center gap-2 px-7 py-3.5 rounded-lg font-mono font-semibold text-sm"
           style={{
             background: 'var(--accent-brand)',
             color: '#fff',
@@ -115,9 +122,18 @@ export default function Hero() {
             e.currentTarget.style.transform = 'translateY(0)'
           }}
         >
-          Acessar Dashboard
+          Ver a chuva agora
           <ArrowRight size={16} />
         </button>
+        <button
+          onClick={() => navigate('/simulacao')}
+          className="flex items-center gap-2 px-6 py-3.5 rounded-lg font-mono font-semibold text-sm"
+          style={{ background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--bg-border)', cursor: 'pointer' }}
+        >
+          <Sparkles size={16} color="var(--accent-brand)" />
+          Simular a cidade conectada
+        </button>
+        </div>
 
         {/* Stats */}
         <div

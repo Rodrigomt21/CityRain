@@ -28,7 +28,7 @@
 
 ## O problema e a proposta
 
-São Paulo tem 113 estações públicas de chuva (79 pluviômetros do CEMADEN, 32 da CGE e 2 do INMET) para 1.522 km²: uma a cada 13 km². Dos 2.047 hexágonos de ~460 m que cobrem a cidade, só 79 têm um pluviômetro dentro, e metade da cidade fica a mais de 2 km do mais próximo. Uma chuva forte num bairro pode não aparecer em nenhuma estação. O CityRain transforma câmeras em sensores. Cada imagem vira uma classe de intensidade, com posição e horário, agregada numa grade de hexágonos H3 de ~460 m.
+São Paulo tem 110 estações públicas de chuva (79 pluviômetros do CEMADEN, 29 da CGE e 2 do INMET) para 1.522 km²: uma a cada 14 km². Dos 2.047 hexágonos de ~460 m que cobrem a cidade, só 106 (5%) têm uma estação dentro, e 45% da cidade fica a mais de 2 km da mais próxima. (A CGE lista 32 postos, mas 3 ficam fora da capital; ela não publica coordenadas, então as posições da CGE são aproximadas pelo bairro.) Uma chuva forte num bairro pode não aparecer em nenhuma estação. O CityRain transforma câmeras em sensores. Cada imagem vira uma classe de intensidade, com posição e horário, agregada numa grade de hexágonos H3 de ~460 m.
 
 | Classe | Faixa (mm/h) |
 |---|---|
