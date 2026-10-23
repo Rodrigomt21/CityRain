@@ -78,7 +78,7 @@ export default function Hero() {
           </div>
           <span
             className="font-mono font-bold"
-            style={{ fontSize: '3rem', color: 'var(--text-primary)', letterSpacing: '-0.03em' }}
+            style={{ fontSize: 'clamp(2.1rem, 9vw, 3rem)', color: 'var(--text-primary)', letterSpacing: '-0.03em' }}
           >
             City Rain
           </span>
@@ -121,19 +121,19 @@ export default function Hero() {
 
         {/* Stats */}
         <div
-          className="grid grid-cols-4 w-full rounded-xl"
+          className="grid grid-cols-2 sm:grid-cols-4 w-full rounded-xl overflow-hidden"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--bg-border)' }}
         >
-          {STATS.map((s, i) => (
+          {STATS.map(s => (
             <div
               key={s.label}
               className="flex flex-col items-center py-5"
-              style={{ borderRight: i < STATS.length - 1 ? '1px solid var(--bg-border)' : 'none' }}
+              style={{ boxShadow: '1px 1px 0 var(--bg-border)' }}
             >
               <span className="font-mono font-bold mb-1" style={{ fontSize: '1.6rem', color: 'var(--text-primary)' }}>
                 {s.value}
               </span>
-              <span className="font-sans text-xs" style={{ color: 'var(--text-secondary)' }}>
+              <span className="font-sans text-xs px-2" style={{ color: 'var(--text-secondary)' }}>
                 {s.label}
               </span>
             </div>

@@ -37,17 +37,18 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
 
   return (
     <header
-      className="flex items-center justify-between px-5 h-11 shrink-0"
+      className="flex flex-wrap md:flex-nowrap items-center justify-between px-3 md:px-5 md:h-11 shrink-0"
       style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--bg-border)' }}
     >
-      <div className="flex items-center gap-3">
+      <div className="contents md:flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 h-11 min-w-0 order-1 md:order-none">
         <Link
           to={backTo}
           className="flex items-center gap-1 no-underline font-mono text-xs"
           style={{ color: 'var(--text-secondary)' }}
         >
           <ChevronLeft size={13} />
-          VOLTAR
+          <span className="hidden sm:inline">VOLTAR</span>
         </Link>
         <span className="w-px h-4" style={{ background: 'var(--bg-border)' }} />
         <div className="flex items-center gap-2">
@@ -64,13 +65,16 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
             </>
           )}
         </div>
-        <span className="w-px h-4" style={{ background: 'var(--bg-border)' }} />
-        <nav aria-label="Páginas" className="flex items-center gap-1 h-11">
+        </div>
+        <span className="hidden md:block w-px h-4" style={{ background: 'var(--bg-border)' }} />
+        {/* no celular as abas descem para uma 2ª linha e rolam na horizontal */}
+        <nav aria-label="Páginas" className="order-3 md:order-none w-full md:w-auto flex items-center gap-1 h-10 md:h-11 overflow-x-auto -mx-3 px-1 md:mx-0 md:px-0 border-t md:border-t-0"
+          style={{ borderColor: 'var(--bg-border)', scrollbarWidth: 'none' }}>
           {ABAS.map(([to, rotulo]) => {
             const ativa = to === abaAtiva
             return (
               <Link key={to} to={to} aria-current={ativa ? 'page' : undefined}
-                className="flex items-center h-full px-3 font-mono text-xs no-underline"
+                className="flex items-center h-full px-3 font-mono text-xs no-underline whitespace-nowrap shrink-0"
                 style={{ color: ativa ? 'var(--text-primary)' : 'var(--text-secondary)',
                   borderBottom: `2px solid ${ativa ? 'var(--accent-brand)' : 'transparent'}` }}>
                 {rotulo}
@@ -80,13 +84,13 @@ export default function Topbar({ breadcrumb = 'Dashboard', backTo = '/' }) {
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 font-mono text-xs">
+      <div className="order-2 md:order-none flex items-center gap-2 font-mono text-xs h-11 min-w-0">
         <span className="flex items-center gap-1.5" role="status" style={{ color: status.cor }}
           title="Idade da captura mais recente (carro ou câmera fixa). Verde: até 2 min. Âmbar: dado atrasado. Cinza: API fora do ar.">
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: status.cor }} />
-          {status.texto}
+          <span className="truncate">{status.texto}</span>
         </span>
-        <span style={{ color: 'var(--text-secondary)' }}>{formatDateTime(now)}</span>
+        <span className="hidden lg:inline" style={{ color: 'var(--text-secondary)' }}>{formatDateTime(now)}</span>
       </div>
     </header>
   )

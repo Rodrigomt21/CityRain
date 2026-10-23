@@ -60,7 +60,7 @@ export default function PainelDispositivo({ celula, onFechar }) {
   return (
     <div className="rounded-xl p-3 flex flex-col gap-3"
       style={{
-        position: 'absolute', top: 12, right: 12, zIndex: 1000, width: 300, maxHeight: 'calc(100% - 24px)',
+        position: 'absolute', top: 12, right: 12, zIndex: 1000, width: 300, maxWidth: 'calc(100% - 24px)', maxHeight: 'calc(100% - 24px)',
         overflowY: 'auto', background: 'var(--bg-surface)', border: '1px solid var(--bg-border)',
         boxShadow: '0 8px 24px #0006',
       }}>

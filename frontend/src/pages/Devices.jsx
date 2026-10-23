@@ -105,8 +105,8 @@ export default function Devices() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <Topbar breadcrumb={NOME_TIPO.movel} backTo="/dashboard" />
 
-      <main style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div className="flex items-end justify-between gap-3">
+      <main className="flex flex-col gap-4 px-3 py-4 md:px-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-mono font-bold" style={{ fontSize: '22px', color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
               {NOME_TIPO.movel}

@@ -58,7 +58,7 @@ export default function Landing() {
         style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--bg-border)' }}
       >
         <div
-          className="max-w-5xl mx-auto flex items-center justify-between"
+          className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-center"
           style={{ color: 'var(--text-secondary)' }}
         >
           <div className="flex items-center gap-2">

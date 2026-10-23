@@ -34,10 +34,11 @@ export default function Dashboard() {
   const celulaAberta = celulas.find(c => c.celula === selecionada) ?? null
 
   return (
-    <div style={{ height: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+    // no celular a página rola (painel em cima, mapa embaixo); no desktop tudo cabe em 100vh
+    <div className="min-h-screen md:h-screen flex flex-col" style={{ background: 'var(--bg-base)' }}>
       <Topbar breadcrumb="Ao vivo" backTo="/" />
-      <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '16px 20px', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+      <main className="flex-1 min-h-0 flex flex-col gap-3 px-3 py-3 md:px-5 md:py-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 className="font-mono font-bold" style={{ fontSize: 22, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
               Monitoramento ao vivo
@@ -50,7 +51,7 @@ export default function Dashboard() {
               {error && <span style={{ color: '#ef4444' }}> · API indisponível: {error.message}</span>}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <span className="font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>Mostrar no mapa:</span>
             <div role="group" aria-label="Tipo de dispositivo no mapa" style={{ display: 'flex', gap: 4 }}>
               {TIPOS_MAPA.map(t => (
@@ -65,14 +66,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 14, flex: 1, minHeight: 0 }}>
+        <div className="flex flex-col md:flex-row gap-3.5 flex-1 min-h-0">
           {/* painel "Agora" é do carro: some quando só as câmeras fixas estão no mapa */}
           {mostrarCarro && (
-            <div style={{ width: 400, flexShrink: 0 }}>
+            <div className="w-full md:w-[400px] shrink-0">
               <PainelAgora capturas={recentes} ultima={ultima} janelaMin={JANELA_MIN} />
             </div>
           )}
-          <div className="rounded-xl" style={{ flex: 1, minWidth: 0, overflow: 'hidden', border: '1px solid var(--bg-border)', position: 'relative' }}>
+          <div className="rounded-xl md:flex-1 min-w-0 h-[65vh] md:h-auto order-first md:order-none" style={{ overflow: 'hidden', border: '1px solid var(--bg-border)', position: 'relative' }}>
             {carregando ? (
               <div role="status" aria-label="Carregando mapa" className="skeleton"
                 style={{ height: '100%', borderRadius: 0, display: 'grid', placeItems: 'center' }}>

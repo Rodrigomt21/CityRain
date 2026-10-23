@@ -91,3 +91,7 @@
 @keyframes ap-ponto-vivo { 0%, 100% { box-shadow: 0 0 0 0 #ef444499; } 70% { box-shadow: 0 0 0 8px #ef444400; } }
 .ap-ponto-vivo { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; animation: ap-ponto-vivo 1.6s ease-out infinite; }
 @media (prefers-reduced-motion: reduce) { .ap-gota, .ap-entrar, .ap-etapa, .ap-fluxo, .ap-ponto-vivo { animation: none; } .ap-gota { display: none; } }
+
+/* Apresentação: faixa de câmeras (2 por linha no celular, todas lado a lado no desktop) */
+.grade-cameras { grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 768px) { .grade-cameras { grid-template-columns: repeat(var(--n), 1fr); } }
