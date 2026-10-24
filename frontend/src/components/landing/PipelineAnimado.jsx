@@ -273,9 +273,10 @@ function Palco({ etapa, rodando }) {
 /**
  * Palco + lista de etapas, com o próprio relógio. Roda só quando está na tela.
  * `grande`: versão do telão (letras maiores). `retomarMs`: depois de um clique numa etapa, volta a andar
- * sozinho após esse tempo (no telão ninguém fica para apertar "continuar").
+ * sozinho após esse tempo. `manual`: só troca de etapa com clique ou teclado (→/espaço/PageDown avança,
+ * ←/PageUp volta), para quem apresenta no telão controlar o ritmo.
  */
-export function Pipeline({ grande = false, retomarMs = null }) {
+export function Pipeline({ grande = false, retomarMs = null, manual = false }) {
   const [etapa, setEtapa] = useState(0)
   const [visivel, setVisivel] = useState(false)
   const [pausado, setPausado] = useState(false)
@@ -291,7 +292,7 @@ export function Pipeline({ grande = false, retomarMs = null }) {
     return () => obs.disconnect()
   }, [])
 
-  const rodando = visivel && !pausado && !reduzido
+  const rodando = visivel && !pausado && !reduzido && !manual
   useEffect(() => {
     if (!rodando) return undefined
     const id = setTimeout(() => setEtapa(e => (e + 1) % ETAPAS.length), PASSO_MS)
@@ -303,6 +304,18 @@ export function Pipeline({ grande = false, retomarMs = null }) {
     const id = setTimeout(() => setPausado(false), retomarMs)
     return () => clearTimeout(id)
   }, [pausado, retomarMs, etapa])
+
+  useEffect(() => {
+    if (!manual) return undefined
+    const tecla = ev => {
+      const passo = { ArrowRight: 1, ' ': 1, PageDown: 1, ArrowLeft: -1, PageUp: -1 }[ev.key]
+      if (!passo) return
+      ev.preventDefault()
+      setEtapa(e => (e + passo + ETAPAS.length) % ETAPAS.length)
+    }
+    window.addEventListener('keydown', tecla)
+    return () => window.removeEventListener('keydown', tecla)
+  }, [manual])
 
   const escolher = i => { setEtapa(i); setPausado(true) }
   const fonte = grande ? { titulo: 'clamp(16px, 1.5vw, 26px)', texto: 'clamp(14px, 1.2vw, 21px)', num: 'clamp(13px, 1.1vw, 18px)' }
@@ -331,7 +344,7 @@ export function Pipeline({ grande = false, retomarMs = null }) {
             </li>
           )
         })}
-        {pausado && !reduzido && retomarMs == null && (
+        {pausado && !reduzido && !manual && retomarMs == null && (
           <li>
             <button type="button" onClick={() => setPausado(false)} className="font-mono text-xs px-4 py-2"
               style={{ background: 'none', border: 0, color: 'var(--accent-brand)', cursor: 'pointer' }}>
