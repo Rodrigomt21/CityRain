@@ -5,7 +5,8 @@ import { Pipeline } from '../components/landing/PipelineAnimado'
 import { SIMULACAO_DO_TELAO } from '../lib/telao'
 
 // Telão do estande (EUREKA): a animação do pipeline em loop, grande, com o QR do site.
-// S ou → abre a cidade conectada, que volta para cá com Esc ou sozinha quando fica parada.
+// As etapas trocam na mão (→/espaço avança, ← volta). S abre a cidade conectada, que volta para cá
+// com Esc ou sozinha quando fica parada.
 
 function telaCheia() {
   const el = document.documentElement
@@ -18,7 +19,7 @@ export default function Telao() {
 
   useEffect(() => {
     const tecla = e => {
-      if (e.key === 's' || e.key === 'S' || e.key === 'ArrowRight') navigate(SIMULACAO_DO_TELAO)
+      if (e.key === 's' || e.key === 'S') navigate(SIMULACAO_DO_TELAO)
       if (e.key === 'f' || e.key === 'F') telaCheia()
     }
     window.addEventListener('keydown', tecla)
@@ -40,7 +41,7 @@ export default function Telao() {
             className="rounded-lg" style={{ padding: 10, background: 'transparent', border: '1px solid var(--bg-border)', color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <Maximize size={18} />
           </button>
-          <button type="button" onClick={() => navigate(SIMULACAO_DO_TELAO)} title="Cidade conectada (S ou →)"
+          <button type="button" onClick={() => navigate(SIMULACAO_DO_TELAO)} title="Cidade conectada (S)"
             className="flex items-center gap-2 rounded-lg font-mono font-semibold"
             style={{ padding: '10px 16px', background: 'var(--accent-brand)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 'clamp(13px, 1vw, 18px)' }}>
             <Sparkles size={16} /> Cidade conectada
@@ -50,7 +51,7 @@ export default function Telao() {
 
       <main className="flex-1 flex items-center">
         <div className="w-full mx-auto" style={{ maxWidth: 'min(100%, calc((100vh - 400px) * 2.1))' }}>
-          <Pipeline grande retomarMs={10000} />
+          <Pipeline grande manual />
         </div>
       </main>
 
